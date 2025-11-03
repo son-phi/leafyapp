@@ -3,4 +3,8 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
+    <string name="tab_my_garden">My Garden</string>
+    <string name="tab_profile">Profile</string>
+    <string name="tab_ask_botanist">Profile</string>
+    <string name="tab_camera">Camera</string>
 </resources>
