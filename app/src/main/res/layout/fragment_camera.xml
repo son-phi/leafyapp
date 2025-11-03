@@ -1,14 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cameraLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:background="#000">
 
-    <TextView
-        android:id="@+id/text_camera"
+    <!-- Camera preview -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Khung overlay -->
+    <View
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/camera_overlay"
+        android:clickable="false" />
+
+    <!-- Nút chế độ Disease -->
+    <Button
+        android:id="@+id/btnDisease"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Camera"
-        android:textSize="18sp"
-        android:layout_gravity="center" />
-</FrameLayout>
+        android:text="🌿 Disease"
+        android:textColor="#FFD700"
+        android:textSize="16sp"
+        android:background="@drawable/label_bg"
+        android:padding="8dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
+        app:layout_constraintEnd_toStartOf="@+id/btnPlant"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <!-- Nút chế độ Plant -->
+    <Button
+        android:id="@+id/btnPlant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🪴 Plant"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:background="@drawable/label_bg"
+        android:padding="8dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
+        app:layout_constraintStart_toEndOf="@+id/btnDisease" />
+
+    <!-- Nút chụp ảnh -->
+    <ImageButton
+        android:id="@+id/btnCapture"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@drawable/btn_capture"
+        android:layout_marginBottom="30dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
