@@ -12,58 +12,148 @@
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Khung overlay -->
-    <View
-        android:id="@+id/overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/camera_overlay"
-        android:clickable="false" />
-
-    <!-- Nút chế độ Disease -->
-    <Button
-        android:id="@+id/btnDisease"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🌿 Disease"
-        android:textColor="#FFD700"
-        android:textSize="16sp"
-        android:background="@drawable/label_bg"
-        android:padding="8dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
-        app:layout_constraintEnd_toStartOf="@+id/btnPlant"
-        app:layout_constraintHorizontal_chainStyle="packed" />
-
-    <!-- Nút chế độ Plant -->
-    <Button
-        android:id="@+id/btnPlant"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🪴 Plant"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:background="@drawable/label_bg"
-        android:padding="8dp"
+    <!-- Nút đóng (X) - góc trái trên -->
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_marginStart="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
-        app:layout_constraintStart_toEndOf="@+id/btnDisease" />
+        android:layout_marginTop="16dp"
+        android:background="@drawable/btn_close_bg"
+        android:contentDescription="Close"
+        android:src="@drawable/ic_close"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Nút chụp ảnh -->
+    <!-- Nút refresh - góc phải trên -->
+    <ImageButton
+        android:id="@+id/btnRefresh"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/btn_refresh_bg"
+        android:contentDescription="Refresh"
+        android:src="@drawable/ic_refresh"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Khung viewfinder với các góc bo tròn -->
+    <View
+        android:id="@+id/viewfinderFrame"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/viewfinder_frame"
+        app:layout_constraintWidth_percent="0.75"
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/modeContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.35" />
+
+    <!-- Container cho 2 nút mode -->
+    <LinearLayout
+        android:id="@+id/modeContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="60dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Nút Disease -->
+        <LinearLayout
+            android:id="@+id/btnDiseaseMode"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:background="@drawable/btn_disease_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true">
+            <TextView
+                android:id="@+id/tvDiseaseMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌿 Disease"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Nút Plant -->
+        <LinearLayout
+            android:id="@+id/btnPlantMode"
+            android:layout_width="150dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/btn_plant_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvPlantMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🪴 Plant"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Icon thư viện ảnh - góc trái dưới -->
+    <ImageButton
+        android:id="@+id/btnGallery"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/btn_gallery_bg"
+        android:contentDescription="Gallery"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_gallery_placeholder"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Nút chụp ảnh ở giữa -->
     <ImageButton
         android:id="@+id/btnCapture"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:background="@drawable/btn_capture"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
         android:layout_marginBottom="30dp"
+        android:background="@drawable/btn_capture"
+        android:contentDescription="Capture"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Nút info - góc phải dưới -->
+    <ImageButton
+        android:id="@+id/btnInfo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/btn_info_bg"
+        android:contentDescription="Info"
+        android:src="@drawable/ic_info"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

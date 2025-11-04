@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#111"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/previewImage"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="32dp"
+        android:background="@drawable/rounded_bg"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="We scan for you"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:textSize="22sp"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="We analyze your plant with AI"
+        android:textColor="#CCCCCC"
+        android:textSize="14sp"
+        android:layout_marginBottom="32dp"/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:indeterminate="true"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/analyzingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Analyzing image..."
+        android:textColor="#FFD700"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/detectingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Detecting leaves"
+        android:textColor="#FFD700"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/identifyingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Identifying plant"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>
