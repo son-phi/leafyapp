@@ -27,17 +27,4 @@
         app:elevation="8dp"
         android:layout_alignParentBottom="true" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_camera"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:layout_gravity="center|bottom"
-        android:layout_marginBottom="28dp"
-        app:layout_anchor="@id/nav_view"
-        app:srcCompat="@drawable/outline_add_a_photo_24"
-        app:maxImageSize="32dp"
-        app:useCompatPadding="true"
-        app:backgroundTint="@color/teal_200"
-        app:tint="@android:color/white" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
