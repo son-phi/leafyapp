@@ -49,14 +49,13 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/viewfinder_frame"
-        app:layout_constraintWidth_percent="0.75"
-        app:layout_constraintDimensionRatio="3:4"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/modeContainer"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.35" />
-
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.4"
+        app:layout_constraintWidth_percent="0.8" />
     <!-- Container cho 2 nút mode -->
     <LinearLayout
         android:id="@+id/modeContainer"
