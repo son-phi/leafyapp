@@ -17,6 +17,7 @@ import com.example.leafyapp.R
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.navigation.fragment.findNavController
 
 class CameraFragment : Fragment() {
 
@@ -179,6 +180,14 @@ class CameraFragment : Fragment() {
             } else {
                 Log.e("CameraFragment", "❌ Permissions not granted by the user.")
             }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val btnClose = view.findViewById<ImageButton>(R.id.btnClose)
+        btnClose.setOnClickListener {
+            findNavController().popBackStack()
         }
     }
 }

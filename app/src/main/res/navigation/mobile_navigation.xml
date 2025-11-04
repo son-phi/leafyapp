@@ -8,24 +8,20 @@
     <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.leafyapp.ui.home.HomeFragment"
-        android:label="@string/title_home"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_garden"
         android:name="com.example.leafyapp.ui.garden.GardenFragment"
-        android:label="@string/tab_my_garden"
         tools:layout="@layout/fragment_garden" />
 
     <fragment
         android:id="@+id/navigation_camera"
         android:name="com.example.leafyapp.ui.camera.CameraFragment"
-        android:label="@string/tab_camera"
         tools:layout="@layout/fragment_camera" />
 
     <fragment
         android:id="@+id/navigation_profile"
         android:name="com.example.leafyapp.ui.profile.ProfileFragment"
-        android:label="@string/tab_profile"
         tools:layout="@layout/fragment_profile" />
 </navigation>

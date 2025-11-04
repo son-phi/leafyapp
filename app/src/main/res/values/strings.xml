@@ -7,4 +7,18 @@
     <string name="tab_profile">Profile</string>
     <string name="tab_ask_botanist">Profile</string>
     <string name="tab_camera">Camera</string>
+    <string name="search_placeholder">Search for anything</string>
+    <string name="search_placeholder_home">Search plants, flowers, trees</string>
+    <string name="cd_location">Location</string>
+    <string name="plant_tools">Plant Tools</string>
+    <string name="plant_identifier">Plant Identifier</string>
+    <string name="disease_identifier">Disease Identifier</string>
+    <string name="light_meter">Light Meter</string>
+    <string name="water_meter">Water Meter</string>
+    <string name="free_premium_available">Free Premium Available</string>
+    <string name="tap_to_claim">Tap to claim</string>
+    <string name="toxicity_identifier">Toxicity Identifier</string>
+    <string name="mushroom_identifier">Mushroom Identifier</string>
+    <string name="show_more">Show More</string>
+    <string name="clear_text">clear</string>
 </resources>

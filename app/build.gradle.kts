@@ -58,4 +58,5 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.extensions)
 
+    implementation("androidx.gridlayout:gridlayout:1.0.0")
 }
