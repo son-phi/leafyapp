@@ -1,89 +1,75 @@
 package com.example.leafyapp.ui.camera
 
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.*
-import android.widget.LinearLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.leafyapp.R
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.navigation.fragment.findNavController
 
 class CameraFragment : Fragment() {
 
     private lateinit var viewFinder: PreviewView
-    private var imageCapture: ImageCapture? = null
     private lateinit var btnDiseaseMode: LinearLayout
     private lateinit var btnPlantMode: LinearLayout
-    private var currentMode = "Disease" // 🌿 mặc định nhận diện bệnh
-    private val outputDirectory: File by lazy { createOutputDirectory() }
+    private lateinit var btnSwitchCamera: ImageButton
+    private lateinit var btnGallery: ImageButton
+
+    private var imageCapture: ImageCapture? = null
+    private var currentMode = "Disease"
+    private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    private val outputDirectory by lazy { requireContext().getExternalFilesDir("LeafyApp")!! }
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 1001
+        private const val REQUEST_GALLERY = 2001
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_camera, container, false)
 
-        // Liên kết view
         viewFinder = view.findViewById(R.id.viewFinder)
         btnDiseaseMode = view.findViewById(R.id.btnDiseaseMode)
         btnPlantMode = view.findViewById(R.id.btnPlantMode)
+        btnSwitchCamera = view.findViewById(R.id.btnSwitchCamera)
+        btnGallery = view.findViewById(R.id.btnGallery)
         val btnCapture = view.findViewById<ImageButton>(R.id.btnCapture)
+        val btnClose = view.findViewById<ImageButton>(R.id.btnClose)
 
-        viewFinder.scaleType = PreviewView.ScaleType.FILL_CENTER
-
-        // Gán sự kiện
         btnDiseaseMode.setOnClickListener { setMode("Disease") }
         btnPlantMode.setOnClickListener { setMode("Plant") }
         btnCapture.setOnClickListener { takePhoto() }
+        btnSwitchCamera.setOnClickListener { switchCamera() }
+        btnGallery.setOnClickListener { openGallery() }
+        btnClose.setOnClickListener { findNavController().popBackStack() }
 
-        // Set mode mặc định
-        setMode("Disease")
-
-        // Kiểm tra quyền camera
-        if (allPermissionsGranted()) {
-            viewFinder.post { startCamera() }
-        } else {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                REQUIRED_PERMISSIONS,
-                REQUEST_CODE_PERMISSIONS
-            )
-        }
+        if (allPermissionsGranted()) startCamera()
+        else ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
 
         return view
     }
 
     private fun setMode(mode: String) {
         currentMode = mode
-        when (mode) {
-            "Disease" -> {
-                // Disease active (màu đỏ), Plant inactive (màu xám)
-                btnDiseaseMode.setBackgroundResource(R.drawable.btn_disease_bg)
-                btnPlantMode.setBackgroundResource(R.drawable.btn_plant_bg)
-            }
-            "Plant" -> {
-                // Plant active (màu đỏ), Disease inactive (màu xám)
-                btnPlantMode.setBackgroundResource(R.drawable.btn_plant_active_bg)
-                btnDiseaseMode.setBackgroundResource(R.drawable.btn_plant_bg)
-            }
-        }
-        Log.d("CameraFragment", "Mode set to: $currentMode")
+        btnDiseaseMode.setBackgroundResource(if (mode == "Disease") R.drawable.btn_disease_bg else R.drawable.btn_plant_bg)
+        btnPlantMode.setBackgroundResource(if (mode == "Plant") R.drawable.btn_plant_active_bg else R.drawable.btn_plant_bg)
     }
 
     private fun startCamera() {
@@ -92,102 +78,77 @@ class CameraFragment : Fragment() {
             val cameraProvider = cameraProviderFuture.get()
 
             val preview = Preview.Builder()
-                .setTargetAspectRatio(AspectRatio.RATIO_16_9)
                 .setTargetRotation(viewFinder.display.rotation)
                 .build()
-                .also {
-                    it.surfaceProvider = viewFinder.surfaceProvider
-                }
+                .also { it.surfaceProvider = viewFinder.surfaceProvider }
 
-            imageCapture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .setTargetRotation(viewFinder.display.rotation)
-                .build()
+            imageCapture = ImageCapture.Builder().build()
 
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageCapture
-                )
-                Log.d("CameraFragment", "✅ Camera started successfully")
-            } catch (exc: Exception) {
-                Log.e("CameraFragment", "❌ Use case binding failed", exc)
-            }
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+
         }, ContextCompat.getMainExecutor(requireContext()))
+    }
+
+    private fun switchCamera() {
+        cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA)
+            CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
+        startCamera()
     }
 
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
-        val photoFile = File(
-            outputDirectory,
-            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
-                .format(System.currentTimeMillis()) + ".jpg"
-        )
+        val file = File(outputDirectory, "${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.jpg")
+        val output = ImageCapture.OutputFileOptions.Builder(file).build()
 
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(requireContext()),
+        imageCapture.takePicture(output, ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageSavedCallback {
+                override fun onImageSaved(result: ImageCapture.OutputFileResults) {
+                    navigateToLoading(file.absolutePath)
+                }
                 override fun onError(exc: ImageCaptureException) {
-                    Log.e("CameraFragment", "❌ Photo capture failed: ${exc.message}", exc)
+                    Log.e("CameraFragment", "Capture failed", exc)
                 }
+            })
+    }
 
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    Log.d("CameraFragment", "✅ Photo saved: ${photoFile.absolutePath}")
-                    when (currentMode) {
-                        "Disease" -> recognizeDisease(photoFile)
-                        "Plant" -> recognizePlant(photoFile)
-                    }
-                }
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, REQUEST_GALLERY)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_GALLERY && resultCode == Activity.RESULT_OK) {
+            val imageUri = data?.data
+            if (imageUri != null) {
+                val intent = Intent(requireContext(), LoadingActivity::class.java)
+                intent.putExtra("PHOTO_PATH", imageUri.toString()) // ✅ gửi URI
+                intent.putExtra("SCAN_MODE", currentMode)
+                startActivity(intent)
             }
-        )
-    }
-
-    private fun recognizeDisease(file: File) {
-        Log.i("CameraFragment", "Running disease recognition on: ${file.name}")
-        // TODO: Gọi model nhận diện bệnh
-    }
-
-    private fun recognizePlant(file: File) {
-        Log.i("CameraFragment", "Running plant recognition on: ${file.name}")
-        // TODO: Gọi model nhận diện cây
-    }
-
-    private fun createOutputDirectory(): File {
-        val appContext = requireContext().applicationContext
-        val mediaDir = appContext.getExternalFilesDir(null)?.let {
-            File(it, "LeafyApp").apply { mkdirs() }
         }
-        return if (mediaDir != null && mediaDir.exists())
-            mediaDir else appContext.filesDir
+    }
+
+
+    private fun getRealPathFromURI(uri: Uri): String? {
+        val cursor = requireContext().contentResolver.query(uri, null, null, null, null) ?: return null
+        cursor.moveToFirst()
+        val index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA)
+        val path = cursor.getString(index)
+        cursor.close()
+        return path
+    }
+
+    private fun navigateToLoading(path: String) {
+        val intent = Intent(requireContext(), LoadingActivity::class.java)
+        intent.putExtra("PHOTO_PATH", path)
+        intent.putExtra("SCAN_MODE", currentMode)
+        startActivity(intent)
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(
-            requireContext(), it
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                viewFinder.post { startCamera() }
-            } else {
-                Log.e("CameraFragment", "❌ Permissions not granted by the user.")
-            }
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val btnClose = view.findViewById<ImageButton>(R.id.btnClose)
-        btnClose.setOnClickListener {
-            findNavController().popBackStack()
-        }
+        ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
 }
