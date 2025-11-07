@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    kotlin("kapt")
 }
 
 android {
@@ -15,6 +16,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ✅ Bao gồm thư viện .so cần thiết cho MediaPipe
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+    }
+
+    // ✅ Đảm bảo APK không bỏ thư viện .so khi optimize/packaging
+    packaging {
+        jniLibs {
+            keepDebugSymbols += setOf("**/*.so")
+        }
     }
 
     buildTypes {
@@ -26,13 +39,16 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         viewBinding = true
     }
@@ -59,4 +75,18 @@ dependencies {
     implementation(libs.androidx.camera.extensions)
 
     implementation("androidx.gridlayout:gridlayout:1.0.0")
+    implementation(libs.glide.core)
+    kapt(libs.glide.compiler)
+
+    // ✅ Thư viện bắt buộc để chạy mô hình TensorFlow Lite + MediaPipe
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
+
+    // Coroutines
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+
+
 }

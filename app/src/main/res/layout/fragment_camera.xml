@@ -30,18 +30,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Nút refresh - góc phải trên -->
+    <!-- Nút switch camera - góc phải trên -->
     <ImageButton
-        android:id="@+id/btnRefresh"
+        android:id="@+id/btnSwitchCamera"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/btn_refresh_bg"
-        android:contentDescription="Refresh"
-        android:src="@drawable/ic_refresh"
+        android:contentDescription="Switch Camera"
+        android:src="@drawable/ic_switch_camera"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <!-- Khung viewfinder với các góc bo tròn -->
     <View
