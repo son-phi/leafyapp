@@ -12,24 +12,41 @@ class DiseaseFragment : Fragment() {
     private var _binding: FragmentDiseaseBinding? = null
     private val binding get() = _binding!!
 
+    private var diseaseId: Int = -1
+    private var diseaseLabel: String = "Unknown"
+    private var diseaseConfidence: Float = 0f
+
     companion object {
-        fun newInstance(result: String): DiseaseFragment {
+        fun newInstance(id: Int, label: String, confidence: Float): DiseaseFragment {
             val fragment = DiseaseFragment()
             val bundle = Bundle()
-            bundle.putString("RESULT", result)
+            bundle.putInt("ID", id)
+            bundle.putString("LABEL", label)
+            bundle.putFloat("CONFIDENCE", confidence)
             fragment.arguments = bundle
             return fragment
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentDiseaseBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val result = arguments?.getString("RESULT") ?: "Unknown"
-        binding.tvDiseaseResult.text = result
+
+        arguments?.let { bundle ->
+            diseaseId = bundle.getInt("ID", -1)
+            diseaseLabel = bundle.getString("LABEL") ?: "Unknown"
+            diseaseConfidence = bundle.getFloat("CONFIDENCE", 0f)
+        }
+
+        binding.tvDiseaseResult.text =
+            "ID: $diseaseId\nDisease: $diseaseLabel\nConfidence: ${(diseaseConfidence * 100).toInt()}%"
     }
 
     override fun onDestroyView() {
