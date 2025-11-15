@@ -17,7 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Nút đóng (X) - góc trái trên -->
+    <!-- Close button -->
     <ImageButton
         android:id="@+id/btnClose"
         android:layout_width="50dp"
@@ -25,99 +25,101 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/btn_close_bg"
-        android:contentDescription="Close"
         android:src="@drawable/ic_close"
+        android:contentDescription="Close"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Nút switch camera - góc phải trên -->
+    <!-- Switch camera -->
     <ImageButton
         android:id="@+id/btnSwitchCamera"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/btn_refresh_bg"
-        android:contentDescription="Switch Camera"
         android:src="@drawable/ic_switch_camera"
+        android:contentDescription="Switch Camera"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
-    <!-- Khung viewfinder với các góc bo tròn -->
+    <!-- Viewfinder Frame -->
     <View
         android:id="@+id/viewfinderFrame"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/viewfinder_frame"
-        app:layout_constraintBottom_toTopOf="@+id/modeContainer"
-        app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.4"
-        app:layout_constraintWidth_percent="0.8" />
-    <!-- Container cho 2 nút mode -->
-    <LinearLayout
-        android:id="@+id/modeContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="60dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnCapture"
+        app:layout_constraintVertical_bias="0.40"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/modeSwitchContainer"
+        app:layout_constraintWidth_percent="0.80"
+        app:layout_constraintDimensionRatio="1:1" />
 
-        <!-- Nút Disease -->
-        <LinearLayout
-            android:id="@+id/btnDiseaseMode"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="12dp"
-            android:background="@drawable/btn_disease_bg"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:layout_marginEnd="8dp"
-            android:clickable="true"
-            android:focusable="true">
-            <TextView
-                android:id="@+id/tvDiseaseMode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🌿 Disease"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+    <!-- Mode switch container -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/modeSwitchContainer"
+        android:layout_width="280dp"
+        android:layout_height="55dp"
+        android:padding="4dp"
+        android:background="@drawable/mode_switch_bg"
+        app:layout_constraintBottom_toTopOf="@id/btnCapture"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="40dp">
 
-        <!-- Nút Plant -->
-        <LinearLayout
-            android:id="@+id/btnPlantMode"
-            android:layout_width="150dp"
+        <!-- Moving Selector Layer -->
+        <View
+            android:id="@+id/selectorView"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/btn_plant_bg"
-            android:clickable="true"
-            android:focusable="true"
+            android:paddingStart="4dp"
+            android:paddingEnd="0dp"
+            android:background="@drawable/mode_selector_bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintWidth_percent="0.5" />
+
+
+
+        <!-- Disease Button -->
+        <TextView
+            android:id="@+id/tvDisease"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="12dp">
+            android:text="Disease"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/tvPlant"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
-            <TextView
-                android:id="@+id/tvPlantMode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🪴 Plant"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+        <!-- Plant Button -->
+        <TextView
+            android:id="@+id/tvPlant"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Plant"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            app:layout_constraintStart_toEndOf="@id/tvDisease"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Icon thư viện ảnh - góc trái dưới -->
+
+
+
+    <!-- Gallery button -->
     <ImageButton
         android:id="@+id/btnGallery"
         android:layout_width="60dp"
@@ -125,13 +127,12 @@
         android:layout_marginStart="30dp"
         android:layout_marginBottom="40dp"
         android:background="@drawable/btn_gallery_bg"
-        android:contentDescription="Gallery"
-        android:scaleType="centerCrop"
         android:src="@drawable/ic_gallery_placeholder"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:contentDescription="Gallery"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Nút chụp ảnh ở giữa -->
+    <!-- Capture button -->
     <ImageButton
         android:id="@+id/btnCapture"
         android:layout_width="90dp"
@@ -139,11 +140,11 @@
         android:layout_marginBottom="30dp"
         android:background="@drawable/btn_capture"
         android:contentDescription="Capture"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Nút info - góc phải dưới -->
+    <!-- Info button -->
     <ImageButton
         android:id="@+id/btnInfo"
         android:layout_width="60dp"
@@ -151,9 +152,9 @@
         android:layout_marginEnd="30dp"
         android:layout_marginBottom="40dp"
         android:background="@drawable/btn_info_bg"
-        android:contentDescription="Info"
         android:src="@drawable/ic_info"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:contentDescription="Info"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_profile
             )
         )
-        setupActionBarWithNavController(navController, appBarConfiguration)
+        //setupActionBarWithNavController(navController, appBarConfiguration)
         binding.navView.setupWithNavController(navController)
 
         navController.addOnDestinationChangedListener { _, dest, _ ->

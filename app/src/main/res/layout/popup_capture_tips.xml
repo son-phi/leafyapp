@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/popup_background"
+    android:orientation="vertical"
+    android:padding="22dp">
+
+    <!-- Tiêu đề -->
+    <TextView
+        android:id="@+id/tvPopupTitle"
+        android:text="Hướng dẫn cách chụp"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:textColor="#000"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="14dp"/>
+
+    <!-- ScrollView nội dung -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="300dp">
+
+        <TextView
+            android:id="@+id/tvPopupContent"
+            android:textSize="16sp"
+            android:textColor="#333"
+            android:lineSpacingExtra="4dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Chụp nhận diện cây: Chụp cả cây, đủ sáng.\n\n• Chụp nhận diện bệnh: Chụp rõ vùng lá bị bệnh.\n\n• Tránh ánh sáng quá mạnh hoặc quá tối.\n\n• Giữ máy ổn định khi chụp để AI nhận diện chính xác hơn." />
+    </ScrollView>
+
+</LinearLayout>
