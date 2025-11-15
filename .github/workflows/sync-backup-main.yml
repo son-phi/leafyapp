@@ -1,4 +1,4 @@
-name: sync-backup-dev.yml
+name: sync-backup-main.yml
 on:
   push:
     branches:
