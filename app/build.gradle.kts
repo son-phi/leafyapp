@@ -98,6 +98,10 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+    implementation ("com.github.bumptech.glide:annotations:4.16.0")
+    kapt ("com.github.bumptech.glide:compiler:4.16.0")
 
-
+// ⭐ transform bo góc & hiệu ứng
+    implementation ("jp.wasabeef:glide-transformations:4.3.0")
 }

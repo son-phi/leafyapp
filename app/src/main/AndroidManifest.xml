@@ -4,9 +4,7 @@
 
     <!-- Quyền dùng camera -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- Nếu bạn dùng camera preview qua Internet thì cần thêm -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Cho phép hiển thị camera trước -->
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
@@ -19,27 +17,36 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true"
-
-
         android:theme="@style/Theme.LeafyApp">
 
+        <!-- MAIN ACTIVITY -->
         <activity
             android:name=".MainActivity"
-
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="" >
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
-        <activity android:name=".ui.camera.LoadingActivity" />
-        <activity android:name=".ui.information.ResultActivity" />
+
+        <!-- HIDE BAR 100% -->
+        <activity
+            android:name=".ui.camera.LoadingActivity"
+            android:label=""
+            android:exported="false"/>
+
+        <activity
+            android:name=".ui.information.ResultActivity"
+            android:label=""
+            android:exported="false"/>
 
     </application>
+
 </manifest>
