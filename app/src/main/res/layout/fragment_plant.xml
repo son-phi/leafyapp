@@ -1,18 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
 
-    <TextView
-        android:id="@+id/tvPlantResult"
-        android:text="Plant Result"
-        android:textSize="22sp"
-        android:textColor="@android:color/black"
-        android:gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <!-- ẢNH CÂY -->
+    <ImageView
+        android:id="@+id/imgPlant"
+        android:layout_width="match_parent"
+        android:layout_height="380dp"
+        android:scaleType="centerCrop"
+        android:background="#DDDDDD" />
 
-</LinearLayout>
+    <!-- NÚT ĐÓNG -->
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_margin="16dp"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        app:tint="#FFFFFF"
+        android:layout_gravity="top|end" />
+
+    <!-- BOTTOM SHEET -->
+    <LinearLayout
+        android:id="@+id/bottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="@android:color/white"
+        android:elevation="12dp"
+        android:clipToPadding="false"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        app:behavior_peekHeight="320dp"
+        app:behavior_hideable="false">
+
+        <!-- Thanh kéo -->
+        <View
+            android:layout_width="60dp"
+            android:layout_height="6dp"
+            android:background="@drawable/drag_handle"
+            android:layout_gravity="center"
+            android:layout_marginBottom="16dp"
+            android:alpha="0.3" />
+
+        <!-- TIÊU ĐỀ -->
+        <TextView
+            android:id="@+id/tvPlantTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="THÔNG TIN CÂY"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:paddingBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvPlantName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên cây"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/tvScientificName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Scientific name"
+            android:textColor="#777777"
+            android:textStyle="italic"
+            android:paddingBottom="12dp"/>
+
+        <!-- MÔ TẢ -->
+        <TextView
+            android:id="@+id/tvDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textColor="#333333"
+            android:lineSpacingExtra="6dp" />
+
+        <!-- THÔNG SỐ KHÁC -->
+        <TextView
+            android:id="@+id/tvLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvWater"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvSoil"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvFertilizer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvTemp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tvHumidity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:textSize="16sp"
+            android:paddingBottom="50dp"/>
+
+        <!-- NÚT ADD -->
+        <Button
+            android:id="@+id/btnAddPlant"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thêm vào vườn"
+            android:textAllCaps="false"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:padding="14dp"
+            android:layout_marginBottom="24dp"/>
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
