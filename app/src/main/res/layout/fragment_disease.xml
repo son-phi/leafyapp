@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:gravity="center"
+    android:gravity="center_horizontal"
     android:padding="24dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -12,7 +12,17 @@
         android:textSize="22sp"
         android:textColor="@android:color/black"
         android:gravity="center"
+        android:paddingBottom="16dp"
         android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tvDiseaseDetails"
+        android:text="Loading disease details..."
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray"
+        android:gravity="start"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
 </LinearLayout>

@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.coordinatorlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -104,4 +105,8 @@ dependencies {
 
 // ⭐ transform bo góc & hiệu ứng
     implementation ("jp.wasabeef:glide-transformations:4.3.0")
+    implementation("io.coil-kt:coil:2.6.0")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+// hoặc version gần nhất m đang dùng
 }
