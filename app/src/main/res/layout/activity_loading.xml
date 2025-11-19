@@ -6,20 +6,25 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- IMAGE PREVIEW -->
-    <ImageView
-        android:id="@+id/imageViewScan"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardImageContainer"
         android:layout_width="300dp"
         android:layout_height="380dp"
         android:layout_marginTop="70dp"
-        android:scaleType="centerCrop"
-        android:background="@drawable/rounded_image"
-        android:clipToOutline="true"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@android:color/black"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- TITLE -->
+        <ImageView
+            android:id="@+id/imageViewScan"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+    </androidx.cardview.widget.CardView>
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
@@ -29,11 +34,9 @@
         android:textColor="@android:color/white"
         android:textStyle="bold"
         android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/imageViewScan"
+        app:layout_constraintTop_toBottomOf="@id/cardImageContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- SUBTITLE -->
     <TextView
         android:id="@+id/tvSubtitle"
         android:layout_width="wrap_content"
@@ -46,7 +49,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- LOADING STEPS -->
     <LinearLayout
         android:id="@+id/stepContainer"
         android:layout_width="wrap_content"
@@ -57,7 +59,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- STEP 1 -->
         <LinearLayout
             android:orientation="horizontal"
             android:gravity="center_vertical"
@@ -80,7 +81,6 @@
                 android:src="@drawable/ic_check"
                 android:visibility="gone"
                 app:tint="@color/lime_green"/>
-
             <TextView
                 android:id="@+id/tvAnalyzing"
                 android:layout_width="wrap_content"
@@ -91,7 +91,6 @@
                 android:layout_marginStart="10dp"/>
         </LinearLayout>
 
-        <!-- STEP 2 -->
         <LinearLayout
             android:orientation="horizontal"
             android:gravity="center_vertical"
@@ -125,7 +124,6 @@
                 android:layout_marginStart="10dp"/>
         </LinearLayout>
 
-        <!-- STEP 3 -->
         <LinearLayout
             android:orientation="horizontal"
             android:gravity="center_vertical"

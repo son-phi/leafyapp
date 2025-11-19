@@ -1,147 +1,158 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <!-- ẢNH CÂY -->
     <ImageView
         android:id="@+id/imgPlant"
         android:layout_width="match_parent"
-        android:layout_height="380dp"
+        android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:background="#DDDDDD" />
+        android:background="#DDDDDD"
 
-    <!-- NÚT ĐÓNG -->
+        android:layout_marginBottom="250dp"
+        android:layout_marginTop="0dp" />
     <ImageButton
         android:id="@+id/btnClose"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
-        android:layout_margin="16dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="20dp"
         android:background="@android:color/transparent"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         app:tint="#FFFFFF"
-        android:layout_gravity="top|end" />
+        android:layout_gravity="top|end"
+        android:elevation="12dp"
+        android:contentDescription="Close" />
 
-    <!-- BOTTOM SHEET -->
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/bottomSheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:background="@android:color/white"
-        android:elevation="12dp"
-        android:clipToPadding="false"
+        android:background="@drawable/bg_bottom_sheet_rounded"
+        android:elevation="16dp"
+        android:fillViewport="true"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-        app:behavior_peekHeight="320dp"
+
+        app:behavior_peekHeight="360dp"
         app:behavior_hideable="false">
-
-        <!-- Thanh kéo -->
-        <View
-            android:layout_width="60dp"
-            android:layout_height="6dp"
-            android:background="@drawable/drag_handle"
-            android:layout_gravity="center"
-            android:layout_marginBottom="16dp"
-            android:alpha="0.3" />
-
-        <!-- TIÊU ĐỀ -->
-        <TextView
-            android:id="@+id/tvPlantTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="THÔNG TIN CÂY"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:paddingBottom="8dp"/>
-
-        <TextView
-            android:id="@+id/tvPlantName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tên cây"
-            android:textSize="19sp"
-            android:textStyle="bold"
-            android:textColor="#000000"/>
-
-        <TextView
-            android:id="@+id/tvScientificName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Scientific name"
-            android:textColor="#777777"
-            android:textStyle="italic"
-            android:paddingBottom="12dp"/>
-
-        <!-- MÔ TẢ -->
-        <TextView
-            android:id="@+id/tvDescription"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textColor="#333333"
-            android:lineSpacingExtra="6dp" />
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <!-- THÔNG SỐ KHÁC -->
-        <TextView
-            android:id="@+id/tvLight"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:textSize="16sp" />
+            <View
+                android:layout_width="60dp"
+                android:layout_height="6dp"
+                android:background="@drawable/drag_handle"
+                android:layout_gravity="center"
+                android:layout_marginBottom="20dp"
+                android:alpha="0.4" />
 
-        <TextView
-            android:id="@+id/tvWater"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tvPlantTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="THÔNG TIN CÂY"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:paddingBottom="8dp"/>
 
-        <TextView
-            android:id="@+id/tvSoil"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tvPlantName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tên cây mẫu"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:textColor="#000000"/>
 
-        <TextView
-            android:id="@+id/tvFertilizer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tvScientificName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scientific name"
+                android:textColor="#777777"
+                android:textStyle="italic"
+                android:paddingBottom="12dp"/>
 
-        <TextView
-            android:id="@+id/tvTemp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tvDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mô tả rất dài... \n\nViết thử dòng dài để test scroll xem có bị mất chữ không nhé."
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:lineSpacingExtra="6dp" />
 
-        <TextView
-            android:id="@+id/tvHumidity"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="10dp"
-            android:textSize="16sp"
-            android:paddingBottom="50dp"/>
+            <TextView
+                android:id="@+id/tvLight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ánh sáng: ..."
+                android:paddingTop="12dp"
+                android:textSize="16sp" />
 
-        <!-- NÚT ADD -->
-        <Button
-            android:id="@+id/btnAddPlant"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Thêm vào vườn"
-            android:textAllCaps="false"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF"
-            android:padding="14dp"
-            android:layout_marginBottom="24dp"/>
+            <TextView
+                android:id="@+id/tvWater"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nước: ..."
+                android:paddingTop="10dp"
+                android:textSize="16sp" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvSoil"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đất: ..."
+                android:paddingTop="10dp"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvFertilizer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phân bón: ..."
+                android:paddingTop="10dp"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvTemp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nhiệt độ: ..."
+                android:paddingTop="10dp"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvHumidity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Độ ẩm: ..."
+                android:paddingTop="10dp"
+                android:paddingBottom="20dp"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/btnAddPlant"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Thêm vào vườn"
+                android:textAllCaps="false"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"
+                android:padding="14dp"
+                android:layout_marginBottom="40dp"/>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

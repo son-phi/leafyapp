@@ -4,7 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -15,7 +15,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -24,7 +23,6 @@ import com.example.leafyapp.R
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import android.view.animation.TranslateAnimation
 
 class CameraFragment : Fragment() {
 
@@ -37,6 +35,7 @@ class CameraFragment : Fragment() {
     private lateinit var btnGallery: ImageButton
     private lateinit var btnInfo: ImageButton
 
+    // Mặc định ban đầu là Disease
     private var currentMode = "Disease"
 
     private var imageCapture: ImageCapture? = null
@@ -68,8 +67,15 @@ class CameraFragment : Fragment() {
         bindViews(v)
         setupClicks()
 
+        // Set trạng thái màu sắc ban đầu (Disease được chọn)
+        updateModeUI(isDisease = true, animate = false)
+
         if (allPermissionsGranted()) startCamera()
-        else ActivityCompat.requestPermissions(requireActivity(), REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        else ActivityCompat.requestPermissions(
+            requireActivity(),
+            REQUIRED_PERMISSIONS,
+            REQUEST_CODE_PERMISSIONS
+        )
 
         return v
     }
@@ -97,63 +103,60 @@ class CameraFragment : Fragment() {
     }
 
     private fun setupClicks() {
+        // Bấm vào chữ Disease
+        tvDisease.setOnClickListener {
+            if (currentMode != "Disease") {
+                currentMode = "Disease"
+                updateModeUI(isDisease = true, animate = true)
+            }
+        }
 
-        // Switch mode
-        tvDisease.setOnClickListener { switchToDisease() }
-        tvPlant.setOnClickListener { switchToPlant() }
+        // Bấm vào chữ Plant
+        tvPlant.setOnClickListener {
+            if (currentMode != "Plant") {
+                currentMode = "Plant"
+                updateModeUI(isDisease = false, animate = true)
+            }
+        }
 
-        // Switch camera
         btnSwitchCamera.setOnClickListener { switchCamera() }
-
-        // Open gallery
         btnGallery.setOnClickListener { openGallery() }
-
-        // Popup
         btnInfo.setOnClickListener {
             CaptureTipsDialog().show(parentFragmentManager, "CaptureTipsDialog")
         }
     }
 
     // ---------------------------
-    //   MODE SWITCH + ANIMATION
+    //   LOGIC ĐỔI MÀU & ANIMATION
     // ---------------------------
 
-    private fun switchToDisease() {
-        if (currentMode == "Disease") return
-        currentMode = "Disease"
-        animateSelector(toRight = false)   // chạy về trái
-    }
+    private fun updateModeUI(isDisease: Boolean, animate: Boolean) {
+        // 1. Tính toán vị trí dịch chuyển (TranslationX)
+        // Nếu Disease (trái) -> x = 0
+        // Nếu Plant (phải) -> x = chiều rộng của tvDisease (để nhảy sang ô bên cạnh)
+        val targetX = if (isDisease) 0f else tvDisease.width.toFloat()
 
-    private fun switchToPlant() {
-        if (currentMode == "Plant") return
-        currentMode = "Plant"
-        animateSelector(toRight = true)    // chạy sang phải
-    }
-
-    private fun animateSelector(toRight: Boolean) {
-
-        // Padding đúng hướng — ngoài 4dp, giữa = 0dp
-        if (toRight) {
-            // Sang PLANT -> padding bên phải
-            selectorView.setPadding(0, 0, 4, 0)
+        // 2. Animation cục trắng
+        if (animate) {
+            selectorView.animate()
+                .translationX(targetX)
+                .setDuration(200) // Tốc độ 200ms
+                .start()
         } else {
-            // Sang DISEASE -> padding bên trái
-            selectorView.setPadding(4, 0, 0, 0)
+            selectorView.translationX = targetX
         }
 
-        val parent = selectorView.parent as ConstraintLayout
-        val halfWidth = parent.width / 2f
-
-        val fromX = if (toRight) 0f else halfWidth
-        val toX   = if (toRight) halfWidth else 0f
-
-        val anim = TranslateAnimation(fromX, toX, 0f, 0f)
-        anim.duration = 220
-        anim.fillAfter = true
-
-        selectorView.startAnimation(anim)
+        // 3. Đổi màu chữ (Quan trọng: Tương phản với nền)
+        if (isDisease) {
+            // Chọn Disease: Disease Đen (nền trắng), Plant Trắng (nền đen)
+            tvDisease.setTextColor(Color.BLACK)
+            tvPlant.setTextColor(Color.WHITE)
+        } else {
+            // Chọn Plant: Disease Trắng (nền đen), Plant Đen (nền trắng)
+            tvDisease.setTextColor(Color.WHITE)
+            tvPlant.setTextColor(Color.BLACK)
+        }
     }
-
 
     // ---------------------------
     //   CAMERA FUNCTIONS
@@ -171,8 +174,12 @@ class CameraFragment : Fragment() {
 
             imageCapture = ImageCapture.Builder().build()
 
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+            } catch (e: Exception) {
+                Log.e("CameraFragment", "Use case binding failed", e)
+            }
 
         }, ContextCompat.getMainExecutor(requireContext()))
     }
@@ -199,6 +206,7 @@ class CameraFragment : Fragment() {
             ContextCompat.getMainExecutor(requireContext()),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    // Chụp xong chuyển sang LoadingActivity
                     openLoadingActivity(file.absolutePath)
                 }
 
@@ -217,7 +225,7 @@ class CameraFragment : Fragment() {
     private fun openLoadingActivity(path: String) {
         val intent = Intent(requireContext(), LoadingActivity::class.java)
         intent.putExtra("PHOTO_PATH", path)
-        intent.putExtra("SCAN_MODE", currentMode)
+        intent.putExtra("SCAN_MODE", currentMode) // Truyền mode (Disease/Plant) sang màn hình sau
         startActivity(intent)
     }
 
