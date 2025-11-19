@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    private const val BASE_URL = "http://10.1.0.52:8000/"
+    private const val BASE_URL = "http://192.168.1.7:8000/"
 
     // Tạo logging cho debug API
     private val logging = HttpLoggingInterceptor().apply {

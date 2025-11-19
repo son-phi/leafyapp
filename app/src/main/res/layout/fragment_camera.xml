@@ -5,9 +5,8 @@
     android:id="@+id/cameraLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000">
+    android:background="#000000">
 
-    <!-- Camera preview -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
@@ -17,144 +16,138 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Close button -->
-    <ImageButton
-        android:id="@+id/btnClose"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/btn_close_bg"
-        android:src="@drawable/ic_close"
-        android:contentDescription="Close"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Switch camera -->
-    <ImageButton
-        android:id="@+id/btnSwitchCamera"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/btn_refresh_bg"
-        android:src="@drawable/ic_switch_camera"
-        android:contentDescription="Switch Camera"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Viewfinder Frame -->
-    <View
+    <ImageView
         android:id="@+id/viewfinderFrame"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/viewfinder_frame"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.40"
+        android:src="@drawable/ic_qr_focus"
+        android:scaleType="fitXY"
+
+        app:layout_constraintDimensionRatio="3:4"
+        app:layout_constraintWidth_percent="1"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/modeSwitchContainer"
-        app:layout_constraintWidth_percent="0.80"
-        app:layout_constraintDimensionRatio="1:1" />
 
-    <!-- Mode switch container -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+        app:layout_constraintVertical_bias="0.65" />
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/btn_close_bg"
+        android:src="@drawable/ic_close"
+        android:contentDescription="Close"
+        android:elevation="5dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnSwitchCamera"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/btn_refresh_bg"
+        android:src="@drawable/ic_switch_camera"
+        android:contentDescription="Switch Camera"
+        android:elevation="5dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.cardview.widget.CardView
         android:id="@+id/modeSwitchContainer"
         android:layout_width="280dp"
-        android:layout_height="55dp"
-        android:padding="4dp"
-        android:background="@drawable/mode_switch_bg"
-        app:layout_constraintBottom_toTopOf="@id/btnCapture"
+        android:layout_height="50dp"
+        android:layout_marginBottom="30dp"
+        app:cardCornerRadius="25dp"
+        app:cardBackgroundColor="#99000000"
+        app:cardElevation="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="40dp">
+        app:layout_constraintBottom_toTopOf="@id/btnCapture">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <!-- Moving Selector Layer -->
-        <View
-            android:id="@+id/selectorView"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:paddingStart="4dp"
-            android:paddingEnd="0dp"
-            android:background="@drawable/mode_selector_bg"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintWidth_percent="0.5" />
+            <View
+                android:id="@+id/selectorView"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_white_rounded"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintWidth_percent="0.5" />
 
+            <TextView
+                android:id="@+id/tvDisease"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Disease"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:elevation="2dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/tvPlant"
+                app:layout_constraintWidth_percent="0.5"/>
 
+            <TextView
+                android:id="@+id/tvPlant"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="Plant"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:elevation="2dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/tvDisease"
+                app:layout_constraintWidth_percent="0.5"/>
 
-        <!-- Disease Button -->
-        <TextView
-            android:id="@+id/tvDisease"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="Disease"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/tvPlant"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
 
-        <!-- Plant Button -->
-        <TextView
-            android:id="@+id/tvPlant"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="Plant"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            app:layout_constraintStart_toEndOf="@id/tvDisease"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+    <ImageButton
+        android:id="@+id/btnCapture"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/btn_capture"
+        android:contentDescription="Capture"
+        android:elevation="5dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
-
-    <!-- Gallery button -->
     <ImageButton
         android:id="@+id/btnGallery"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="30dp"
-        android:layout_marginBottom="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="40dp"
         android:background="@drawable/btn_gallery_bg"
         android:src="@drawable/ic_gallery_placeholder"
         android:contentDescription="Gallery"
+        android:elevation="5dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <!-- Capture button -->
-    <ImageButton
-        android:id="@+id/btnCapture"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        android:layout_marginBottom="30dp"
-        android:background="@drawable/btn_capture"
-        android:contentDescription="Capture"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <!-- Info button -->
+        app:layout_constraintTop_toTopOf="@id/btnCapture"
+        app:layout_constraintBottom_toBottomOf="@id/btnCapture" />
     <ImageButton
         android:id="@+id/btnInfo"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginEnd="30dp"
-        android:layout_marginBottom="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="40dp"
         android:background="@drawable/btn_info_bg"
         android:src="@drawable/ic_info"
         android:contentDescription="Info"
+        android:elevation="5dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/btnCapture"
+        app:layout_constraintBottom_toBottomOf="@id/btnCapture" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
