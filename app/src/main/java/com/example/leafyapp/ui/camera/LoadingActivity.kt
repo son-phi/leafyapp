@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.leafyapp.R
 import com.example.leafyapp.api.ApiClient
 import com.example.leafyapp.api.PredictionResponse
@@ -24,8 +25,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 
 class LoadingActivity : AppCompatActivity() {
 
@@ -65,6 +64,7 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun hideStatusBar() {
+        @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
         window.statusBarColor = Color.BLACK
     }
@@ -87,10 +87,9 @@ class LoadingActivity : AppCompatActivity() {
 
     private fun applyAnimations() {
         val fade = AnimationUtils.loadAnimation(this, R.anim.fade_in)
-        val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
         val pulse = AnimationUtils.loadAnimation(this, R.anim.pulse)
 
-        imageView.startAnimation(fade)
+        // Không animate imageView nữa để tránh xung đột với Glide load
         tvAnalyzing.startAnimation(fade)
         tvDetecting.startAnimation(fade)
         tvIdentifying.startAnimation(fade)
@@ -101,27 +100,27 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun loadImage(photoPath: String) {
-
         val finalFile = if (photoPath.startsWith("content://")) {
-            // Convert URI → File tạm
-            val inputStream = contentResolver.openInputStream(Uri.parse(photoPath))
-            val temp = File(cacheDir, "preview_${System.currentTimeMillis()}.jpg")
-            temp.outputStream().use { out -> inputStream?.copyTo(out) }
-            temp
+            try {
+                val inputStream = contentResolver.openInputStream(Uri.parse(photoPath))
+                val temp = File(cacheDir, "preview_${System.currentTimeMillis()}.jpg")
+                temp.outputStream().use { out -> inputStream?.copyTo(out) }
+                temp
+            } catch (e: Exception) {
+                Log.e("LoadingActivity", "Error loading content URI", e)
+                null
+            }
         } else File(photoPath)
 
-        Glide.with(this)
-            .load(finalFile)
-            .centerCrop()
-            .transform(RoundedCorners(40))
-            .transition(DrawableTransitionOptions.withCrossFade())
-            .into(imageView)
+        if (finalFile != null) {
+            Glide.with(this)
+                .load(finalFile)
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .into(imageView)
+        }
     }
 
-
-
     private fun startRecognition(photoPath: String, mode: String) {
-
         updateStep(0, false)
         updateStep(1, false)
         updateStep(2, false)
@@ -130,18 +129,23 @@ class LoadingActivity : AppCompatActivity() {
             var result: PredictionResponse? = null
 
             try {
-                updateStep(0, true)
+                updateStep(0, true) // Xong bước 1: Phân tích ảnh
+
+                // Giả lập delay 1 chút để người dùng kịp nhìn thấy hiệu ứng (tùy chọn)
+                // kotlinx.coroutines.delay(500)
 
                 result = runRecognition(photoPath, mode)
 
-                updateStep(1, true)
-                updateStep(2, true)
+                updateStep(1, true) // Xong bước 2: Nhận diện vùng
+                updateStep(2, true) // Xong bước 3: Có kết quả
 
             } catch (e: Exception) {
                 Log.e("LoadingActivity", "API ERROR", e)
+                // Nếu lỗi vẫn cho hiện check bước cuối để chuyển màn hình (hoặc xử lý lỗi riêng)
                 updateStep(2, true)
             }
 
+            // Chuyển màn hình
             navigateToResultScreen(result, mode)
         }
     }
@@ -156,6 +160,9 @@ class LoadingActivity : AppCompatActivity() {
                 tmp.outputStream().use { out -> inputStream.copyTo(out) }
                 tmp
             } else File(imagePath)
+
+            // Nén ảnh nếu cần thiết tại đây (để upload nhanh hơn)
+            // ...
 
             val req = file.asRequestBody("image/*".toMediaTypeOrNull())
             val multipart = MultipartBody.Part.createFormData("file", file.name, req)
@@ -178,7 +185,8 @@ class LoadingActivity : AppCompatActivity() {
             val fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in)
             checkList[index].startAnimation(fadeIn)
 
-            textList[index].setTextColor(Color.parseColor("#FFC107"))
+            // Đổi màu chữ thành Xanh lá cho khớp với icon Check
+            textList[index].setTextColor(Color.parseColor("#4CAF50"))
         } else {
             loadingList[index].visibility = View.VISIBLE
             checkList[index].visibility = View.GONE
@@ -187,14 +195,24 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun navigateToResultScreen(result: PredictionResponse?, mode: String) {
-        if (result == null) return
+        // Delay nhỏ để người dùng thấy được bước 3 hoàn thành
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
 
-        val intent = Intent(this, ResultActivity::class.java)
-        intent.putExtra("RESULT_ID", result.id)
-        intent.putExtra("RESULT_LABEL", result.label)
-        intent.putExtra("RESULT_CONF", result.confidence)
-        intent.putExtra("RESULT_MODE", mode)
-        startActivity(intent)
-        finish()
+            if (result == null) {
+                // Xử lý khi lỗi (ví dụ Toast hoặc về màn hình trước)
+                finish()
+                return@postDelayed
+            }
+
+            val intent = Intent(this, ResultActivity::class.java)
+            // Truyền ID + 1 vì Database của bạn thường bắt đầu từ 1, AI trả về index từ 0 (hoặc giữ nguyên tùy logic server)
+            intent.putExtra("RESULT_ID", result.id)
+            intent.putExtra("RESULT_LABEL", result.label)
+            intent.putExtra("RESULT_CONF", result.confidence)
+            intent.putExtra("RESULT_MODE", mode)
+            startActivity(intent)
+            finish()
+
+        }, 500) // Delay 500ms
     }
 }

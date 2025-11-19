@@ -108,5 +108,6 @@ dependencies {
     implementation("io.coil-kt:coil:2.6.0")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+    implementation("com.airbnb.android:lottie:6.3.0")
 // hoặc version gần nhất m đang dùng
 }
