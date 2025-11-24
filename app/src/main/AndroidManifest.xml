@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- QUYỀN MỚI CHO NOTIFICATION (THÊM VÀO ĐÂY) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -37,12 +41,10 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="" >
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
         <!-- HIDE BAR 100% -->
@@ -55,6 +57,9 @@
             android:name=".ui.information.ResultActivity"
             android:label=""
             android:exported="false"/>
+
+        <!-- ĐĂNG KÝ RECEIVER Ở ĐÂY (QUAN TRỌNG) -->
+        <receiver android:name=".ui.notifications.AlarmReceiver" />
 
     </application>
 
