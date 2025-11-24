@@ -98,6 +98,10 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:descendantFocusability="blocksDescendants"
             app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:cardCornerRadius="28dp"
             app:strokeWidth="0dp">
@@ -108,7 +112,9 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
-                android:paddingEnd="12dp">
+                android:paddingEnd="12dp"
+                android:clickable="false"
+                android:focusable="false">
 
                 <ImageView
                     android:id="@+id/iv_search"
@@ -118,36 +124,63 @@
                     android:contentDescription="@string/search_placeholder_home"
                     app:tint="?attr/colorOnSurfaceVariant" />
 
-                <EditText
-                    android:id="@+id/et_search"
+<!--                <EditText-->
+<!--                    android:id="@+id/et_search"-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="match_parent"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:background="@android:color/transparent"-->
+<!--                    android:hint="@string/search_placeholder_home"-->
+<!--                    android:imeOptions="actionSearch"-->
+<!--                    android:inputType="text"-->
+<!--                    android:maxLines="1"-->
+<!--                    android:paddingStart="8dp"-->
+<!--                    android:paddingEnd="8dp"-->
+<!--                    android:textSize="16sp"-->
+<!--                    android:textColorHint="?attr/colorOnSurfaceVariant"-->
+<!--                    android:includeFontPadding="false"-->
+
+<!--                    android:focusable="false"-->
+<!--                    android:focusableInTouchMode="false"-->
+<!--                    android:cursorVisible="false"-->
+<!--                    android:longClickable="false"-->
+<!--                    android:clickable="false"-->
+<!--                    android:importantForAutofill="no" />-->
+                <TextView
+                    android:id="@+id/tv_search_hint"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:hint="@string/search_placeholder_home"
-                    android:imeOptions="actionSearch"
-                    android:inputType="text"
-                    android:maxLines="1"
+                    android:gravity="center_vertical"
                     android:paddingStart="8dp"
                     android:paddingEnd="8dp"
+                    android:text="@string/search_placeholder_home"
                     android:textSize="16sp"
-                    android:textColorHint="?attr/colorOnSurfaceVariant"
-                    android:includeFontPadding="false"/>
+                    android:textColorHint="?attr/colorOnSurfaceVariant" />
 
-                <!-- Nút xóa (tuỳ chọn) -->
-                <ImageButton
-                    android:id="@+id/btn_clear"
-                    style="?attr/borderlessButtonStyle"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:src="@drawable/ic_close"
-                    android:contentDescription="@string/clear_text"
-                    android:visibility="gone"
-                    app:tint="?attr/colorOnSurfaceVariant" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_search_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            android:overScrollMode="never"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"/>
 
+        <!-- "No results" simple TextView (ẩn) -->
+        <TextView
+            android:id="@+id/tv_no_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/no_results"
+            android:visibility="gone"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
 
 
