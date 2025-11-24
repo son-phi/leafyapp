@@ -19,10 +19,12 @@ import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 
 import android.Manifest
+import android.content.Intent
 import android.location.Geocoder
 import android.location.Location
 import android.util.Log
 import androidx.fragment.app.viewModels
+import com.example.leafyapp.ui.search.SearchActivity
 import java.util.*
 
 
@@ -73,10 +75,17 @@ class HomeFragment : Fragment() {
             binding.tvTemp.text = "${weather.main.temp}°C"
 //            binding.tvWeather.text = weather.weather[0].main
         }
-        binding.etSearch.doAfterTextChanged {
-            binding.btnClear.isVisible = !it.isNullOrEmpty()
+
+        binding.cardSearch.isClickable = true
+        binding.cardSearch.isFocusable = true
+
+
+        binding.cardSearch.setOnClickListener {
+            Toast.makeText(requireContext(), "Card clicked", Toast.LENGTH_SHORT).show()
+            val intent = Intent(requireContext(), SearchActivity::class.java)
+            startActivity(intent)
         }
-        binding.btnClear.setOnClickListener { binding.etSearch.text?.clear() }
+
 
         return binding.root
     }
