@@ -23,5 +23,8 @@
     <string name="clear_text">clear</string>
     <string name="image_of_scanned_plant">Ảnh của cây đã được quét</string>
     <string name="close">Close</string>
+    <string name="search_hint">Search plants, flowers, trees</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_results">No results found</string>
 
 </resources>

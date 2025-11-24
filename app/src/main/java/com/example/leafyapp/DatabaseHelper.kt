@@ -124,4 +124,43 @@ class DatabaseHelper(context: Context) :
         }
     }
 
+    // ĐẶT HÀM NÀY BÊN DƯỚI CÁC HÀM getPlantById VÀ getDiseaseById
+    fun searchPlants(query: String): List<Plant> {
+        val db = readableDatabase
+        val resultList = mutableListOf<Plant>()
+
+        // Sử dụng từ khóa LIKE và dấu % để tìm kiếm khớp một phần
+        // Sử dụng LOWER() hoặc COLLATE NOCASE để không phân biệt chữ hoa chữ thường.
+        // TÌM KIẾM THEO COL_PLANT_NAME (tên thường) VÀ COL_PLANT_SCI (tên khoa học)
+        val sqlQuery = """
+        SELECT * FROM $TABLE_PLANTS 
+        WHERE LOWER($COL_PLANT_NAME) LIKE LOWER(?) 
+           OR LOWER($COL_PLANT_SCI) LIKE LOWER(?)
+    """.trimIndent()
+
+        // Chuẩn bị tham số tìm kiếm
+        val searchPattern = "%$query%"
+        val selectionArgs = arrayOf(searchPattern, searchPattern)
+
+        db.rawQuery(sqlQuery, selectionArgs).use { c ->
+            while (c.moveToNext()) {
+                val plant = Plant(
+                    id = c.getInt(c.getColumnIndexOrThrow(COL_PLANT_ID)),
+                    name = c.getString(c.getColumnIndexOrThrow(COL_PLANT_NAME)),
+                    scientificName = c.getString(c.getColumnIndexOrThrow(COL_PLANT_SCI)),
+                    description = c.getString(c.getColumnIndexOrThrow(COL_PLANT_DESC)),
+                    light = c.getString(c.getColumnIndexOrThrow(COL_PLANT_LIGHT)),
+                    watering = c.getString(c.getColumnIndexOrThrow(COL_PLANT_WATER)),
+                    soil = c.getString(c.getColumnIndexOrThrow(COL_PLANT_SOIL)),
+                    fertilizer = c.getString(c.getColumnIndexOrThrow(COL_PLANT_FERT)),
+                    temperature = c.getString(c.getColumnIndexOrThrow(COL_PLANT_TEMP)),
+                    humidity = c.getString(c.getColumnIndexOrThrow(COL_PLANT_HUM)),
+                    image = c.getString(c.getColumnIndexOrThrow(COL_PLANT_IMG))
+                )
+                resultList.add(plant)
+            }
+        }
+        return resultList
+    }
+
 }
