@@ -1,13 +1,175 @@
 package com.example.leafyapp.ui.garden
 
+import android.app.AlarmManager
+import android.app.Application
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.leafyapp.data.AppDatabase
+import com.example.leafyapp.data.model.CareTask
+import com.example.leafyapp.data.model.TaskHistory
+import com.example.leafyapp.data.model.TaskWithPlant
+import com.example.leafyapp.data.model.UserPlant
+import com.example.leafyapp.ui.notifications.AlarmReceiver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Calendar
+import java.util.Date
+import java.util.concurrent.TimeUnit
 
-class GardenViewModel : ViewModel() {
+// Data class mới để chứa Cây và list Task của nó
+data class PlantTasksGroup(
+    val plant: UserPlant,
+    val tasks: List<CareTask>
+)
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is garden Fragment"
+class GardenViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val gardenDao = AppDatabase.getDatabase(application).gardenDao()
+    val allUserPlants: LiveData<List<UserPlant>> = gardenDao.getAllUserPlants()
+
+    private val _selectedDate = MutableLiveData<Long>(System.currentTimeMillis())
+    private val _allTasksSource = gardenDao.getAllTasks()
+
+    // LiveData MỚI: Trả về danh sách đã GOM NHÓM
+    val groupedTasksForSelectedDate = MediatorLiveData<List<PlantTasksGroup>>().apply {
+        addSource(_selectedDate) { date ->
+            val tasks = _allTasksSource.value
+            if (tasks != null) filterAndGroupTasks(date, tasks)
+        }
+        addSource(_allTasksSource) { tasks ->
+            val date = _selectedDate.value ?: System.currentTimeMillis()
+            filterAndGroupTasks(date, tasks)
+        }
     }
-    val text: LiveData<String> = _text
+
+    // --- HÀM LỌC VÀ GOM NHÓM ---
+    private fun filterAndGroupTasks(dateMillis: Long, allTasks: List<TaskWithPlant>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val viewingDate = getStartOfDay(dateMillis)
+            val validTasks = ArrayList<TaskWithPlant>()
+
+            // 1. Lọc ra các task của ngày hôm đó
+            for (item in allTasks) {
+                val task = item.task
+                val startDate = getStartOfDay(task.startDate)
+
+                if (viewingDate >= startDate) {
+                    val diffMillis = viewingDate - startDate
+                    val diffDays = TimeUnit.MILLISECONDS.toDays(diffMillis)
+
+                    if (diffDays % task.frequencyDays == 0L) {
+                        // Check lịch sử
+                        val history = gardenDao.getHistoryForTask(task.id)
+                        val isCompleted = history.any { getStartOfDay(it) == viewingDate }
+
+                        val displayTask = task.copy(lastCompletedDate = if (isCompleted) viewingDate else null)
+                        validTasks.add(item.copy(task = displayTask))
+                    }
+                }
+            }
+
+            // 2. Gom nhóm theo Plant ID
+            // Map<UserPlant, List<CareTask>>
+            val groupedMap = validTasks.groupBy { it.plant }
+
+            val resultList = groupedMap.map { (plant, taskWithPlantList) ->
+                PlantTasksGroup(plant, taskWithPlantList.map { it.task })
+            }
+
+            withContext(Dispatchers.Main) {
+                groupedTasksForSelectedDate.value = resultList
+            }
+        }
+    }
+
+    private fun getStartOfDay(timeMillis: Long): Long {
+        val cal = Calendar.getInstance()
+        cal.timeInMillis = timeMillis
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    fun setSelectedDate(date: Date) {
+        _selectedDate.value = date.time
+    }
+
+    fun insert(plant: UserPlant) = viewModelScope.launch(Dispatchers.IO) {
+        gardenDao.insertUserPlant(plant)
+    }
+
+    fun delete(plant: UserPlant) = viewModelScope.launch(Dispatchers.IO) {
+        gardenDao.deleteUserPlant(plant)
+    }
+
+    fun deleteTask(task: CareTask) = viewModelScope.launch(Dispatchers.IO) {
+        gardenDao.deleteTask(task)
+    }
+
+    fun insertTask(task: CareTask) = viewModelScope.launch(Dispatchers.IO) {
+        val rowId = gardenDao.insertTask(task)
+        if (task.isAutoReminder) {
+            val id = if (task.id > 0) task.id.toInt() else rowId.toInt()
+            scheduleAlarm(task, id)
+        }
+    }
+
+    fun markTaskAsCompleted(task: CareTask, completedDate: Long) = viewModelScope.launch(Dispatchers.IO) {
+        val history = TaskHistory(taskId = task.id, completedDate = completedDate)
+        gardenDao.insertHistory(history)
+
+        val oneDayMillis = 24L * 60 * 60 * 1000
+        val newNextDue = completedDate + (task.frequencyDays * oneDayMillis)
+
+        val updatedTask = task.copy(nextDueDate = newNextDue)
+        gardenDao.insertTask(updatedTask)
+
+        if (task.isAutoReminder) {
+            scheduleAlarm(updatedTask, task.id.toInt())
+        }
+
+        // Refresh lại list
+        val currentDate = _selectedDate.value ?: System.currentTimeMillis()
+        val currentTasks = _allTasksSource.value ?: emptyList()
+        filterAndGroupTasks(currentDate, currentTasks)
+    }
+
+    private fun scheduleAlarm(task: CareTask, taskId: Int) {
+        val alarmManager = getApplication<Application>().getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(getApplication(), AlarmReceiver::class.java).apply {
+            putExtra("TASK_TITLE", "Đến giờ chăm sóc: ${task.type.displayName}")
+            putExtra("TASK_MESSAGE", "Đừng quên nhiệm vụ của bạn nhé!")
+            putExtra("TASK_ID", taskId)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            getApplication(), taskId, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.nextDueDate, pendingIntent)
+                } else {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.nextDueDate, pendingIntent)
+                }
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.nextDueDate, pendingIntent)
+            }
+        } catch (e: SecurityException) { e.printStackTrace() }
+    }
+
+    // Hàm check plant (giữ nguyên)
+    suspend fun checkPlantExists(plantId: Int): Boolean {
+        return gardenDao.isPlantInGarden(plantId)
+    }
 }

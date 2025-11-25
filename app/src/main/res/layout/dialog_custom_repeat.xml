@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="24dp"
+    android:gravity="center_vertical">
+
+    <!-- Ô nhập số lượng (Ví dụ: 2) -->
+    <EditText
+        android:id="@+id/et_repeat_count"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="@android:drawable/edit_text"
+        android:hint="1"
+        android:inputType="number"
+        android:text="1"
+        android:textSize="18sp"
+        android:gravity="center"/>
+
+    <!-- Spinner chọn đơn vị (Day, Week, Month) -->
+    <Spinner
+        android:id="@+id/sp_repeat_unit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:minHeight="48dp"
+        android:spinnerMode="dropdown"/>
+
+</LinearLayout>
