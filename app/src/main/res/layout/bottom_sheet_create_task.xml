@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_rounded"
+    android:orientation="vertical"
+    android:paddingBottom="24dp">
+
+    <!-- Thanh kéo -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/drag_handle"
+        android:alpha="0.5"/>
+
+    <!-- Header: Gồm Tiêu đề và nút Đóng -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="16dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tv_sheet_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Create Task"
+            android:textColor="#000000"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Nút Đóng (X) -->
+        <ImageView
+            android:id="@+id/btn_close_sheet"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:tint="#757575"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"/>
+    </LinearLayout>
+
+    <!-- ... (Các phần SELECT PLANT, REMIND ME ABOUT, REPEAT, TIME giữ nguyên như cũ) ... -->
+    <!-- Copy lại đoạn giữa từ file cũ hoặc dùng file đầy đủ bên dưới nếu bạn muốn chắc chắn -->
+
+    <!-- 1. SELECT PLANT -->
+    <LinearLayout
+        android:id="@+id/option_select_plant"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp">
+        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_search" app:tint="#757575" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Select Plant" android:textColor="#000000" android:textStyle="bold" android:textSize="16sp" />
+            <TextView android:id="@+id/tv_selected_plant" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Select" android:textColor="#757575" android:textSize="14sp" />
+        </LinearLayout>
+        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_media_play" app:tint="#BDBDBD" android:rotation="0" />
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginStart="64dp"/>
+
+    <!-- 2. REMIND ME ABOUT -->
+    <LinearLayout
+        android:id="@+id/option_remind_about"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp">
+        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_day" app:tint="#757575" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Remind Me About" android:textColor="#000000" android:textStyle="bold" android:textSize="16sp" />
+            <TextView android:id="@+id/tv_selected_task_type" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Select" android:textColor="#757575" android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginStart="64dp"/>
+
+    <!-- 3. REPEAT -->
+    <LinearLayout
+        android:id="@+id/option_repeat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp">
+        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_popup_sync" app:tint="#757575" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Repeat" android:textColor="#000000" android:textStyle="bold" android:textSize="16sp" />
+            <TextView android:id="@+id/tv_selected_frequency" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1 Days" android:textColor="#757575" android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F0F0F0" android:layout_marginStart="64dp"/>
+
+    <!-- 4. TIME -->
+    <LinearLayout
+        android:id="@+id/option_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="16dp">
+        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@android:drawable/ic_menu_recent_history" app:tint="#757575" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="16dp" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Time" android:textColor="#000000" android:textStyle="bold" android:textSize="16sp" />
+            <TextView android:id="@+id/tv_selected_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Select" android:textColor="#757575" android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="20dp"/>
+
+    <!-- 5. AUTO REMINDERS -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="#F5F5F5"
+        app:cardElevation="0dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:padding="16dp" android:gravity="center_vertical">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto Reminders" android:textColor="#000000" android:textStyle="bold" android:textSize="16sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Notify me about my care reminders" android:textColor="#757575" android:textSize="12sp" />
+            </LinearLayout>
+            <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switch_auto_reminder" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- BUTTONS CONTAINER -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp">
+
+        <!-- Nút DELETE (Mặc định ẩn, chỉ hiện khi Edit) -->
+        <Button
+            android:id="@+id/btn_delete_task"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="12dp"
+            android:backgroundTint="#FFEBEE"
+            android:text="Delete"
+            android:textColor="#D32F2F"
+            android:paddingVertical="12dp"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="24dp"
+            android:visibility="gone"/>
+
+        <!-- Nút SAVE -->
+        <Button
+            android:id="@+id/btn_save_task"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#2DDA93"
+            android:text="Save"
+            android:paddingVertical="12dp"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="24dp"/>
+    </LinearLayout>
+
+</LinearLayout>
