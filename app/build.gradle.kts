@@ -17,8 +17,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // --- SỬA LỖI TẠI ĐÂY ---
+        // Thêm "x86" và "x86_64" để chạy được trên Máy ảo máy tính
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
     }
 

@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope // Import mới
 import coil.load
 import com.example.leafyapp.DatabaseHelper
 import com.example.leafyapp.MainActivity
@@ -17,6 +18,8 @@ import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.FragmentPlantBinding
 import com.example.leafyapp.ui.garden.GardenViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import kotlinx.coroutines.launch // Import mới
+import java.io.File
 
 class PlantFragment : Fragment() {
 
@@ -33,7 +36,6 @@ class PlantFragment : Fragment() {
     private var currentDisplayPlant: Plant? = null
 
     companion object {
-        // Bỏ tham số photoPath, quay về như cũ
         fun newInstance(id: Int, label: String, confidence: Float) =
             PlantFragment().apply {
                 arguments = Bundle().apply {
@@ -58,8 +60,9 @@ class PlantFragment : Fragment() {
         receiveArguments()
         setupBottomSheet()
         setupCloseButton()
+
+        // Chỉ gọi loadPlantFromDatabase, việc setup nút Add sẽ làm trong đó
         loadPlantFromDatabase()
-        setupAddButton()
     }
 
     private fun receiveArguments() {
@@ -81,31 +84,47 @@ class PlantFragment : Fragment() {
         }
     }
 
-    private fun setupAddButton() {
-        binding.btnAddPlant.setOnClickListener {
-            val plantToSave = currentDisplayPlant ?: return@setOnClickListener
+    // Hàm setup nút Add dựa trên trạng thái cây
+    private fun setupAddButton(plant: Plant) {
+        lifecycleScope.launch {
+            // Kiểm tra xem cây đã có trong vườn chưa
+            val exists = gardenViewModel.checkPlantExists(plant.id)
 
-            // LƯU CÂY VÀO MY GARDEN
-            // Sử dụng ảnh từ Database (plantToSave.image)
-            val newUserPlant = UserPlant(
-                plantId = plantToSave.id,
-                nickname = plantToSave.name,
-                imagePath = plantToSave.image // Lưu tên ảnh gốc (VD: "rose" hoặc URL Drive)
-            )
+            if (exists) {
+                // Nếu ĐÃ CÓ -> Đổi text, khóa nút, làm mờ
+                binding.btnAddPlant.text = "Đã có trong vườn"
+                binding.btnAddPlant.isEnabled = false
+                binding.btnAddPlant.alpha = 0.5f
+            } else {
+                // Nếu CHƯA CÓ -> Cho phép thêm
+                binding.btnAddPlant.text = "Thêm vào vườn"
+                binding.btnAddPlant.isEnabled = true
+                binding.btnAddPlant.alpha = 1.0f
 
-            gardenViewModel.insert(newUserPlant)
-
-            Toast.makeText(context, "Đã thêm ${plantToSave.name} vào vườn!", Toast.LENGTH_SHORT).show()
-
-            // Quay về màn hình My Garden
-            val intent = Intent(requireContext(), MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
-            requireActivity().finish()
+                binding.btnAddPlant.setOnClickListener {
+                    addToGarden(plant)
+                }
+            }
         }
     }
 
-    // Hàm xử lý link Google Drive nếu cần
+    private fun addToGarden(plantToSave: Plant) {
+        val newUserPlant = UserPlant(
+            plantId = plantToSave.id,
+            nickname = plantToSave.name,
+            imagePath = plantToSave.image
+        )
+
+        gardenViewModel.insert(newUserPlant)
+
+        Toast.makeText(context, "Đã thêm ${plantToSave.name} vào vườn!", Toast.LENGTH_SHORT).show()
+
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        startActivity(intent)
+        requireActivity().finish()
+    }
+
     private fun convertDrive(url: String): String {
         return if (url.contains("drive.google.com")) {
             try {
@@ -124,7 +143,7 @@ class PlantFragment : Fragment() {
         val ctx = context ?: return
         val db = DatabaseHelper(ctx)
 
-        // Giả sử ID từ AI trả về là index 0, còn trong DB bắt đầu từ 1
+        // Logic +1 id (do index AI bắt đầu từ 0, DB từ 1)
         val plant = db.getPlantById(plantId + 1)
 
         if (plant == null) {
@@ -134,6 +153,9 @@ class PlantFragment : Fragment() {
 
         currentDisplayPlant = plant
         displayPlantInfo(plant)
+
+        // Quan trọng: Setup nút Add sau khi đã có thông tin cây
+        setupAddButton(plant)
     }
 
     private fun showError(msg: String) {
@@ -143,16 +165,12 @@ class PlantFragment : Fragment() {
     }
 
     private fun displayPlantInfo(plant: Plant) {
-        // HIỂN THỊ ẢNH TỪ DATABASE
-        // Kiểm tra xem plant.image là tên resource (VD: "rose") hay là URL
         val context = binding.root.context
         val resId = context.resources.getIdentifier(plant.image, "drawable", context.packageName)
 
         if (resId != 0) {
-            // Nếu là tên ảnh trong drawable
             binding.imgPlant.load(resId) { crossfade(true) }
         } else {
-            // Nếu là URL hoặc đường dẫn khác
             binding.imgPlant.load(convertDrive(plant.image ?: "")) { crossfade(true) }
         }
 

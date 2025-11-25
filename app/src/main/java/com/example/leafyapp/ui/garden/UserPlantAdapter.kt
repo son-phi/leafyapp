@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.leafyapp.DatabaseHelper
 import com.example.leafyapp.R
 import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.ItemUserPlantBinding
@@ -32,26 +33,37 @@ class UserPlantAdapter(
 
         fun bind(plant: UserPlant) {
             binding.tvNickname.text = plant.nickname
-            binding.tvPlantType.text = "Plant ID: ${plant.plantId}"
 
             val context = itemView.context
+            val dbHelper = DatabaseHelper(context)
+            val originalPlant = dbHelper.getPlantById(plant.plantId)
 
-            // LOGIC LOAD ẢNH MỚI: Kiểm tra resource hoặc file path
-            if (!plant.imagePath.isNullOrEmpty()) {
-                // 1. Thử tìm xem imagePath có phải là tên resource trong drawable không (VD: "rose")
-                val resId = context.resources.getIdentifier(plant.imagePath, "drawable", context.packageName)
+            if (originalPlant != null) {
+                binding.tvPlantType.text = originalPlant.scientificName
+            } else {
+                binding.tvPlantType.text = "Unknown Plant"
+            }
+
+            // --- LOGIC LOAD ẢNH (ĐÃ SỬA) ---
+            var imageToLoad = if (!plant.imagePath.isNullOrEmpty()) {
+                plant.imagePath
+            } else {
+                originalPlant?.image
+            }
+
+            if (!imageToLoad.isNullOrEmpty()) {
+                val resId = context.resources.getIdentifier(imageToLoad, "drawable", context.packageName)
 
                 if (resId != 0) {
-                    // Nếu đúng là resource ID -> Load bằng ID
-                    Glide.with(context)
-                        .load(resId)
-                        .centerCrop()
-                        .into(binding.imgPlant)
+                    Glide.with(context).load(resId).centerCrop().into(binding.imgPlant)
                 } else {
-                    // 2. Nếu không phải resource -> Load như đường dẫn file/URL bình thường (Fallback)
+                    // Convert link Drive trước khi load
+                    val finalUrl = convertDrive(imageToLoad!!)
                     Glide.with(context)
-                        .load(plant.imagePath)
+                        .load(finalUrl)
                         .centerCrop()
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .error(R.drawable.ic_launcher_background)
                         .into(binding.imgPlant)
                 }
             } else {
@@ -66,6 +78,16 @@ class UserPlantAdapter(
                 onItemClick(plant)
             }
         }
+    }
+
+    // Hàm convert link Google Drive
+    private fun convertDrive(url: String): String {
+        return if (url.contains("drive.google.com")) {
+            try {
+                val id = url.substringAfter("d/").substringBefore("/")
+                "https://drive.google.com/uc?export=view&id=$id"
+            } catch (e: Exception) { url }
+        } else url
     }
 
     class UserPlantDiffCallback : DiffUtil.ItemCallback<UserPlant>() {

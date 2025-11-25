@@ -11,53 +11,84 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
-
-        <!-- Icon Task (Nước, Phân bón...) -->
-        <ImageView
-            android:id="@+id/img_task_icon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_rounded_light_blue"
-            android:padding="8dp"
-            android:src="@drawable/ic_water_drop"
-            app:tint="#2196F3"/>
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginStart="16dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <!-- Loại Task (Water, Fertilizer...) -->
-            <TextView
-                android:id="@+id/tv_task_type"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Water"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:textSize="16sp"/>
+            <!-- Icon Task -->
+            <ImageView
+                android:id="@+id/img_task_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_rounded_light_blue"
+                android:padding="8dp"
+                android:src="@drawable/ic_water_drop"
+                app:tint="#2196F3"/>
 
-            <!-- Tên Cây -->
-            <TextView
-                android:id="@+id/tv_plant_name"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Peace Lily"
-                android:textColor="#757575"
-                android:textSize="14sp"/>
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp">
+
+                <TextView
+                    android:id="@+id/tv_task_type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Water"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:textSize="16sp"/>
+
+                <TextView
+                    android:id="@+id/tv_plant_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Peace Lily"
+                    android:textColor="#757575"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+
+            <!-- Checkbox hoàn thành -->
+            <CheckBox
+                android:id="@+id/cb_task_done"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:buttonTint="#2DDA93"/>
         </LinearLayout>
 
-        <!-- Checkbox hoàn thành -->
-        <CheckBox
-            android:id="@+id/cb_task_done"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:buttonTint="#2DDA93"/>
+        <!-- PHẦN HIỂN THỊ KHI ĐÃ HOÀN THÀNH -->
+        <LinearLayout
+            android:id="@+id/layout_completed_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="56dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Today Completed"
+                android:textColor="#4CAF50"
+                android:textStyle="bold"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/tv_next_due_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Next task: 2 Dec"
+                android:textColor="#757575"
+                android:textSize="12sp"/>
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

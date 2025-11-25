@@ -26,11 +26,18 @@ data class CareTask(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val userPlantId: Long,
     val type: TaskType,
-    val frequencyDays: Int,  // 1 = mỗi ngày, 2 = 2 ngày/lần...
+    val frequencyDays: Int,
     val timeHour: Int,
     val timeMinute: Int,
-    val nextDueDate: Long,
-    val isAutoReminder: Boolean = true // MỚI: Bật tắt thông báo
+
+    val startDate: Long, // Ngày bắt đầu tính lịch
+    val nextDueDate: Long, // Mốc nhắc nhở tiếp theo
+
+    val isAutoReminder: Boolean = true,
+
+    // --- THÊM LẠI TRƯỜNG NÀY ĐỂ SỬA LỖI ---
+    // Dùng để Adapter biết trạng thái hiển thị (Checked/Unchecked)
+    val lastCompletedDate: Long? = null
 )
 
 enum class TaskType(val displayName: String) {

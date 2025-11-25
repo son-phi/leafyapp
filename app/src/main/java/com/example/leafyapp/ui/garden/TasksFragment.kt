@@ -1,5 +1,6 @@
 package com.example.leafyapp.ui.garden
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,8 +9,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.leafyapp.data.model.CareTask
 import com.example.leafyapp.databinding.FragmentTasksBinding
 import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class TasksFragment : Fragment() {
@@ -17,6 +21,11 @@ class TasksFragment : Fragment() {
     private var _binding: FragmentTasksBinding? = null
     private val binding get() = _binding!!
     private val viewModel: GardenViewModel by viewModels()
+
+    private var isViewingToday = true
+
+    // SỬA: Dùng TaskGroupAdapter thay vì TaskAdapter
+    private lateinit var taskAdapter: TaskGroupAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -29,33 +38,56 @@ class TasksFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. Setup Calendar Adapter
+        setupTasksList()
+        setupCalendar()
+
+        binding.btnAddTask.setOnClickListener {
+            val bottomSheet = CreateTaskBottomSheet.newInstance()
+            bottomSheet.show(childFragmentManager, "CreateTaskBottomSheet")
+        }
+    }
+
+    private fun setupCalendar() {
         val calendarAdapter = CalendarAdapter { selectedDate ->
             viewModel.setSelectedDate(selectedDate)
 
             val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
             binding.tvMonthYear.text = monthFormat.format(selectedDate)
+
+            isViewingToday = isSameDay(selectedDate, Date())
+
+            taskAdapter.updateSelectedDate(selectedDate.time)
         }
 
         binding.rvCalendar.adapter = calendarAdapter
 
-        // --- SỬA ĐỔI: Scroll đến ngày hôm nay ---
-        val todayPosition = calendarAdapter.getSelectedPositionInt()
-        if (todayPosition != -1) {
-            // Dùng scrollToPositionWithOffset để căn ngày hôm nay ra giữa màn hình (hoặc lệch trái một chút cho đẹp)
-            (binding.rvCalendar.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(todayPosition - 2, 0)
+        val todayPos = calendarAdapter.getSelectedPositionInt()
+        if (todayPos != -1) {
+            (binding.rvCalendar.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(todayPos - 2, 0)
         }
+    }
 
-        // 2. Setup Task Adapter
-        val taskAdapter = TaskAdapter()
+    private fun setupTasksList() {
+        // Adapter mới
+        taskAdapter = TaskGroupAdapter(
+            selectedDateMillis = System.currentTimeMillis(),
+            onTaskChecked = { task ->
+                viewModel.markTaskAsCompleted(task, System.currentTimeMillis())
+                Toast.makeText(context, "Đã hoàn thành!", Toast.LENGTH_SHORT).show()
+            },
+            onTaskClick = { task ->
+                showEditDeleteDialog(task)
+            }
+        )
+
         binding.rvTasks.adapter = taskAdapter
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
 
-        // 3. Lắng nghe dữ liệu Task
-        viewModel.tasksForSelectedDate.observe(viewLifecycleOwner) { tasks ->
-            taskAdapter.submitList(tasks)
+        // Lắng nghe dữ liệu đã gom nhóm
+        viewModel.groupedTasksForSelectedDate.observe(viewLifecycleOwner) { groupedList ->
+            taskAdapter.submitList(groupedList)
 
-            if (tasks.isEmpty()) {
+            if (groupedList.isEmpty()) {
                 binding.layoutNoTask.visibility = View.VISIBLE
                 binding.rvTasks.visibility = View.GONE
             } else {
@@ -63,13 +95,30 @@ class TasksFragment : Fragment() {
                 binding.rvTasks.visibility = View.VISIBLE
             }
         }
+    }
 
-        // 4. Nút Add Task
-        binding.btnAddTask.setOnClickListener {
-            // Mở BottomSheet tạo Task
-            val bottomSheet = CreateTaskBottomSheet()
-            bottomSheet.show(childFragmentManager, "CreateTaskBottomSheet")
-        }
+    private fun showEditDeleteDialog(task: CareTask) {
+        val options = arrayOf("Delete Task", "Edit Task", "Cancel")
+        AlertDialog.Builder(requireContext())
+            .setTitle("Task: ${task.type.displayName}")
+            .setItems(options) { dialog, which ->
+                if (which == 0) {
+                    viewModel.deleteTask(task)
+                    Toast.makeText(context, "Đã xóa task", Toast.LENGTH_SHORT).show()
+                } else if (which == 1) {
+                    val bottomSheet = CreateTaskBottomSheet.newInstance(task.id)
+                    bottomSheet.show(childFragmentManager, "EditTaskBottomSheet")
+                }
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun isSameDay(date1: Date, date2: Date): Boolean {
+        val cal1 = Calendar.getInstance().apply { time = date1 }
+        val cal2 = Calendar.getInstance().apply { time = date2 }
+        return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
+                cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
     }
 
     override fun onDestroyView() {

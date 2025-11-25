@@ -6,14 +6,13 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.leafyapp.data.dao.GardenDao
 import com.example.leafyapp.data.model.CareTask
+import com.example.leafyapp.data.model.TaskHistory // Import mới
 import com.example.leafyapp.data.model.UserPlant
 
-// Khai báo Database này chứa 2 bảng: UserPlant và CareTask
-// version = 1: Phiên bản đầu tiên của DB
-@Database(entities = [UserPlant::class, CareTask::class], version = 2, exportSchema = false) // Tăng lên 2
+// Tăng version lên 3
+@Database(entities = [UserPlant::class, CareTask::class, TaskHistory::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
-    // Khai báo cho phép GardenDao hoạt động
     abstract fun gardenDao(): GardenDao
 
     companion object {
@@ -21,15 +20,13 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-            // Nếu instance đã có thì trả về, nếu chưa thì tạo mới (Singleton Pattern)
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "leafy_user_database" // Tên file database sẽ lưu trong máy điện thoại
+                    "leafy_user_database"
                 )
-                    // .createFromAsset("database/my_plants.db") <--- Nếu bạn muốn dùng lại DB 29 cây cũ thì dùng lệnh này (tạm thời chưa cần)
-                    .fallbackToDestructiveMigration() // Nếu sửa cấu trúc bảng thì xóa cũ xây lại để tránh lỗi crash
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

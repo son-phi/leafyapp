@@ -8,12 +8,13 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.example.leafyapp.data.model.CareTask
+import com.example.leafyapp.data.model.TaskHistory
 import com.example.leafyapp.data.model.TaskWithPlant
 import com.example.leafyapp.data.model.UserPlant
 
 @Dao
 interface GardenDao {
-    // --- PHẦN CÂY (CŨ) ---
+    // --- UserPlant ---
     @Query("SELECT * FROM user_plants ORDER BY id DESC")
     fun getAllUserPlants(): LiveData<List<UserPlant>>
 
@@ -23,15 +24,27 @@ interface GardenDao {
     @Delete
     suspend fun deleteUserPlant(plant: UserPlant)
 
-    // --- PHẦN TASK (MỚI) ---
-
-    // Thêm Task mới
+    // --- CareTask ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTask(task: CareTask)
+    suspend fun insertTask(task: CareTask): Long
 
-    // Lấy danh sách Task trong một khoảng thời gian (ví dụ: từ sáng đến tối của 1 ngày)
-    // Dùng @Transaction vì truy vấn nhiều bảng
+    @Delete
+    suspend fun deleteTask(task: CareTask)
+
+    // Lấy TOÀN BỘ Task (kèm thông tin cây) để ViewModel tự lọc
     @Transaction
-    @Query("SELECT * FROM care_tasks WHERE nextDueDate >= :startTime AND nextDueDate <= :endTime ORDER BY nextDueDate ASC")
-    fun getTasksForDate(startTime: Long, endTime: Long): LiveData<List<TaskWithPlant>>
+    @Query("SELECT * FROM care_tasks")
+    fun getAllTasks(): LiveData<List<TaskWithPlant>>
+
+    // --- TaskHistory ---
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertHistory(history: TaskHistory)
+
+    // Lấy lịch sử hoàn thành của 1 task cụ thể
+    @Query("SELECT completedDate FROM task_history WHERE taskId = :taskId")
+    suspend fun getHistoryForTask(taskId: Long): List<Long>
+
+    // HÀM MỚI: Kiểm tra xem plantId đã có trong user_plants chưa
+    @Query("SELECT EXISTS(SELECT 1 FROM user_plants WHERE plantId = :plantId LIMIT 1)")
+    suspend fun isPlantInGarden(plantId: Int): Boolean
 }

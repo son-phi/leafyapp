@@ -15,7 +15,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.leafyapp.R
 import com.example.leafyapp.databinding.FragmentMyPlantsBinding
-import com.example.leafyapp.ui.camera.LoadingActivity // Đảm bảo import đúng đường dẫn LoadingActivity
+import com.example.leafyapp.ui.camera.LoadingActivity
+import com.example.leafyapp.ui.information.ResultActivity // Import Activity kết quả
 
 class MyPlantsFragment : Fragment() {
 
@@ -23,13 +24,11 @@ class MyPlantsFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: GardenViewModel by viewModels()
 
-    // 1. Launcher để chọn ảnh từ thư viện
     private val galleryLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val uri = result.data?.data
                 if (uri != null) {
-                    // Chọn ảnh xong -> Mở màn hình Loading để nhận diện
                     openLoadingActivity(uri.toString())
                 }
             }
@@ -53,14 +52,26 @@ class MyPlantsFragment : Fragment() {
                 Toast.makeText(context, "Đã xóa ${plant.nickname}", Toast.LENGTH_SHORT).show()
             },
             onItemClick = { plant ->
-                Toast.makeText(context, "Clicked: ${plant.nickname}", Toast.LENGTH_SHORT).show()
+                // --- SỬA ĐỔI: Mở màn hình thông tin cây khi click ---
+                val intent = Intent(requireContext(), ResultActivity::class.java)
+
+                // Lưu ý: PlantFragment của bạn đang dùng logic (id + 1) để lấy cây từ DB
+                // Do đó ở đây ta truyền (plantId - 1) để khi vào trong nó cộng 1 là vừa khớp
+                // Hoặc nếu bạn đã sửa PlantFragment thì truyền thẳng plantId.
+                // Giả định logic cũ: ID từ AI trả về (0-based) -> DB (1-based)
+                intent.putExtra("RESULT_ID", plant.plantId - 1)
+
+                intent.putExtra("RESULT_LABEL", plant.nickname)
+                intent.putExtra("RESULT_MODE", "Plant")
+                // Không cần PHOTO_PATH vì PlantFragment đã sửa để load từ DB
+
+                startActivity(intent)
             }
         )
 
         binding.rvMyPlants.adapter = adapter
         binding.rvMyPlants.layoutManager = LinearLayoutManager(requireContext())
 
-        // Quan sát dữ liệu
         viewModel.allUserPlants.observe(viewLifecycleOwner) { plants ->
             adapter.submitList(plants)
             if (plants.isEmpty()) {
@@ -72,7 +83,6 @@ class MyPlantsFragment : Fragment() {
             }
         }
 
-        // Sự kiện nút Add
         binding.btnAddFirstPlant.setOnClickListener {
             showAddPlantBottomSheet()
         }
@@ -85,18 +95,13 @@ class MyPlantsFragment : Fragment() {
     private fun showAddPlantBottomSheet() {
         val bottomSheet = AddPlantBottomSheet(
             onTakePhotoClick = {
-                // CHUYỂN SANG CAMERA FRAGMENT
-                // Lưu ý: ID này phải khớp với id trong file navigation (nav_graph.xml) của bạn.
-                // Thường là R.id.navigation_camera hoặc R.id.cameraFragment
                 try {
                     findNavController().navigate(R.id.navigation_camera)
                 } catch (e: Exception) {
-                    // Nếu lỗi ID, thông báo để bạn sửa lại ID cho đúng
-                    Toast.makeText(requireContext(), "Lỗi: Chưa tìm thấy ID navigation_camera", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Lỗi điều hướng Camera", Toast.LENGTH_SHORT).show()
                 }
             },
             onGalleryClick = {
-                // MỞ THƯ VIỆN ẢNH
                 val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                 galleryLauncher.launch(intent)
             }
@@ -104,11 +109,10 @@ class MyPlantsFragment : Fragment() {
         bottomSheet.show(parentFragmentManager, "AddPlantBottomSheet")
     }
 
-    // Hàm chuyển sang LoadingActivity để nhận diện cây
     private fun openLoadingActivity(path: String) {
         val intent = Intent(requireContext(), LoadingActivity::class.java)
         intent.putExtra("PHOTO_PATH", path)
-        intent.putExtra("SCAN_MODE", "Plant") // Bắt buộc set mode là Plant vì đang ở trong Garden
+        intent.putExtra("SCAN_MODE", "Plant")
         startActivity(intent)
     }
 
