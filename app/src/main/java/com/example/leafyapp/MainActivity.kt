@@ -1,19 +1,20 @@
 package com.example.leafyapp
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.findNavController
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import androidx.navigation.navOptions
 import com.example.leafyapp.databinding.ActivityMainBinding
-// --- QUAN TRỌNG: PHẢI CÓ CÁC DÒNG IMPORT NÀY ---
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -21,8 +22,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // ✔ COPY DB — KHÔNG TRUYỀN PATH, CHỈ COPY THEO TÊN FILE DUY NHẤT
-        DatabaseCopier.copyDatabase(this)
+        // DatabaseCopier.copyDatabase(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -51,11 +51,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // XIN QUYỀN THÔNG BÁO (Cho Android 13+)
+        // Xử lý Intent khi App khởi động lần đầu
+        handleIntent(intent)
+
+        // Xin quyền Notification
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
             }
+        }
+    }
+
+    // --- QUAN TRỌNG: Hàm này chạy khi MainActivity đã có sẵn và nhận Intent mới ---
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) // Cập nhật intent mới nhất
+        handleIntent(intent) // Xử lý logic chuyển tab
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra("OPEN_MY_GARDEN", false) == true) {
+            // Chuyển sang tab My Garden
+            // Đảm bảo ID này đúng với file res/menu/bottom_nav_menu.xml
+            binding.navView.selectedItemId = R.id.navigation_garden
         }
     }
 }

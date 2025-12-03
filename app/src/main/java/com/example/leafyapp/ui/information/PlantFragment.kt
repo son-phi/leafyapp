@@ -1,15 +1,17 @@
 package com.example.leafyapp.ui.information
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope // Import mới
+import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.leafyapp.DatabaseHelper
 import com.example.leafyapp.MainActivity
@@ -18,7 +20,7 @@ import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.FragmentPlantBinding
 import com.example.leafyapp.ui.garden.GardenViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import kotlinx.coroutines.launch // Import mới
+import kotlinx.coroutines.launch
 import java.io.File
 
 class PlantFragment : Fragment() {
@@ -60,8 +62,6 @@ class PlantFragment : Fragment() {
         receiveArguments()
         setupBottomSheet()
         setupCloseButton()
-
-        // Chỉ gọi loadPlantFromDatabase, việc setup nút Add sẽ làm trong đó
         loadPlantFromDatabase()
     }
 
@@ -79,50 +79,82 @@ class PlantFragment : Fragment() {
     }
 
     private fun setupCloseButton() {
-        binding.btnClose.setOnClickListener {
+        binding.btnClose.setOnClickListener { requireActivity().finish() }
+    }
+
+    private fun setupAddButton(plant: Plant) {
+        binding.btnAddPlant.text = "Thêm vào vườn"
+        binding.btnAddPlant.isEnabled = true
+        binding.btnAddPlant.alpha = 1.0f
+
+        binding.btnAddPlant.setOnClickListener {
+            showQuantityDialog(plant)
+        }
+    }
+
+    private fun showQuantityDialog(plant: Plant) {
+        val numberPicker = NumberPicker(requireContext())
+        numberPicker.minValue = 1
+        numberPicker.maxValue = 10
+        numberPicker.value = 1
+        numberPicker.wrapSelectorWheel = false
+
+        val layout = android.widget.FrameLayout(requireContext())
+        layout.addView(numberPicker, android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+            android.view.Gravity.CENTER
+        ))
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Chọn số lượng")
+            .setMessage("Bạn muốn thêm bao nhiêu cây ${plant.name}?")
+            .setView(layout)
+            .setPositiveButton("Thêm") { _, _ ->
+                val quantity = numberPicker.value
+                addMultiplePlantsToGarden(plant, quantity)
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+    }
+
+    /// --- LOGIC MỚI: TỰ ĐỘNG ĐÁNH SỐ THỨ TỰ ---
+    private fun addMultiplePlantsToGarden(plantToSave: Plant, quantity: Int) {
+        lifecycleScope.launch {
+            // 1. Đếm số lượng cây hiện có trong DB trước
+            val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
+            val baseName = plantToSave.name
+
+            for (i in 1..quantity) {
+                // 2. Tính số thứ tự mới = Số hiện có + i
+                val newIndex = currentCount + i
+
+                // Nếu chỉ có 1 cây duy nhất (và chưa có cây nào trước đó), có thể không cần số
+                // Nhưng để thống nhất, cứ thêm số nếu muốn: "Hoa hồng 1", "Hoa hồng 2"
+                // Hoặc logic: Nếu currentCount == 0 && quantity == 1 -> Giữ nguyên tên
+
+                val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
+
+                val newUserPlant = UserPlant(
+                    plantId = plantToSave.id,
+                    nickname = finalName,
+                    imagePath = plantToSave.image
+                )
+                gardenViewModel.insert(newUserPlant)
+            }
+
+            Toast.makeText(context, "Đã thêm $quantity cây vào vườn!", Toast.LENGTH_SHORT).show()
+
+            // --- SỬA ĐỔI TẠI ĐÂY: CHUYỂN VỀ MY GARDEN ---
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+            // Gửi tín hiệu để MainActivity mở tab Garden
+            intent.putExtra("OPEN_MY_GARDEN", true)
+
+            startActivity(intent)
             requireActivity().finish()
         }
-    }
-
-    // Hàm setup nút Add dựa trên trạng thái cây
-    private fun setupAddButton(plant: Plant) {
-        lifecycleScope.launch {
-            // Kiểm tra xem cây đã có trong vườn chưa
-            val exists = gardenViewModel.checkPlantExists(plant.id)
-
-            if (exists) {
-                // Nếu ĐÃ CÓ -> Đổi text, khóa nút, làm mờ
-                binding.btnAddPlant.text = "Đã có trong vườn"
-                binding.btnAddPlant.isEnabled = false
-                binding.btnAddPlant.alpha = 0.5f
-            } else {
-                // Nếu CHƯA CÓ -> Cho phép thêm
-                binding.btnAddPlant.text = "Thêm vào vườn"
-                binding.btnAddPlant.isEnabled = true
-                binding.btnAddPlant.alpha = 1.0f
-
-                binding.btnAddPlant.setOnClickListener {
-                    addToGarden(plant)
-                }
-            }
-        }
-    }
-
-    private fun addToGarden(plantToSave: Plant) {
-        val newUserPlant = UserPlant(
-            plantId = plantToSave.id,
-            nickname = plantToSave.name,
-            imagePath = plantToSave.image
-        )
-
-        gardenViewModel.insert(newUserPlant)
-
-        Toast.makeText(context, "Đã thêm ${plantToSave.name} vào vườn!", Toast.LENGTH_SHORT).show()
-
-        val intent = Intent(requireContext(), MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        startActivity(intent)
-        requireActivity().finish()
     }
 
     private fun convertDrive(url: String): String {
@@ -139,11 +171,8 @@ class PlantFragment : Fragment() {
             showError("Không xác định được cây từ AI.")
             return
         }
-
         val ctx = context ?: return
         val db = DatabaseHelper(ctx)
-
-        // Logic +1 id (do index AI bắt đầu từ 0, DB từ 1)
         val plant = db.getPlantById(plantId + 1)
 
         if (plant == null) {
@@ -153,8 +182,6 @@ class PlantFragment : Fragment() {
 
         currentDisplayPlant = plant
         displayPlantInfo(plant)
-
-        // Quan trọng: Setup nút Add sau khi đã có thông tin cây
         setupAddButton(plant)
     }
 
@@ -177,7 +204,6 @@ class PlantFragment : Fragment() {
         binding.tvPlantName.text = plant.name
         binding.tvScientificName.text = plant.scientificName
         binding.tvDescription.text = plant.description ?: "Đang cập nhật..."
-
         binding.tvLight.text = "☀️ Ánh sáng: ${plant.light ?: "N/A"}"
         binding.tvWater.text = "💧 Tưới nước: ${plant.watering ?: "N/A"}"
         binding.tvSoil.text = "🪨 Đất: ${plant.soil ?: "N/A"}"

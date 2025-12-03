@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="8dp"
-    android:paddingStart="8dp"> <!-- Thụt lề trái 8dp -->
+    android:paddingVertical="12dp"
+    android:paddingStart="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -52,11 +52,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
 
                     <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
                         android:src="@android:drawable/checkbox_on_background"
                         app:tint="#4CAF50"/>
 
@@ -82,24 +83,25 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Checkbox -->
+        <!-- Checkbox (Sẽ ẩn đi khi hoàn thành) -->
         <CheckBox
             android:id="@+id/cb_task_done"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:buttonTint="#E0E0E0"
+            android:buttonTint="#4CAF50"
             android:background="@null"
             android:scaleX="1.2"
             android:scaleY="1.2"/>
 
-        <!-- Icon Tick tròn xám -->
+        <!-- Icon Tick tròn xám (Hiện khi hoàn thành - ĐÂY LÀ ID BẠN BỊ THIẾU) -->
         <ImageView
             android:id="@+id/img_done_check"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:src="@android:drawable/checkbox_on_background"
             app:tint="#BDBDBD"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            android:layout_marginEnd="8dp"/>
 
     </LinearLayout>
 
@@ -107,8 +109,8 @@
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="56dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="64dp"
         android:background="#F0F0F0"/>
 
 </LinearLayout>
