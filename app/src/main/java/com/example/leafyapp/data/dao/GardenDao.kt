@@ -24,6 +24,14 @@ interface GardenDao {
     @Delete
     suspend fun deleteUserPlant(plant: UserPlant)
 
+    // Kiểm tra tồn tại (Cũ)
+    @Query("SELECT EXISTS(SELECT 1 FROM user_plants WHERE plantId = :plantId LIMIT 1)")
+    suspend fun isPlantInGarden(plantId: Int): Boolean
+
+    // --- HÀM MỚI: Đếm số lượng cây theo loại ---
+    @Query("SELECT COUNT(*) FROM user_plants WHERE plantId = :plantId")
+    suspend fun countPlantsById(plantId: Int): Int
+
     // --- CareTask ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTask(task: CareTask): Long
@@ -31,7 +39,6 @@ interface GardenDao {
     @Delete
     suspend fun deleteTask(task: CareTask)
 
-    // Lấy TOÀN BỘ Task (kèm thông tin cây) để ViewModel tự lọc
     @Transaction
     @Query("SELECT * FROM care_tasks")
     fun getAllTasks(): LiveData<List<TaskWithPlant>>
@@ -40,11 +47,9 @@ interface GardenDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHistory(history: TaskHistory)
 
-    // Lấy lịch sử hoàn thành của 1 task cụ thể
     @Query("SELECT completedDate FROM task_history WHERE taskId = :taskId")
     suspend fun getHistoryForTask(taskId: Long): List<Long>
 
-    // HÀM MỚI: Kiểm tra xem plantId đã có trong user_plants chưa
-    @Query("SELECT EXISTS(SELECT 1 FROM user_plants WHERE plantId = :plantId LIMIT 1)")
-    suspend fun isPlantInGarden(plantId: Int): Boolean
+    @androidx.room.Update
+    suspend fun updateUserPlant(plant: UserPlant)
 }

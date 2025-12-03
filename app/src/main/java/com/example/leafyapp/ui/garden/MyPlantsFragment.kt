@@ -1,12 +1,14 @@
 package com.example.leafyapp.ui.garden
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -14,9 +16,11 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.leafyapp.R
+import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.FragmentMyPlantsBinding
 import com.example.leafyapp.ui.camera.LoadingActivity
-import com.example.leafyapp.ui.information.ResultActivity // Import Activity kết quả
+import com.example.leafyapp.ui.information.ResultActivity
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MyPlantsFragment : Fragment() {
 
@@ -45,26 +49,18 @@ class MyPlantsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup RecyclerView
+        // Setup RecyclerView với Adapter mới
         val adapter = UserPlantAdapter(
-            onDeleteClick = { plant ->
-                viewModel.delete(plant)
-                Toast.makeText(context, "Đã xóa ${plant.nickname}", Toast.LENGTH_SHORT).show()
+            // Callback 1: Khi bấm nút 3 chấm (Menu)
+            onMenuClick = { view, plant ->
+                showPlantOptionsBottomSheet(plant) // Gọi hàm private trong class này
             },
+            // Callback 2: Khi bấm vào item cây
             onItemClick = { plant ->
-                // --- SỬA ĐỔI: Mở màn hình thông tin cây khi click ---
                 val intent = Intent(requireContext(), ResultActivity::class.java)
-
-                // Lưu ý: PlantFragment của bạn đang dùng logic (id + 1) để lấy cây từ DB
-                // Do đó ở đây ta truyền (plantId - 1) để khi vào trong nó cộng 1 là vừa khớp
-                // Hoặc nếu bạn đã sửa PlantFragment thì truyền thẳng plantId.
-                // Giả định logic cũ: ID từ AI trả về (0-based) -> DB (1-based)
                 intent.putExtra("RESULT_ID", plant.plantId - 1)
-
                 intent.putExtra("RESULT_LABEL", plant.nickname)
                 intent.putExtra("RESULT_MODE", "Plant")
-                // Không cần PHOTO_PATH vì PlantFragment đã sửa để load từ DB
-
                 startActivity(intent)
             }
         )
@@ -74,6 +70,7 @@ class MyPlantsFragment : Fragment() {
 
         viewModel.allUserPlants.observe(viewLifecycleOwner) { plants ->
             adapter.submitList(plants)
+
             if (plants.isEmpty()) {
                 binding.layoutEmptyState.visibility = View.VISIBLE
                 binding.rvMyPlants.visibility = View.GONE
@@ -91,6 +88,8 @@ class MyPlantsFragment : Fragment() {
             showAddPlantBottomSheet()
         }
     }
+
+    // --- CÁC HÀM RIÊNG CỦA FRAGMENT (Đặt ở đây là đúng) ---
 
     private fun showAddPlantBottomSheet() {
         val bottomSheet = AddPlantBottomSheet(
@@ -114,6 +113,68 @@ class MyPlantsFragment : Fragment() {
         intent.putExtra("PHOTO_PATH", path)
         intent.putExtra("SCAN_MODE", "Plant")
         startActivity(intent)
+    }
+
+    // Hàm hiển thị Bottom Sheet tùy chọn (Sửa/Xóa)
+    private fun showPlantOptionsBottomSheet(plant: UserPlant) {
+        val dialog = BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_plant_options, null)
+        dialog.setContentView(view)
+
+        // Xử lý nút Sửa tên
+        view.findViewById<View>(R.id.option_edit_name).setOnClickListener {
+            dialog.dismiss()
+            showRenameDialog(plant)
+        }
+
+        // Xử lý nút Xóa
+        view.findViewById<View>(R.id.option_delete_plant).setOnClickListener {
+            dialog.dismiss()
+            showDeleteConfirmation(plant)
+        }
+
+        dialog.show()
+    }
+
+    // Dialog đổi tên
+    private fun showRenameDialog(plant: UserPlant) {
+        val input = EditText(requireContext())
+        input.setText(plant.nickname)
+
+        val container = android.widget.FrameLayout(requireContext())
+        val params = android.widget.FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        params.leftMargin = 50; params.rightMargin = 50
+        input.layoutParams = params
+        container.addView(input)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Plant Name")
+            .setView(container)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    viewModel.updatePlantName(plant, newName)
+                    Toast.makeText(context, "Updated name", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    // Dialog xóa
+    private fun showDeleteConfirmation(plant: UserPlant) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Plant")
+            .setMessage("Are you sure you want to delete '${plant.nickname}'?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.delete(plant)
+                Toast.makeText(context, "Deleted ${plant.nickname}", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onDestroyView() {

@@ -24,21 +24,19 @@ import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-// Data class mới để chứa Cây và list Task của nó
-data class PlantTasksGroup(
-    val plant: UserPlant,
-    val tasks: List<CareTask>
-)
+// Data class cho Group Task
+data class PlantTasksGroup(val plant: UserPlant, val tasks: List<CareTask>)
 
 class GardenViewModel(application: Application) : AndroidViewModel(application) {
 
     private val gardenDao = AppDatabase.getDatabase(application).gardenDao()
+
     val allUserPlants: LiveData<List<UserPlant>> = gardenDao.getAllUserPlants()
 
+    // --- Logic Task (Giữ nguyên) ---
     private val _selectedDate = MutableLiveData<Long>(System.currentTimeMillis())
     private val _allTasksSource = gardenDao.getAllTasks()
 
-    // LiveData MỚI: Trả về danh sách đã GOM NHÓM
     val groupedTasksForSelectedDate = MediatorLiveData<List<PlantTasksGroup>>().apply {
         addSource(_selectedDate) { date ->
             val tasks = _allTasksSource.value
@@ -50,13 +48,11 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // --- HÀM LỌC VÀ GOM NHÓM ---
     private fun filterAndGroupTasks(dateMillis: Long, allTasks: List<TaskWithPlant>) {
         viewModelScope.launch(Dispatchers.IO) {
             val viewingDate = getStartOfDay(dateMillis)
             val validTasks = ArrayList<TaskWithPlant>()
 
-            // 1. Lọc ra các task của ngày hôm đó
             for (item in allTasks) {
                 val task = item.task
                 val startDate = getStartOfDay(task.startDate)
@@ -66,20 +62,15 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
                     val diffDays = TimeUnit.MILLISECONDS.toDays(diffMillis)
 
                     if (diffDays % task.frequencyDays == 0L) {
-                        // Check lịch sử
                         val history = gardenDao.getHistoryForTask(task.id)
                         val isCompleted = history.any { getStartOfDay(it) == viewingDate }
-
                         val displayTask = task.copy(lastCompletedDate = if (isCompleted) viewingDate else null)
                         validTasks.add(item.copy(task = displayTask))
                     }
                 }
             }
 
-            // 2. Gom nhóm theo Plant ID
-            // Map<UserPlant, List<CareTask>>
             val groupedMap = validTasks.groupBy { it.plant }
-
             val resultList = groupedMap.map { (plant, taskWithPlantList) ->
                 PlantTasksGroup(plant, taskWithPlantList.map { it.task })
             }
@@ -112,6 +103,11 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         gardenDao.deleteUserPlant(plant)
     }
 
+    fun updatePlantName(plant: UserPlant, newName: String) = viewModelScope.launch(Dispatchers.IO) {
+        val updatedPlant = plant.copy(nickname = newName)
+        gardenDao.updateUserPlant(updatedPlant)
+    }
+
     fun deleteTask(task: CareTask) = viewModelScope.launch(Dispatchers.IO) {
         gardenDao.deleteTask(task)
     }
@@ -138,7 +134,6 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
             scheduleAlarm(updatedTask, task.id.toInt())
         }
 
-        // Refresh lại list
         val currentDate = _selectedDate.value ?: System.currentTimeMillis()
         val currentTasks = _allTasksSource.value ?: emptyList()
         filterAndGroupTasks(currentDate, currentTasks)
@@ -168,8 +163,12 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         } catch (e: SecurityException) { e.printStackTrace() }
     }
 
-    // Hàm check plant (giữ nguyên)
     suspend fun checkPlantExists(plantId: Int): Boolean {
         return gardenDao.isPlantInGarden(plantId)
+    }
+
+    // --- HÀM MỚI: Lấy số lượng cây ---
+    suspend fun getPlantCount(plantId: Int): Int {
+        return gardenDao.countPlantsById(plantId)
     }
 }

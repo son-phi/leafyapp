@@ -6,7 +6,7 @@
     android:layout_marginHorizontal="16dp"
     android:layout_marginBottom="16dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
+    app:cardElevation="4dp"
     app:cardBackgroundColor="#FFFFFF">
 
     <LinearLayout
@@ -23,7 +23,7 @@
             android:orientation="horizontal"
             android:paddingBottom="12dp">
 
-            <!-- Ảnh cây nhỏ -->
+            <!-- Ảnh cây -->
             <androidx.cardview.widget.CardView
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -37,19 +37,26 @@
                     android:src="@drawable/ic_launcher_background"/>
             </androidx.cardview.widget.CardView>
 
+            <!-- Tên cây -->
             <TextView
                 android:id="@+id/tv_plant_name_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
-                android:text="Bird of Paradise"
+                android:text="Plant Name"
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- BODY: DANH SÁCH TASK -->
-        <!-- Nơi chúng ta sẽ add các item_task_row vào đây bằng code -->
+        <!-- ĐƯỜNG KẺ MỜ -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#F0F0F0"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- BODY: DANH SÁCH TASK CON -->
         <LinearLayout
             android:id="@+id/layout_tasks_container"
             android:layout_width="match_parent"
