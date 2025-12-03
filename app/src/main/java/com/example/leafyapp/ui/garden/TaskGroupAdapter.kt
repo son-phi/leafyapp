@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -44,38 +43,44 @@ class TaskGroupAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(group: PlantTasksGroup) {
+            // 1. Set tên cây
             binding.tvPlantNameHeader.text = group.plant.nickname
 
+            // 2. Load ảnh cây
             val context = itemView.context
             if (!group.plant.imagePath.isNullOrEmpty()) {
-                // Xử lý cả resource ID và URL ảnh
                 val resId = context.resources.getIdentifier(group.plant.imagePath, "drawable", context.packageName)
                 if (resId != 0) {
                     Glide.with(context).load(resId).centerCrop().into(binding.imgPlantAvatar)
                 } else {
-                    // Thêm convertDrive nếu cần cho ảnh cây trong task (tương tự UserPlantAdapter)
-                    val finalUrl = if (group.plant.imagePath!!.contains("drive.google.com")) {
-                        try {
-                            val id = group.plant.imagePath!!.substringAfter("d/").substringBefore("/")
-                            "https://drive.google.com/uc?export=view&id=$id"
-                        } catch (e: Exception) { group.plant.imagePath }
-                    } else group.plant.imagePath
-
-                    Glide.with(context).load(finalUrl).centerCrop().into(binding.imgPlantAvatar)
+                    val finalUrl = convertDrive(group.plant.imagePath!!)
+                    Glide.with(context)
+                        .load(finalUrl)
+                        .centerCrop()
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .into(binding.imgPlantAvatar)
                 }
             } else {
                 binding.imgPlantAvatar.setImageResource(R.drawable.ic_launcher_background)
             }
 
+            // 3. Add các task con vào
             binding.layoutTasksContainer.removeAllViews()
             val inflater = LayoutInflater.from(context)
 
             group.tasks.forEachIndexed { index, task ->
+                // Inflate layout dòng task
                 val taskView = inflater.inflate(R.layout.item_task_row, binding.layoutTasksContainer, false)
+
+                // Bind dữ liệu cho dòng task
                 bindTaskRow(taskView, task, context)
+
+                // Ẩn đường kẻ của dòng cuối cùng
                 if (index == group.tasks.size - 1) {
-                    taskView.findViewById<View>(R.id.divider).visibility = View.GONE
+                    val divider = taskView.findViewById<View>(R.id.divider)
+                    if (divider != null) divider.visibility = View.GONE
                 }
+
                 binding.layoutTasksContainer.addView(taskView)
             }
         }
@@ -109,10 +114,8 @@ class TaskGroupAdapter(
                 imgDone.visibility = View.VISIBLE
                 layoutCompleted.visibility = View.VISIBLE
 
-                // Tính ngày next dựa trên selectedDate (vì đã hoàn thành hôm đó) + tần suất
                 val oneDayMillis = 24L * 60 * 60 * 1000
                 val nextDueTime = selectedDateMillis + (task.frequencyDays * oneDayMillis)
-
                 val nextDate = Calendar.getInstance()
                 nextDate.timeInMillis = nextDueTime
                 val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
@@ -137,6 +140,15 @@ class TaskGroupAdapter(
 
             view.setOnClickListener { onTaskClick(task) }
         }
+    }
+
+    private fun convertDrive(url: String): String {
+        return if (url.contains("drive.google.com")) {
+            try {
+                val id = url.substringAfter("d/").substringBefore("/")
+                "https://drive.google.com/uc?export=view&id=$id"
+            } catch (e: Exception) { url }
+        } else url
     }
 
     private fun isSameDay(date1: Long, date2: Long): Boolean {
