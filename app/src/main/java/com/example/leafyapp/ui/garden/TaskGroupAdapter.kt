@@ -104,29 +104,24 @@ class TaskGroupAdapter(
             }
             imgIcon.setImageResource(iconRes)
 
+            // --- TÍNH TRẠNG HIỆN TẠI ---
             val isCompletedOnSelectedDate = isSameDay(task.lastCompletedDate ?: 0, selectedDateMillis)
-            val isFuture = selectedDateMillis > System.currentTimeMillis() && !isSameDay(selectedDateMillis, System.currentTimeMillis())
+            val isFuture = selectedDateMillis > System.currentTimeMillis() &&
+                    !isSameDay(selectedDateMillis, System.currentTimeMillis())
 
+            // Xóa listener cũ tránh loop
             cbDone.setOnCheckedChangeListener(null)
 
             if (isCompletedOnSelectedDate) {
-                cbDone.visibility = View.GONE
-                imgDone.visibility = View.VISIBLE
-                layoutCompleted.visibility = View.VISIBLE
-
-                val oneDayMillis = 24L * 60 * 60 * 1000
-                val nextDueTime = selectedDateMillis + (task.frequencyDays * oneDayMillis)
-                val nextDate = Calendar.getInstance()
-                nextDate.timeInMillis = nextDueTime
-                val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
-                tvNextDue.text = "Next task: ${dateFormat.format(nextDate.time)}"
-
+                // ĐÃ hoàn thành trong ngày đang xem → set UI completed
+                applyCompletedUi(cbDone, imgDone, layoutCompleted, tvNextDue, task)
             } else {
                 imgDone.visibility = View.GONE
                 layoutCompleted.visibility = View.GONE
 
                 if (isFuture) {
                     cbDone.visibility = View.INVISIBLE
+                    cbDone.isEnabled = false
                 } else {
                     cbDone.visibility = View.VISIBLE
                     cbDone.isChecked = false
@@ -134,9 +129,18 @@ class TaskGroupAdapter(
                 }
             }
 
+
+            // --- LISTENER: CẬP NHẬT UI NGAY KHI TICK ---
             cbDone.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) onTaskChecked(task)
+                if (isChecked) {
+                    // 1. Cập nhật UI ngay
+                    applyCompletedUi(cbDone, imgDone, layoutCompleted, tvNextDue, task)
+
+                    // 2. Báo ViewModel cập nhật DB
+                    onTaskChecked(task)
+                }
             }
+
 
             view.setOnClickListener { onTaskClick(task) }
         }
@@ -157,6 +161,28 @@ class TaskGroupAdapter(
         return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
                 cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
     }
+    private fun applyCompletedUi(
+        cbDone: CheckBox,
+        imgDone: ImageView,
+        layoutCompleted: View,
+        tvNextDue: TextView,
+        task: CareTask
+    ) {
+        // Ẩn checkbox, hiện icon tick + block "Today Completed / Next task"
+        cbDone.visibility = View.GONE
+        imgDone.visibility = View.VISIBLE
+        layoutCompleted.visibility = View.VISIBLE
+
+        // Tính ngày Next task dựa theo selectedDateMillis + frequencyDays
+        val oneDayMillis = 24L * 60 * 60 * 1000
+        val baseCal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
+        val nextTime = baseCal.timeInMillis + task.frequencyDays * oneDayMillis
+
+        val nextCal = Calendar.getInstance().apply { timeInMillis = nextTime }
+        val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
+        tvNextDue.text = "Next task: ${dateFormat.format(nextCal.time)}"
+    }
+
 
     class GroupDiffCallback : DiffUtil.ItemCallback<PlantTasksGroup>() {
         override fun areItemsTheSame(oldItem: PlantTasksGroup, newItem: PlantTasksGroup): Boolean {
