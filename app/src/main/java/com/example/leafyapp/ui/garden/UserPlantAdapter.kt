@@ -1,5 +1,6 @@
 package com.example.leafyapp.ui.garden
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,157 +12,126 @@ import com.example.leafyapp.DatabaseHelper
 import com.example.leafyapp.R
 import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.ItemPlantGroupBinding
-import com.example.leafyapp.databinding.ItemPlantGroupHeaderBinding
-import com.example.leafyapp.databinding.ItemUserPlantBinding
 
-// Đảm bảo import đúng GardenDataItem
-// Nếu GardenDataItem nằm trong file riêng, import nó.
-// Nếu nó nằm trong UserPlantAdapter.kt thì không cần import.
-// Giả sử GardenDataItem đã được tách ra file riêng ui/garden/GardenDataItem.kt
+// Class nội bộ để lưu dữ liệu nhóm
+data class PlantGroupItem(
+    val plantId: Int,
+    val items: List<UserPlant>,
+    var isExpanded: Boolean = false
+)
 
 class UserPlantAdapter(
-    private val onMenuClick: (View, UserPlant) -> Unit, // Callback khi bấm 3 chấm
-    private val onItemClick: (UserPlant) -> Unit        // Callback khi bấm vào cây
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    private val onMenuClick: (View, UserPlant) -> Unit, // Callback menu 3 chấm
+    private val onItemClick: (UserPlant) -> Unit
+) : RecyclerView.Adapter<UserPlantAdapter.GroupViewHolder>() {
 
-    private val originalList = ArrayList<UserPlant>()
-    private val displayList = ArrayList<GardenDataItem>()
-    private val groupsState = HashMap<Int, Boolean>()
-
-    companion object {
-        const val TYPE_HEADER = 0
-        const val TYPE_ITEM = 1
-    }
+    private val groupList = ArrayList<PlantGroupItem>()
 
     fun submitList(list: List<UserPlant>) {
-        originalList.clear()
-        originalList.addAll(list)
-        recalculateDisplayList()
-    }
+        val groupedMap = list.groupBy { it.plantId }
 
-    private fun recalculateDisplayList() {
-        displayList.clear()
-        val grouped = originalList.groupBy { it.plantId }
-
-        for ((plantId, plants) in grouped) {
-            val firstPlant = plants[0]
-            val isExpanded = groupsState[plantId] ?: false
-
-            displayList.add(GardenDataItem.GroupHeader(
-                plantId = plantId,
-                name = "", // Tên sẽ lấy từ DB trong onBind
-                image = firstPlant.imagePath,
-                count = plants.size,
-                isExpanded = isExpanded
-            ))
-
-            if (isExpanded) {
-                for (plant in plants) {
-                    displayList.add(GardenDataItem.PlantItem(plant))
-                }
-            }
+        groupList.clear()
+        for ((id, plants) in groupedMap) {
+            groupList.add(PlantGroupItem(id, plants, false))
         }
         notifyDataSetChanged()
     }
 
-    override fun getItemViewType(position: Int): Int {
-        return when (displayList[position]) {
-            is GardenDataItem.GroupHeader -> TYPE_HEADER
-            is GardenDataItem.PlantItem -> TYPE_ITEM
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GroupViewHolder {
+        val binding = ItemPlantGroupBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return GroupViewHolder(binding)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        val inflater = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_HEADER) {
-            // Sử dụng layout item_plant_group_header.xml (Header của nhóm)
-            val binding = ItemPlantGroupHeaderBinding.inflate(inflater, parent, false)
-            HeaderViewHolder(binding)
-        } else {
-            // Sử dụng layout item_plant_child.xml (Cây con)
-            // Lưu ý: item_plant_child.xml phải được inflate đúng
-            // Ở đây mình dùng view trực tiếp vì có thể chưa tạo binding cho item_plant_child
-            val view = inflater.inflate(R.layout.item_plant_child, parent, false)
-            ItemViewHolder(view)
-        }
+    override fun onBindViewHolder(holder: GroupViewHolder, position: Int) {
+        holder.bind(groupList[position])
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (val item = displayList[position]) {
-            is GardenDataItem.GroupHeader -> (holder as HeaderViewHolder).bind(item)
-            is GardenDataItem.PlantItem -> (holder as ItemViewHolder).bind(item.userPlant)
-        }
-    }
+    override fun getItemCount(): Int = groupList.size
 
-    override fun getItemCount(): Int = displayList.size
+    inner class GroupViewHolder(private val binding: ItemPlantGroupBinding) : RecyclerView.ViewHolder(binding.root) {
 
-    // --- HEADER VIEWHOLDER ---
-    inner class HeaderViewHolder(private val binding: ItemPlantGroupHeaderBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(header: GardenDataItem.GroupHeader) {
+        fun bind(group: PlantGroupItem) {
             val context = itemView.context
             val dbHelper = DatabaseHelper(context)
-            val originalPlant = dbHelper.getPlantById(header.plantId)
+            val firstPlant = group.items.firstOrNull()
 
-            binding.tvGroupName.text = originalPlant?.name ?: "Unknown Group"
-            binding.tvGroupCount.text = "${header.count} plants"
+            val originalPlant = if (firstPlant != null) dbHelper.getPlantById(firstPlant.plantId) else null
 
-            val imageToLoad = header.image ?: originalPlant?.image
-            loadImage(imageToLoad, binding.imgGroupIcon)
+            // --- HEADER ---
+            binding.tvGroupName.text = originalPlant?.name ?: "Unknown Plant"
+            binding.tvGroupCount.text = "${group.items.size} plants"
 
-            binding.imgExpandArrow.rotation = if (header.isExpanded) 180f else 0f
+            val imagePath = originalPlant?.image
+            loadImage(imagePath, binding.imgGroupIcon)
 
-            binding.root.setOnClickListener {
-                val newState = !header.isExpanded
-                groupsState[header.plantId] = newState
-                recalculateDisplayList()
+            binding.imgExpandArrow.rotation = if (group.isExpanded) 180f else 0f
+
+            // --- CHILD ITEMS ---
+            binding.layoutChildContainer.removeAllViews()
+
+            if (group.isExpanded) {
+                binding.layoutChildContainer.visibility = View.VISIBLE
+                val inflater = LayoutInflater.from(context)
+
+                for (plant in group.items) {
+                    val childView = inflater.inflate(R.layout.item_plant_child, binding.layoutChildContainer, false)
+
+                    val tvNickname = childView.findViewById<TextView>(R.id.tv_child_nickname)
+                    val tvSciName = childView.findViewById<TextView>(R.id.tv_child_sci_name)
+                    val imgChild = childView.findViewById<ImageView>(R.id.img_child_plant)
+
+                    // --- ĐÃ SỬA: Tìm đúng ID btn_more ---
+                    val btnMore = childView.findViewById<ImageView>(R.id.btn_more)
+
+                    tvNickname.text = plant.nickname
+                    tvSciName.text = originalPlant?.scientificName ?: ""
+
+                    val childImg = if (!plant.imagePath.isNullOrEmpty()) plant.imagePath else originalPlant?.image
+                    loadImage(childImg, imgChild)
+
+                    // Sự kiện Click 3 chấm
+                    btnMore.setOnClickListener {
+                        onMenuClick(it, plant)
+                    }
+
+                    childView.setOnClickListener { onItemClick(plant) }
+
+                    binding.layoutChildContainer.addView(childView)
+                }
+            } else {
+                binding.layoutChildContainer.visibility = View.GONE
+            }
+
+            binding.layoutHeaderClick.setOnClickListener {
+                group.isExpanded = !group.isExpanded
+                notifyItemChanged(adapterPosition)
             }
         }
-    }
 
-    // --- ITEM VIEWHOLDER (Cây con) ---
-    inner class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Ánh xạ View thủ công (nếu không dùng Binding cho item con)
-        private val tvNickname: TextView = itemView.findViewById(R.id.tv_child_nickname)
-        private val tvSciName: TextView = itemView.findViewById(R.id.tv_child_sci_name)
-        private val imgChild: ImageView = itemView.findViewById(R.id.img_child_plant)
-        private val btnMore: ImageView = itemView.findViewById(R.id.btn_more)
-
-        fun bind(plant: UserPlant) {
-            tvNickname.text = plant.nickname
-
-            val context = itemView.context
-            val dbHelper = DatabaseHelper(context)
-            val originalPlant = dbHelper.getPlantById(plant.plantId)
-
-            tvSciName.text = originalPlant?.scientificName ?: ""
-
-            val imageToLoad = if (!plant.imagePath.isNullOrEmpty()) plant.imagePath else originalPlant?.image
-            loadImage(imageToLoad, imgChild)
-
-            // Sự kiện Click 3 chấm -> Gọi callback về Fragment
-            btnMore.setOnClickListener {
-                onMenuClick(it, plant)
+        private fun loadImage(path: String?, imageView: ImageView) {
+            if (path.isNullOrEmpty()) {
+                imageView.setImageResource(R.drawable.ic_launcher_background)
+                return
             }
+            val context = imageView.context
+            val resId = context.resources.getIdentifier(path, "drawable", context.packageName)
 
-            itemView.setOnClickListener { onItemClick(plant) }
-        }
-    }
+            if (resId != 0) {
+                Glide.with(context).load(resId).centerCrop().into(imageView)
+            } else {
+                val finalUrl = if (path.contains("drive.google.com")) {
+                    try {
+                        val id = path.substringAfter("d/").substringBefore("/")
+                        "https://drive.google.com/uc?export=view&id=$id"
+                    } catch (e: Exception) { path }
+                } else path
 
-    private fun loadImage(path: String?, imageView: ImageView) {
-        if (path.isNullOrEmpty()) {
-            imageView.setImageResource(R.drawable.ic_launcher_background)
-            return
-        }
-        val context = imageView.context
-        val resId = context.resources.getIdentifier(path, "drawable", context.packageName)
-
-        if (resId != 0) {
-            Glide.with(context).load(resId).centerCrop().into(imageView)
-        } else {
-            val finalUrl = if (path.contains("drive.google.com")) {
-                try { path.substringAfter("d/").substringBefore("/").let { "https://drive.google.com/uc?export=view&id=$it" } } catch (e: Exception) { path }
-            } else path
-            Glide.with(context).load(finalUrl).centerCrop().into(imageView)
+                Glide.with(context)
+                    .load(finalUrl)
+                    .centerCrop()
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .into(imageView)
+            }
         }
     }
 }
