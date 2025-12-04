@@ -91,6 +91,12 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         return cal.timeInMillis
     }
 
+    fun getSelectedDayStart(): Long {
+        val time = _selectedDate.value ?: System.currentTimeMillis()
+        return getStartOfDay(time)
+    }
+
+
     fun setSelectedDate(date: Date) {
         _selectedDate.value = date.time
     }
@@ -120,24 +126,32 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun markTaskAsCompleted(task: CareTask, completedDate: Long) = viewModelScope.launch(Dispatchers.IO) {
-        val history = TaskHistory(taskId = task.id, completedDate = completedDate)
-        gardenDao.insertHistory(history)
+    fun markTaskAsCompleted(task: CareTask, completedDate: Long) =
+        viewModelScope.launch(Dispatchers.IO) {
 
-        val oneDayMillis = 24L * 60 * 60 * 1000
-        val newNextDue = completedDate + (task.frequencyDays * oneDayMillis)
+            // 1. Lưu history (dùng completedDate đã chuẩn)
+            val history = TaskHistory(taskId = task.id, completedDate = completedDate)
+            gardenDao.insertHistory(history)
 
-        val updatedTask = task.copy(nextDueDate = newNextDue)
-        gardenDao.insertTask(updatedTask)
+            // 2. Cập nhật nextDueDate cho task
+            val oneDayMillis = 24L * 60 * 60 * 1000
+            val newNextDue = completedDate + (task.frequencyDays * oneDayMillis)
 
-        if (task.isAutoReminder) {
-            scheduleAlarm(updatedTask, task.id.toInt())
+            val updatedTask = task.copy(nextDueDate = newNextDue)
+            // ✅ DÙNG UPDATE, KHÔNG INSERT
+            gardenDao.updateTask(updatedTask)
+
+            // 3. Nếu có nhắc giờ thì đặt lại alarm
+            if (task.isAutoReminder) {
+                scheduleAlarm(updatedTask, task.id.toInt())
+            }
+
+            // 4. Làm mới lại list cho ngày đang xem
+            val currentDate = _selectedDate.value ?: System.currentTimeMillis()
+            val currentTasks = _allTasksSource.value ?: emptyList()
+            filterAndGroupTasks(currentDate, currentTasks)
         }
 
-        val currentDate = _selectedDate.value ?: System.currentTimeMillis()
-        val currentTasks = _allTasksSource.value ?: emptyList()
-        filterAndGroupTasks(currentDate, currentTasks)
-    }
 
     private fun scheduleAlarm(task: CareTask, taskId: Int) {
         val alarmManager = getApplication<Application>().getSystemService(Context.ALARM_SERVICE) as AlarmManager

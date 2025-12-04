@@ -72,13 +72,15 @@ class TasksFragment : Fragment() {
         taskAdapter = TaskGroupAdapter(
             selectedDateMillis = System.currentTimeMillis(),
             onTaskChecked = { task ->
-                viewModel.markTaskAsCompleted(task, System.currentTimeMillis())
+                val completedAt = viewModel.getSelectedDayStart()
+                viewModel.markTaskAsCompleted(task, completedAt)
                 Toast.makeText(context, "Đã hoàn thành!", Toast.LENGTH_SHORT).show()
             },
             onTaskClick = { task ->
                 showEditDeleteDialog(task)
             }
         )
+
 
         binding.rvTasks.adapter = taskAdapter
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
