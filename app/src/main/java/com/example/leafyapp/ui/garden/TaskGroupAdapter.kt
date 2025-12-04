@@ -106,16 +106,30 @@ class TaskGroupAdapter(
 
             // --- TÍNH TRẠNG HIỆN TẠI ---
             val isCompletedOnSelectedDate = isSameDay(task.lastCompletedDate ?: 0, selectedDateMillis)
-            val isFuture = selectedDateMillis > System.currentTimeMillis() &&
-                    !isSameDay(selectedDateMillis, System.currentTimeMillis())
+            val isFuture = selectedDateMillis > System.currentTimeMillis() && !isSameDay(selectedDateMillis, System.currentTimeMillis())
 
-            // Xóa listener cũ tránh loop
             cbDone.setOnCheckedChangeListener(null)
 
             if (isCompletedOnSelectedDate) {
-                // ĐÃ hoàn thành trong ngày đang xem → set UI completed
-                applyCompletedUi(cbDone, imgDone, layoutCompleted, tvNextDue, task)
-            } else {
+                cbDone.visibility = View.VISIBLE
+                cbDone.isChecked = true
+
+                // KHÔNG disable để khỏi bị xám
+                cbDone.isEnabled = true
+                // Chỉ khoá click thôi
+                cbDone.isClickable = false
+
+                imgDone.visibility = View.GONE
+                layoutCompleted.visibility = View.VISIBLE
+
+                val oneDayMillis = 24L * 60 * 60 * 1000
+                val nextDueTime = selectedDateMillis + (task.frequencyDays * oneDayMillis)
+                val nextDate = Calendar.getInstance().apply { timeInMillis = nextDueTime }
+                val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
+                tvNextDue.text = "Next task: ${dateFormat.format(nextDate.time)}"
+            }
+            else {
+                // CHƯA HOÀN THÀNH
                 imgDone.visibility = View.GONE
                 layoutCompleted.visibility = View.GONE
 
@@ -130,16 +144,28 @@ class TaskGroupAdapter(
             }
 
 
+
             // --- LISTENER: CẬP NHẬT UI NGAY KHI TICK ---
             cbDone.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
-                    // 1. Cập nhật UI ngay
-                    applyCompletedUi(cbDone, imgDone, layoutCompleted, tvNextDue, task)
-
-                    // 2. Báo ViewModel cập nhật DB
                     onTaskChecked(task)
+
+                    // Khóa không cho bấm lại, nhưng vẫn giữ màu xanh
+                    cbDone.isClickable = false
+                    cbDone.isEnabled = true
+
+                    layoutCompleted.visibility = View.VISIBLE
+
+                    val oneDayMillis = 24L * 60 * 60 * 1000
+                    val baseTime = selectedDateMillis
+                    val nextDueTime = baseTime + (task.frequencyDays * oneDayMillis)
+                    val nextDate = Calendar.getInstance().apply { timeInMillis = nextDueTime }
+                    val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
+                    tvNextDue.text = "Next task: ${dateFormat.format(nextDate.time)}"
                 }
             }
+
+
 
 
             view.setOnClickListener { onTaskClick(task) }
