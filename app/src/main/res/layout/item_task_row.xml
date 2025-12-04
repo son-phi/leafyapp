@@ -56,10 +56,12 @@
                     android:layout_marginTop="4dp">
 
                     <ImageView
+                        android:id="@+id/img_completed_icon"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
-                        android:src="@android:drawable/checkbox_on_background"
+                        android:src="@drawable/ic_completed_small"
                         app:tint="#4CAF50"/>
+
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -86,22 +88,24 @@
         <!-- Checkbox (Sẽ ẩn đi khi hoàn thành) -->
         <CheckBox
             android:id="@+id/cb_task_done"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:buttonTint="#4CAF50"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:button="@drawable/selector_task_check"
             android:background="@null"
-            android:scaleX="1.2"
-            android:scaleY="1.2"/>
+            android:buttonTint="@null"
+            app:buttonTint="@null"/>
+
 
         <!-- Icon Tick tròn xám (Hiện khi hoàn thành - ĐÂY LÀ ID BẠN BỊ THIẾU) -->
         <ImageView
             android:id="@+id/img_done_check"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@android:drawable/checkbox_on_background"
+            android:src="@drawable/ic_check_circle_gray"
             app:tint="#BDBDBD"
             android:visibility="gone"
             android:layout_marginEnd="8dp"/>
+
 
     </LinearLayout>
 
