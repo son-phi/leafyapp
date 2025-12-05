@@ -67,8 +67,24 @@ class CameraFragment : Fragment() {
         bindViews(v)
         setupClicks()
 
+        // 1. Nhận dữ liệu từ Home gửi sang
+        val argMode = arguments?.getString("CAMERA_MODE") ?: arguments?.getString("SCAN_MODE")
+
+        // 2. Cập nhật biến currentMode dựa trên dữ liệu nhận được
+        if (!argMode.isNullOrBlank()) {
+            currentMode = if (argMode.equals("Plant", ignoreCase = true)) "Plant" else "Disease"
+        } else {
+            currentMode = "Disease" // Mặc định nếu không có dữ liệu gửi sang
+        }
+        // 3. Cập nhật UI (QUAN TRỌNG: Sửa đoạn này)
+        // Dùng v.post để đảm bảo View đã được vẽ xong (để lấy được width của tvDisease)
+        v.post {
+            // Cập nhật UI dựa trên currentMode vừa nhận được (chứ không fix cứng là true nữa)
+            updateModeUI(isDisease = (currentMode == "Disease"), animate = false)
+        }
+
         // Set trạng thái màu sắc ban đầu (Disease được chọn)
-        updateModeUI(isDisease = true, animate = false)
+//        updateModeUI(isDisease = true, animate = false)
 
         if (allPermissionsGranted()) startCamera()
         else ActivityCompat.requestPermissions(

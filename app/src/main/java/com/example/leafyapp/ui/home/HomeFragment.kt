@@ -26,6 +26,8 @@ import android.util.Log
 import androidx.fragment.app.viewModels
 import com.example.leafyapp.ui.search.SearchActivity
 import java.util.*
+import androidx.core.os.bundleOf
+import androidx.navigation.fragment.findNavController
 
 
 class HomeFragment : Fragment() {
@@ -55,11 +57,16 @@ class HomeFragment : Fragment() {
 
         // Clicks cho 4 tool
         binding.cardToolPlant.setOnClickListener {
-            Toast.makeText(requireContext(), "Plant Identifier", Toast.LENGTH_SHORT).show()
+            // Tạo gói dữ liệu: Key là "CAMERA_MODE", Value là "Plant"
+            val args = bundleOf("CAMERA_MODE" to "Plant")
+
             // TODO: điều hướng tới màn nhận dạng cây
+            findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
+
         }
         binding.cardToolDisease.setOnClickListener {
-            Toast.makeText(requireContext(), "Disease Identifier", Toast.LENGTH_SHORT).show()
+            val args = bundleOf("CAMERA_MODE" to "Disease")
+            findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
         }
         binding.cardToolLight.setOnClickListener {
             Toast.makeText(requireContext(), "Light Meter", Toast.LENGTH_SHORT).show()
@@ -81,7 +88,6 @@ class HomeFragment : Fragment() {
 
 
         binding.cardSearch.setOnClickListener {
-            Toast.makeText(requireContext(), "Card clicked", Toast.LENGTH_SHORT).show()
             val intent = Intent(requireContext(), SearchActivity::class.java)
             startActivity(intent)
         }
