@@ -8,17 +8,19 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatEditText
+import android.widget.ImageButton
+import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.leafyapp.DatabaseHelper
 import com.example.leafyapp.R
-import com.example.leafyapp.data.model.Plant
 import com.example.leafyapp.ui.home.PlantAdapter
 import com.example.leafyapp.ui.information.ResultActivity
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +29,11 @@ import kotlinx.coroutines.withContext
 
 class SearchActivity : AppCompatActivity() {
 
-    private lateinit var etSearch: EditText
+    private lateinit var etSearch: AppCompatEditText
     private lateinit var btnCancel: TextView
     private lateinit var rv: RecyclerView
     private lateinit var adapter: PlantAdapter
+    private lateinit var btnClear: ImageButton
 
     private lateinit var dbHelper: DatabaseHelper
 
@@ -41,36 +44,58 @@ class SearchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
+        // find views (single etSearch variable only)
         etSearch = findViewById(R.id.et_search)
         btnCancel = findViewById(R.id.btn_cancel)
         rv = findViewById(R.id.rv_results)
+        btnClear = findViewById(R.id.btn_clear)
 
-        // Initialize DB helper BEFORE any DB calls
+        // DB + adapter init
         dbHelper = DatabaseHelper(this)
-
-        // Adapter: reuse existing PlantAdapter (shows name + scientificName)
         adapter = PlantAdapter { plant ->
-            // Open ResultActivity which will host PlantFragment
-            // NOTE: PlantFragment uses getPlantById(plantId + 1) internally,
-            // so we pass plant.id - 1 so that final DB lookup becomes plant.id.
             val intent = Intent(this, ResultActivity::class.java).apply {
-                putExtra("RESULT_ID", (plant.id - 1))           // see note above
+                putExtra("RESULT_ID", (plant.id - 1))
                 putExtra("RESULT_LABEL", plant.name)
-                putExtra("RESULT_CONF", 1.0f)                   // confidence 1.0 by default
-                putExtra("RESULT_MODE", "Plant")                // mode = "Plant" so ResultActivity loads PlantFragment
+                putExtra("RESULT_CONF", 1.0f)
+                putExtra("RESULT_MODE", "Plant")
             }
             startActivity(intent)
-            // optionally finish search activity so back returns to Home
             finish()
         }
 
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
+        rv.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
 
-        // Load first 5 plants from DB (do this on IO)
+        // Clear button behaviour
+        btnClear.setOnClickListener {
+            etSearch.text?.clear()
+            etSearch.requestFocus()
+            performSearch("")
+            // don't call it.performClick() here — this would re-trigger the listener
+        }
+
+        // Show/hide clear button based on text
+        btnClear.isVisible = !etSearch.text.isNullOrEmpty()
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun afterTextChanged(s: Editable?) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                // show/hide clear immediately
+                btnClear.isVisible = !s.isNullOrEmpty()
+
+                workRunnable?.let { handler.removeCallbacks(it) }
+                workRunnable = Runnable {
+                    val q = s?.toString()?.trim() ?: ""
+                    performSearch(q)
+                }
+                handler.postDelayed(workRunnable!!, 250)
+            }
+        })
+
+        // Load initial list
         lifecycleScope.launch {
             val list = withContext(Dispatchers.IO) {
-                // searchPlants("") returns all rows (LIKE '%%'), so take first 5
                 dbHelper.searchPlants("").take(5)
             }
             adapter.submitList(list)
@@ -81,31 +106,14 @@ class SearchActivity : AppCompatActivity() {
             finish()
         }
 
-        // Focus and open keyboard
         etSearch.requestFocus()
         showKeyboard()
-
-        // Text change with debounce -> call DB search on IO
-        etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun afterTextChanged(s: Editable?) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                workRunnable?.let { handler.removeCallbacks(it) }
-                workRunnable = Runnable {
-                    val q = s?.toString()?.trim() ?: ""
-                    performSearch(q)
-                }
-                handler.postDelayed(workRunnable!!, 250)
-            }
-        })
     }
 
     private fun performSearch(query: String) {
         lifecycleScope.launch {
             val results = withContext(Dispatchers.IO) {
                 if (query.isBlank()) {
-                    // show first 5 when empty, or show all: dbHelper.searchPlants("")
                     dbHelper.searchPlants("").take(5)
                 } else {
                     dbHelper.searchPlants(query)
