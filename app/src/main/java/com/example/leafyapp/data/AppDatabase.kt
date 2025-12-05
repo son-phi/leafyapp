@@ -10,7 +10,7 @@ import com.example.leafyapp.data.model.TaskHistory // Import mới
 import com.example.leafyapp.data.model.UserPlant
 
 // Tăng version lên 3
-@Database(entities = [UserPlant::class, CareTask::class, TaskHistory::class], version = 4, exportSchema = false)
+@Database(entities = [UserPlant::class, CareTask::class, TaskHistory::class], version = 10   , exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun gardenDao(): GardenDao
