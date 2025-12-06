@@ -52,11 +52,11 @@ class HomeFragment : Fragment() {
         // Bắt đầu lấy vị trí
         getCurrentLocation(vm)
         // Quan sát location LiveData
-        vm.location.observe(viewLifecycleOwner) { binding.tvLocation.text = it }
+        vm.location.observe(viewLifecycleOwner) { binding.sectionHeader.tvLocation.text = it }
 
 
         // Clicks cho 4 tool
-        binding.cardToolPlant.setOnClickListener {
+        binding.sectionTools.cardToolPlant.setOnClickListener {
             // Tạo gói dữ liệu: Key là "CAMERA_MODE", Value là "Plant"
             val args = bundleOf("CAMERA_MODE" to "Plant")
 
@@ -64,14 +64,14 @@ class HomeFragment : Fragment() {
             findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
 
         }
-        binding.cardToolDisease.setOnClickListener {
+        binding.sectionTools.cardToolDisease.setOnClickListener {
             val args = bundleOf("CAMERA_MODE" to "Disease")
             findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
         }
-        binding.cardToolLight.setOnClickListener {
+        binding.sectionTools.cardToolLight.setOnClickListener {
             Toast.makeText(requireContext(), "Light Meter", Toast.LENGTH_SHORT).show()
         }
-        binding.cardToolWater.setOnClickListener {
+        binding.sectionTools.cardToolWater.setOnClickListener {
             Toast.makeText(requireContext(), "Water Meter", Toast.LENGTH_SHORT).show()
         }
 
@@ -79,7 +79,7 @@ class HomeFragment : Fragment() {
 //        binding.tvTemp.text = "30°C"
 //        binding.tvTempRange.text = "(30°C · 30°C)"
         viewModel.weatherData.observe(viewLifecycleOwner) { weather ->
-            binding.tvTemp.text = "${weather.main.temp}°C"
+            binding.sectionHeader.tvTemp.text = "${weather.main.temp}°C"
 //            binding.tvWeather.text = weather.weather[0].main
         }
 

@@ -16,4 +16,12 @@
         <item name="colorSecondary">@color/teal_200</item>
     </style>
 
+    <style name="MyBottomNavStyle" parent="Widget.Material3.BottomNavigationView">
+        <item name="materialThemeOverlay">@style/MyBottomNavOverlay</item>
+    </style>
+
+    <style name="MyBottomNavOverlay" parent="">
+        <item name="colorSecondaryContainer">@android:color/transparent</item>
+    </style>
+
 </resources>
