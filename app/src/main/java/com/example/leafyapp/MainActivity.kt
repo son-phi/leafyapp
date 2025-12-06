@@ -9,7 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.navigation.findNavController
+// import androidx.navigation.findNavController // <-- Bỏ dòng này
+import androidx.navigation.fragment.NavHostFragment // <-- Thêm dòng này
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import androidx.navigation.navOptions
@@ -29,7 +30,12 @@ class MainActivity : AppCompatActivity() {
 
         supportActionBar?.hide()
 
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        // --- SỬA LỖI TẠI ĐÂY ---
+        // Thay vì dùng findNavController(R.id...), hãy lấy NavHostFragment từ SupportFragmentManager trước
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
+        val navController = navHostFragment.navController
+        // ------------------------
 
         binding.navView.setupWithNavController(navController)
 
@@ -62,17 +68,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- QUAN TRỌNG: Hàm này chạy khi MainActivity đã có sẵn và nhận Intent mới ---
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent) // Cập nhật intent mới nhất
-        handleIntent(intent) // Xử lý logic chuyển tab
+        setIntent(intent)
+        handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.getBooleanExtra("OPEN_MY_GARDEN", false) == true) {
-            // Chuyển sang tab My Garden
-            // Đảm bảo ID này đúng với file res/menu/bottom_nav_menu.xml
             binding.navView.selectedItemId = R.id.navigation_garden
         }
     }
