@@ -55,4 +55,12 @@ interface GardenDao {
 
     @Query("SELECT completedDate FROM task_history WHERE taskId = :taskId")
     suspend fun getHistoryForTask(taskId: Long): List<Long>
+
+    // Lấy thông tin chi tiết của 1 cây dựa trên ID (để biết ngày thêm, tên, ảnh...)
+    @Query("SELECT * FROM user_plants WHERE id = :id")
+    suspend fun getUserPlantById(id: Int): UserPlant?
+
+    // Lấy danh sách các nhiệm vụ (Task) của cây đó (để từ đó tra ra lịch sử)
+    @Query("SELECT * FROM care_tasks WHERE userPlantId = :userPlantId")
+    suspend fun getTasksForPlant(userPlantId: Int): List<CareTask>
 }
