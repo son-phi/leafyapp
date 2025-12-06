@@ -16,7 +16,9 @@
     <fragment
         android:id="@+id/navigation_garden"
         android:name="com.example.leafyapp.ui.garden.GardenFragment"
-        tools:layout="@layout/fragment_garden" />
+        tools:layout="@layout/fragment_garden" > <action
+        android:id="@+id/action_garden_to_timeline"
+        app:destination="@id/plantTimelineFragment" /> </fragment>
 
     <fragment
         android:id="@+id/navigation_camera"
@@ -27,4 +29,13 @@
         android:id="@+id/navigation_profile"
         android:name="com.example.leafyapp.ui.profile.ProfileFragment"
         tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/plantTimelineFragment"
+        android:name="com.example.leafyapp.ui.garden.PlantTimelineFragment"
+        android:label="Plant Timeline"
+        tools:layout="@layout/fragment_plant_timeline"> <argument
+        android:name="PLANT_ID"
+        app:argType="integer" /> </fragment>
+
 </navigation>
