@@ -72,7 +72,11 @@ class TasksFragment : Fragment() {
         taskAdapter = TaskGroupAdapter(
             selectedDateMillis = System.currentTimeMillis(),
             onTaskChecked = { task ->
-                val completedAt = viewModel.getSelectedDayStart()
+                // --- SỬA Ở ĐÂY (QUAN TRỌNG) ---
+                // Code cũ: val completedAt = viewModel.getSelectedDayStart() -> Gây lỗi 00:00
+                // Code mới: Lấy thời gian thực tế lúc bấm nút
+                val completedAt = System.currentTimeMillis()
+
                 viewModel.markTaskAsCompleted(task, completedAt)
                 Toast.makeText(context, "Đã hoàn thành!", Toast.LENGTH_SHORT).show()
             },

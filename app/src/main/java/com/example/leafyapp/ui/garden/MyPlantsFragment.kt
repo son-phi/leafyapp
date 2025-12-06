@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.leafyapp.R
@@ -62,17 +63,15 @@ class MyPlantsFragment : Fragment() {
 //                intent.putExtra("RESULT_LABEL", plant.nickname)
 //                intent.putExtra("RESULT_MODE", "Plant")
 //                startActivity(intent)
-                val timelineFragment = PlantTimelineFragment().apply {
-                    arguments = Bundle().apply {
-                        putInt("PLANT_ID", plant.id) // Chú ý: dùng plant.id (Primary Key)
-                    }
+                val bundle = Bundle().apply { putInt("PLANT_ID", plant.id.toInt()) }
+                try {
+                    findNavController().navigate(R.id.action_garden_to_timeline, bundle)
+                } catch (e: Exception) {
+                    // Có thể bạn đang ở tab khác, nên tìm từ NavController của Activity
+                    requireActivity().findNavController(R.id.nav_host_fragment_activity_main)
+                        .navigate(R.id.action_garden_to_timeline, bundle)
                 }
 
-                // Thay thế Fragment hiện tại bằng TimelineFragment
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.nav_host_fragment_activity_main, timelineFragment) // ID của container chính trong Activity
-                    .addToBackStack(null) // Để user bấm Back sẽ quay lại danh sách cây
-                    .commit()
             }
         )
 
