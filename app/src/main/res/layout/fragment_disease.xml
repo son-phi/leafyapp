@@ -82,6 +82,20 @@
                 android:orientation="vertical"
                 android:paddingBottom="40dp"
                 android:paddingTop="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMarkSick"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="40dp"
+                android:text="Chọn cây bị bệnh"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:padding="12dp"
+                app:backgroundTint="#D32F2F"
+                app:cornerRadius="12dp"
+                 app:iconGravity="textStart" />
         </LinearLayout>
 
     </ScrollView>
