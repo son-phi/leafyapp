@@ -28,6 +28,8 @@ import com.example.leafyapp.ui.search.SearchActivity
 import java.util.*
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.leafyapp.ui.information.ResultActivity
 
 
 class HomeFragment : Fragment() {
@@ -38,6 +40,9 @@ class HomeFragment : Fragment() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val viewModel: HomeViewModel by viewModels()
+
+    // Khai báo Adapter
+    private lateinit var trendingAdapter: TrendingAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -94,6 +99,60 @@ class HomeFragment : Fragment() {
 
 
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
+        // 2. Setup RecyclerView Trending (MỚI THÊM)
+        setupTrendingRecyclerView()
+
+        // 3. Quan sát dữ liệu (Location, Weather, Plants)
+        setupObservers()
+    }
+
+    private fun setupTrendingRecyclerView() {
+        // Khởi tạo Adapter và xử lý sự kiện Click vào 1 cây
+        trendingAdapter = TrendingAdapter { plant ->
+            // Mở màn hình chi tiết khi click vào thẻ Trending
+            val intent = Intent(requireContext(), ResultActivity::class.java).apply {
+                putExtra("RESULT_ID", plant.id)
+                putExtra("RESULT_LABEL", plant.name)
+                putExtra("RESULT_MODE", "Plant")
+            }
+            startActivity(intent)
+        }
+
+        // Cấu hình RecyclerView trong file layout
+        // binding.sectionTrending là ID của thẻ <include>
+        // rvTrending là ID của RecyclerView bên trong file layout_home_trending.xml
+        binding.sectionTrending.rvTrending.apply {
+            adapter = trendingAdapter
+            layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            setHasFixedSize(true)
+        }
+    }
+
+    private fun setupObservers() {
+        // Observer Location
+        viewModel.location.observe(viewLifecycleOwner) {
+            binding.sectionHeader.tvLocation.text = it
+        }
+
+        // Observer Weather
+        viewModel.weatherData.observe(viewLifecycleOwner) { weather ->
+            binding.sectionHeader.tvTemp.text = "${weather.main.temp}°C"
+        }
+
+        // Observer Plants (Dữ liệu cây lấy từ Firebase) -> Cập nhật vào Trending
+        viewModel.plants.observe(viewLifecycleOwner) { list ->
+            // Giả lập "Trending" bằng cách lấy 5 cây đầu tiên trong danh sách
+            // Hoặc bạn có thể dùng list.shuffled().take(5) để lấy ngẫu nhiên
+            val trendingList = list.take(5)
+            trendingAdapter.submitList(trendingList)
+        }
     }
 
     private fun getCurrentLocation(vm: HomeViewModel) {
