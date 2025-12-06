@@ -4,7 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+
+    android:paddingBottom="105dp"
+    android:clipToPadding="false"
+    >
 
     <!-- Tiêu đề (nếu cần, hoặc xóa nếu Activity đã có Toolbar) -->
     <TextView
