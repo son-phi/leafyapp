@@ -132,10 +132,49 @@ class DatabaseHelper(private val context: Context) :
     fun getDiseaseById(id: Int): Disease? {
         val db = readableDatabase
         val cursor = db.rawQuery("SELECT * FROM diseases WHERE id = ?", arrayOf(id.toString()))
+
         cursor.use { c ->
             if (!c.moveToFirst()) return null
-            val name = c.getString(c.getColumnIndexOrThrow("disease"))
-            return Disease(id, name, listOf(), listOf(), listOf())
+
+            // 1. Lấy tên bệnh
+            // Lưu ý: Cột tên bệnh trong ảnh bạn gửi là "disease", không phải "name"
+            val nameIndex = c.getColumnIndex("disease")
+            val name = if (nameIndex != -1) c.getString(nameIndex) else "Lỗi tên bệnh"
+
+            // 2. Gom nhóm các cột Reason (reason1 -> reason4)
+            val reasons = ArrayList<String>()
+            val reasonCols = listOf("reason1", "reason2", "reason3", "reason4")
+            for (colName in reasonCols) {
+                val index = c.getColumnIndex(colName)
+                if (index != -1) {
+                    val text = c.getString(index)
+                    if (!text.isNullOrBlank()) reasons.add(text)
+                }
+            }
+
+            // 3. Gom nhóm các cột Solution (solu1 -> solu4)
+            val solutions = ArrayList<String>()
+            val soluCols = listOf("solu1", "solu2", "solu3", "solu4")
+            for (colName in soluCols) {
+                val index = c.getColumnIndex(colName)
+                if (index != -1) {
+                    val text = c.getString(index)
+                    if (!text.isNullOrBlank()) solutions.add(text)
+                }
+            }
+
+            // 4. Gom nhóm các cột Plants (cay1 -> cay4)
+            val plants = ArrayList<String>()
+            val plantCols = listOf("cay1", "cay2", "cay3", "cay4")
+            for (colName in plantCols) {
+                val index = c.getColumnIndex(colName)
+                if (index != -1) {
+                    val text = c.getString(index)
+                    if (!text.isNullOrBlank()) plants.add(text)
+                }
+            }
+
+            return Disease(id, name, reasons, solutions, plants)
         }
     }
 
