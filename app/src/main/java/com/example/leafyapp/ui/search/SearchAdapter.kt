@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide // Import Glide
 import com.example.leafyapp.R
 import com.example.leafyapp.data.model.Plant
 
@@ -25,19 +26,19 @@ class SearchAdapter(private val onClick: (Plant) -> Unit) :
         holder.title.text = p.name
         holder.sub.text = p.scientificName
 
-        // cố gắng load drawable từ tên lưu trong p.image (nếu image lưu tên drawable)
-        var loaded = false
-        val ctx = holder.itemView.context
+        // Xử lý ảnh với Glide
         if (!p.image.isNullOrBlank()) {
-            // nếu DB lưu "peace_lily" hoặc "peace_lily.png" -> lấy tên trước dấu chấm
-            val name = p.image.substringBeforeLast('.')
-            val resId = ctx.resources.getIdentifier(name, "drawable", ctx.packageName)
-            if (resId != 0) {
-                holder.thumb.setImageResource(resId)
-                loaded = true
-            }
-        }
-        if (!loaded) {
+
+            val directUrl = convertGoogleDriveLink(p.image)
+            // Nếu link là Google Drive, cần convert sang link xem trực tiếp (nếu cần)
+            // Tuy nhiên, Glide thường load tốt các URL chuẩn.
+            Glide.with(holder.itemView.context)
+                .load(directUrl)
+                .placeholder(android.R.drawable.ic_menu_gallery) // Ảnh chờ
+                .error(android.R.drawable.ic_delete) // Ảnh lỗi
+                .centerCrop()
+                .into(holder.thumb)
+        } else {
             holder.thumb.setImageResource(android.R.drawable.ic_menu_gallery)
         }
 
@@ -53,5 +54,22 @@ class SearchAdapter(private val onClick: (Plant) -> Unit) :
     class Diff : DiffUtil.ItemCallback<Plant>() {
         override fun areItemsTheSame(oldItem: Plant, newItem: Plant) = oldItem.id == newItem.id
         override fun areContentsTheSame(oldItem: Plant, newItem: Plant) = oldItem == newItem
+    }
+
+    // --- Thêm hàm hỗ trợ này xuống dưới cùng class Adapter ---
+    private fun convertGoogleDriveLink(originalUrl: String): String {
+        // Link gốc trong DB: https://drive.google.com/file/d/FILE_ID/view?usp=drive_link
+        // Link cần chuyển:   https://drive.google.com/uc?export=view&id=FILE_ID
+
+        return if (originalUrl.contains("drive.google.com")) {
+            try {
+                val id = originalUrl.substringAfter("/d/").substringBefore("/")
+                "https://drive.google.com/uc?export=view&id=$id"
+            } catch (e: Exception) {
+                originalUrl // Nếu lỗi thì trả về link gốc
+            }
+        } else {
+            originalUrl // Nếu không phải link Drive thì giữ nguyên
+        }
     }
 }
