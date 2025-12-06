@@ -102,7 +102,9 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun insert(plant: UserPlant) = viewModelScope.launch(Dispatchers.IO) {
-        gardenDao.insertUserPlant(plant)
+        val newPlantId = gardenDao.insertUserPlant(plant)
+        // Lưu NGAY giờ hiện tại làm ngày thêm cây
+        saveCreationDate(newPlantId.toInt(), System.currentTimeMillis())
     }
 
     fun delete(plant: UserPlant) = viewModelScope.launch(Dispatchers.IO) {
@@ -187,31 +189,69 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // --- HÀM MỚI: Lấy Timeline ---
+
     fun getPlantTimeline(plantId: Int): LiveData<List<TimelineItem>> = androidx.lifecycle.liveData(Dispatchers.IO) {
-        val timelineList = ArrayList<TimelineItem>()
+        // 1. Tạo list chứa dữ liệu thô (Raw Data)
+        val rawEvents = ArrayList<TimelineItem>()
 
-    // Nếu là cây cũ chưa có ngày, hàm này sẽ tự tạo và lưu lại luôn
+        //ngày thêm cây vào vườn
         val fixedCreationDate = getOrInitCreationDate(plantId)
-
-        // 1. Lấy thông tin cây
         val plant = gardenDao.getUserPlantById(plantId)
         if (plant != null) {
-            timelineList.add(TimelineItem.PlantAdded(fixedCreationDate, plant.nickname, plant.imagePath))
+            rawEvents.add(TimelineItem.PlantAdded(fixedCreationDate, plant.nickname, plant.imagePath))
         }
 
-        // 2. Lấy danh sách Task và lịch sử hoàn thành của chúng
+        //lấy nhiệm vụ đã hoàn thành vào timeline
         val tasks = gardenDao.getTasksForPlant(plantId)
         for (task in tasks) {
-            val historyDates = gardenDao.getHistoryForTask(task.id) // Trả về List<Long>
+            val historyDates = gardenDao.getHistoryForTask(task.id)
             for (date in historyDates) {
-                timelineList.add(TimelineItem.CareEvent(date, task.type))
+                rawEvents.add(TimelineItem.CareEvent(date, task.type))
             }
         }
 
-        // 3. Sắp xếp: Mới nhất lên đầu
-        timelineList.sortByDescending { it.dateMillis }
+        //Lấy tên bệnh vào timeline
+        val prefs = getApplication<Application>().getSharedPreferences("plant_diseases", Context.MODE_PRIVATE)
+        val logs = prefs.getStringSet("disease_logs", emptySet()) ?: emptySet()
 
-        emit(timelineList)
+        for (log in logs) {
+            // Tách chuỗi "ID|Tên|Ngày"
+            val parts = log.split("|")
+            if (parts.size == 3) {
+                val pId = parts[0].toIntOrNull()
+                val dName = parts[1]
+                val dTime = parts[2].toLongOrNull()
+
+                // Nếu đúng là cây này thì thêm vào list
+                if (pId == plantId && dTime != null) {
+                    rawEvents.add(TimelineItem.DiseaseEvent(dTime, dName))
+                }
+            }
+        }
+
+        // 2. Sắp xếp dữ liệu thô: Mới nhất lên đầu
+        rawEvents.sortByDescending { it.dateMillis }
+
+        // 3. --- GOM NHÓM THEO THÁNG ---
+        val groupedList = ArrayList<TimelineItem>()
+        val calendar = Calendar.getInstance()
+        var lastMonthKey = "" // Dùng để kiểm tra tháng trùng
+
+        for (item in rawEvents) {
+            calendar.timeInMillis = item.dateMillis
+
+            // Tạo key đại diện cho tháng (VD: "12-2025")
+            val currentMonthKey = "${calendar.get(Calendar.MONTH)}-${calendar.get(Calendar.YEAR)}"
+
+            // Nếu tháng này khác tháng trước -> Chèn Header
+            if (currentMonthKey != lastMonthKey) {
+                groupedList.add(TimelineItem.Header(item.dateMillis, currentMonthKey))
+                lastMonthKey = currentMonthKey
+            }
+            groupedList.add(item)
+        }
+
+        emit(groupedList)
     }
     private fun saveCreationDate(plantId: Int, date: Long) {
         val prefs = getApplication<Application>().getSharedPreferences("plant_birthdays", Context.MODE_PRIVATE)
@@ -219,25 +259,36 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // Hàm lấy ngày hoặc tạo mới nếu chưa có (cho cây cũ)
-    private suspend fun getOrInitCreationDate(plantId: Int): Long {
-        val prefs = getApplication<Application>().getSharedPreferences("plant_birthdays", Context.MODE_PRIVATE)
-
+    private fun getOrInitCreationDate(plantId: Int): Long {
+        val prefs = getApplication<Application>().getSharedPreferences(
+            "plant_birthdays",
+            Context.MODE_PRIVATE
+        )
         // 1. Thử lấy ngày đã lưu
         val savedDate = prefs.getLong("dob_$plantId", 0L)
-
         if (savedDate != 0L) {
             return savedDate
         } else {
-            // 2. Nếu chưa có (cây cũ từ trước), ta tính toán một mốc cố định
-            // Lấy ngày của task đầu tiên, nếu không có task thì lấy giờ hiện tại
-            val tasks = gardenDao.getTasksForPlant(plantId)
-            val earliestTask = tasks.minOfOrNull { it.startDate }
-            val newFixedDate = earliestTask ?: System.currentTimeMillis()
-
-            // 3. Lưu lại ngay để lần sau không bị đổi nữa
-            saveCreationDate(plantId, newFixedDate)
-
-            return newFixedDate
+            // 2. Nếu chưa có (Cây cũ từ trước khi update code)
+            // Lấy luôn giờ hiện tại làm mốc cố định
+            val now = System.currentTimeMillis()
+            // 3. Lưu lại ngay để lần sau mở lại nó vẫn là giờ này (không đổi nữa)
+            saveCreationDate(plantId, now)
+            return now
         }
+    }
+
+    fun markPlantsAsInfected(plants: List<UserPlant>, diseaseName: String) = viewModelScope.launch(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val prefs = getApplication<Application>().getSharedPreferences("plant_diseases", Context.MODE_PRIVATE)
+        val existingSet = prefs.getStringSet("disease_logs", HashSet())?.toMutableSet() ?: HashSet()
+
+        for (plant in plants) {
+            val logEntry = "${plant.id}|$diseaseName|$now"
+            existingSet.add(logEntry)
+        }
+
+        prefs.edit().putStringSet("disease_logs", existingSet).apply()
+
     }
 }
