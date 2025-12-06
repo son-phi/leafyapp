@@ -185,4 +185,33 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     suspend fun getPlantCount(plantId: Int): Int {
         return gardenDao.countPlantsById(plantId)
     }
+
+    // --- HÀM MỚI: Lấy Timeline ---
+    fun getPlantTimeline(plantId: Int): LiveData<List<TimelineItem>> = androidx.lifecycle.liveData(Dispatchers.IO) {
+        val timelineList = ArrayList<TimelineItem>()
+
+        // 1. Lấy thông tin cây (Sự kiện thêm cây)
+        val plant = gardenDao.getUserPlantById(plantId)
+        if (plant != null) {
+            // Lưu ý: Nếu UserPlant chưa có trường 'dateAdded', bạn có thể tạm dùng ngày hiện tại
+            // hoặc thêm trường đó vào Entity UserPlant sau. Ở đây mình ví dụ lấy time hiện tại.
+            // val dateAdded = plant.dateAdded ?: System.currentTimeMillis()
+            val dateAdded = System.currentTimeMillis() // Tạm thời để test
+            timelineList.add(TimelineItem.PlantAdded(dateAdded, plant.nickname, plant.imagePath))
+        }
+
+        // 2. Lấy danh sách Task và lịch sử hoàn thành của chúng
+        val tasks = gardenDao.getTasksForPlant(plantId)
+        for (task in tasks) {
+            val historyDates = gardenDao.getHistoryForTask(task.id) // Trả về List<Long>
+            for (date in historyDates) {
+                timelineList.add(TimelineItem.CareEvent(date, task.type))
+            }
+        }
+
+        // 3. Sắp xếp: Mới nhất lên đầu
+        timelineList.sortByDescending { it.dateMillis }
+
+        emit(timelineList)
+    }
 }

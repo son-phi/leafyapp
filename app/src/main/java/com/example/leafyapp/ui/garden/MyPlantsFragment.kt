@@ -57,11 +57,22 @@ class MyPlantsFragment : Fragment() {
             },
             // Callback 2: Khi bấm vào item cây
             onItemClick = { plant ->
-                val intent = Intent(requireContext(), ResultActivity::class.java)
-                intent.putExtra("RESULT_ID", plant.plantId - 1)
-                intent.putExtra("RESULT_LABEL", plant.nickname)
-                intent.putExtra("RESULT_MODE", "Plant")
-                startActivity(intent)
+//                val intent = Intent(requireContext(), ResultActivity::class.java)
+//                intent.putExtra("RESULT_ID", plant.plantId - 1)
+//                intent.putExtra("RESULT_LABEL", plant.nickname)
+//                intent.putExtra("RESULT_MODE", "Plant")
+//                startActivity(intent)
+                val timelineFragment = PlantTimelineFragment().apply {
+                    arguments = Bundle().apply {
+                        putInt("PLANT_ID", plant.id) // Chú ý: dùng plant.id (Primary Key)
+                    }
+                }
+
+                // Thay thế Fragment hiện tại bằng TimelineFragment
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.nav_host_fragment_activity_main, timelineFragment) // ID của container chính trong Activity
+                    .addToBackStack(null) // Để user bấm Back sẽ quay lại danh sách cây
+                    .commit()
             }
         )
 
