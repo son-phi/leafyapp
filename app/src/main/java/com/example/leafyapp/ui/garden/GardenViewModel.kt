@@ -190,14 +190,13 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     fun getPlantTimeline(plantId: Int): LiveData<List<TimelineItem>> = androidx.lifecycle.liveData(Dispatchers.IO) {
         val timelineList = ArrayList<TimelineItem>()
 
-        // 1. Lấy thông tin cây (Sự kiện thêm cây)
+    // Nếu là cây cũ chưa có ngày, hàm này sẽ tự tạo và lưu lại luôn
+        val fixedCreationDate = getOrInitCreationDate(plantId)
+
+        // 1. Lấy thông tin cây
         val plant = gardenDao.getUserPlantById(plantId)
         if (plant != null) {
-            // Lưu ý: Nếu UserPlant chưa có trường 'dateAdded', bạn có thể tạm dùng ngày hiện tại
-            // hoặc thêm trường đó vào Entity UserPlant sau. Ở đây mình ví dụ lấy time hiện tại.
-            // val dateAdded = plant.dateAdded ?: System.currentTimeMillis()
-            val dateAdded = System.currentTimeMillis() // Tạm thời để test
-            timelineList.add(TimelineItem.PlantAdded(dateAdded, plant.nickname, plant.imagePath))
+            timelineList.add(TimelineItem.PlantAdded(fixedCreationDate, plant.nickname, plant.imagePath))
         }
 
         // 2. Lấy danh sách Task và lịch sử hoàn thành của chúng
@@ -213,5 +212,32 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         timelineList.sortByDescending { it.dateMillis }
 
         emit(timelineList)
+    }
+    private fun saveCreationDate(plantId: Int, date: Long) {
+        val prefs = getApplication<Application>().getSharedPreferences("plant_birthdays", Context.MODE_PRIVATE)
+        prefs.edit().putLong("dob_$plantId", date).apply()
+    }
+
+    // Hàm lấy ngày hoặc tạo mới nếu chưa có (cho cây cũ)
+    private suspend fun getOrInitCreationDate(plantId: Int): Long {
+        val prefs = getApplication<Application>().getSharedPreferences("plant_birthdays", Context.MODE_PRIVATE)
+
+        // 1. Thử lấy ngày đã lưu
+        val savedDate = prefs.getLong("dob_$plantId", 0L)
+
+        if (savedDate != 0L) {
+            return savedDate
+        } else {
+            // 2. Nếu chưa có (cây cũ từ trước), ta tính toán một mốc cố định
+            // Lấy ngày của task đầu tiên, nếu không có task thì lấy giờ hiện tại
+            val tasks = gardenDao.getTasksForPlant(plantId)
+            val earliestTask = tasks.minOfOrNull { it.startDate }
+            val newFixedDate = earliestTask ?: System.currentTimeMillis()
+
+            // 3. Lưu lại ngay để lần sau không bị đổi nữa
+            saveCreationDate(plantId, newFixedDate)
+
+            return newFixedDate
+        }
     }
 }

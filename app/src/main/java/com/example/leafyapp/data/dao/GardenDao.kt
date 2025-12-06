@@ -21,7 +21,7 @@ interface GardenDao {
     fun getAllUserPlants(): LiveData<List<UserPlant>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUserPlant(plant: UserPlant)
+    suspend fun insertUserPlant(plant: UserPlant): Long
 
     @Delete
     suspend fun deleteUserPlant(plant: UserPlant)
