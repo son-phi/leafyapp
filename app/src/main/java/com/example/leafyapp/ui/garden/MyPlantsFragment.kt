@@ -94,9 +94,6 @@ class MyPlantsFragment : Fragment() {
             showAddPlantBottomSheet()
         }
 
-        binding.btnTestAddDebug.setOnClickListener {
-            showAddPlantBottomSheet()
-        }
     }
 
     // --- CÁC HÀM RIÊNG CỦA FRAGMENT (Đặt ở đây là đúng) ---

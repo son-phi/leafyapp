@@ -72,14 +72,5 @@
 
     </LinearLayout>
 
-    <!-- Nút Debug nhỏ (Để test thêm cây nhanh khi đã có list) -->
-    <Button
-        android:id="@+id/btn_test_add_debug"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Test Add"
-        android:alpha="0.5"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

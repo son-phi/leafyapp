@@ -190,4 +190,86 @@ class DatabaseHelper(private val context: Context) :
         }
         return resultList
     }
+
+    // --- THÊM MỚI ĐỂ MIGRATE ---
+    fun getAllPlants(): List<Plant> {
+        val list = ArrayList<Plant>()
+        val db = readableDatabase
+        // Lấy tất cả dòng từ bảng plants
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_PLANTS", null)
+
+        cursor.use { c ->
+            if (c.moveToFirst()) {
+                do {
+                    list.add(Plant(
+                        id = c.getInt(c.getColumnIndexOrThrow(COL_PLANT_ID)),
+                        name = c.getString(c.getColumnIndexOrThrow(COL_PLANT_NAME)),
+                        scientificName = c.getString(c.getColumnIndexOrThrow(COL_PLANT_SCI)),
+                        description = c.getString(c.getColumnIndexOrThrow(COL_PLANT_DESC)),
+                        light = c.getString(c.getColumnIndexOrThrow(COL_PLANT_LIGHT)),
+                        watering = c.getString(c.getColumnIndexOrThrow(COL_PLANT_WATER)),
+                        soil = c.getString(c.getColumnIndexOrThrow(COL_PLANT_SOIL)),
+                        fertilizer = c.getString(c.getColumnIndexOrThrow(COL_PLANT_FERT)),
+                        temperature = c.getString(c.getColumnIndexOrThrow(COL_PLANT_TEMP)),
+                        humidity = c.getString(c.getColumnIndexOrThrow(COL_PLANT_HUM)),
+                        image = c.getString(c.getColumnIndexOrThrow(COL_PLANT_IMG))
+                    ))
+                } while (c.moveToNext())
+            }
+        }
+        return list
+    }
+
+    fun getAllDiseases(): List<Disease> {
+        val list = ArrayList<Disease>()
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM diseases", null)
+
+        cursor.use { c ->
+            if (c.moveToFirst()) {
+                do {
+                    val id = c.getInt(c.getColumnIndexOrThrow("id"))
+                    val name = c.getString(c.getColumnIndexOrThrow("disease"))
+
+                    // Logic gộp cột Reason1 -> Reason4 thành List
+                    val reasons = ArrayList<String>()
+                    listOf("reason1", "reason2", "reason3", "reason4").forEach { col ->
+                        val index = c.getColumnIndex(col)
+                        if (index != -1 && !c.isNull(index)) {
+                            val txt = c.getString(index)
+                            if (txt.isNotBlank()) reasons.add(txt)
+                        }
+                    }
+
+                    // Logic gộp cột Solution1 -> Solution4
+                    val solutions = ArrayList<String>()
+                    listOf("solu1", "solu2", "solu3", "solu4").forEach { col ->
+                        val index = c.getColumnIndex(col)
+                        if (index != -1 && !c.isNull(index)) {
+                            // Lưu ý: Trong DB file bạn gửi, solu3, solu4 có thể bị nhận nhầm là INTEGER
+                            // nên ta dùng try-catch hoặc getString an toàn
+                            try {
+                                val txt = c.getString(index)
+                                if (txt.isNotBlank()) solutions.add(txt)
+                            } catch (e: Exception) {}
+                        }
+                    }
+
+                    // Logic gộp cột Plants (cay1 -> cay4)
+                    val plants = ArrayList<String>()
+                    listOf("cay1", "cay2", "cay3", "cay4").forEach { col ->
+                        val index = c.getColumnIndex(col)
+                        if (index != -1 && !c.isNull(index)) {
+                            val txt = c.getString(index)
+                            if (txt.isNotBlank()) plants.add(txt)
+                        }
+                    }
+
+                    list.add(Disease(id, name, reasons, solutions, plants))
+
+                } while (c.moveToNext())
+            }
+        }
+        return list
+    }
 }

@@ -4,7 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.home.HomeFragment">
+    tools:context=".ui.home.HomeFragment"
+    android:paddingBottom="105dp"
+    android:clipToPadding="false"
+    >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -77,6 +80,9 @@
         <include
             android:id="@+id/section_tools"
             layout="@layout/layout_home_tools" />
+        <include
+            android:id="@+id/section_trending"
+            layout="@layout/layout_home_trending" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

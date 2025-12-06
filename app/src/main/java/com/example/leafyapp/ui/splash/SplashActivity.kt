@@ -8,6 +8,8 @@ import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import com.example.leafyapp.MainActivity
 import com.example.leafyapp.databinding.ActivitySplashBinding
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 class SplashActivity : AppCompatActivity() {
 
@@ -25,6 +27,24 @@ class SplashActivity : AppCompatActivity() {
         )
 
         startAnimation()
+
+        val auth = Firebase.auth
+
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // Đã có user rồi → vào thẳng Main
+            goToMain()
+        } else {
+            // Đăng nhập ẩn danh lần đầu
+            auth.signInAnonymously()
+                .addOnSuccessListener {
+                    goToMain()
+                }
+                .addOnFailureListener { e ->
+                    e.printStackTrace()
+                    // TODO: show dialog / retry tuỳ anh
+                }
+        }
     }
 
     private fun startAnimation() {
