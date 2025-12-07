@@ -14,6 +14,8 @@ class WateringCalculatorActivity : AppCompatActivity() {
     private var potSize = 28
     private var temp = 25
     private var humidity = 60
+    private var isCm = true
+    private var isCelsius = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +25,92 @@ class WateringCalculatorActivity : AppCompatActivity() {
         setupNavigation()
         setupSliders()
         setupSelections()
+        setupUnitToggle()
+        setupTempToggle()
+    }
+
+    private fun setupTempToggle() {
+        binding.toggleUnitTemp.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                when (checkedId) {
+                    com.example.leafyapp.R.id.btn_c -> {
+                        if (!isCelsius) { // Đang là °F -> Chuyển sang °C
+                            isCelsius = true
+
+                            // 1. Lấy giá trị hiện tại (°F)
+                            val currentF = binding.sliderTemp.value
+
+                            // 2. Tính toán sang °C: (F - 32) / 1.8
+                            val newC = (currentF - 32) / 1.8f
+
+                            // 3. Cập nhật Slider (Range độ C: 0 -> 50)
+                            binding.sliderTemp.valueFrom = 0f
+                            binding.sliderTemp.valueTo = 50f
+                            binding.sliderTemp.value = newC.coerceIn(0f, 50f)
+
+                            // 4. Cập nhật Text
+                            binding.tvTempValue.text = "${newC.toInt()}°C"
+                        }
+                    }
+                    com.example.leafyapp.R.id.btn_f -> {
+                        if (isCelsius) { // Đang là °C -> Chuyển sang °F
+                            isCelsius = false
+
+                            // 1. Lấy giá trị hiện tại (°C)
+                            val currentC = binding.sliderTemp.value
+
+                            // 2. Tính toán sang °F: (C * 1.8) + 32
+                            val newF = (currentC * 1.8f) + 32
+
+                            // 3. Cập nhật Slider (Range độ F: 32 -> 122)
+                            // 0°C = 32°F, 50°C = 122°F
+                            binding.sliderTemp.valueFrom = 32f
+                            binding.sliderTemp.valueTo = 122f
+                            binding.sliderTemp.value = newF.coerceIn(32f, 122f)
+
+                            // 4. Cập nhật Text
+                            binding.tvTempValue.text = "${newF.toInt()}°F"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private fun setupUnitToggle() {
+        binding.toggleUnitSize.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                when (checkedId) {
+                    com.example.leafyapp.R.id.btn_cm -> {
+                        if (!isCm) { // Đang là IN, chuyển sang CM
+                            isCm = true
+                            val currentVal = binding.sliderSize.value
+                            val newVal = currentVal * 2.54f
+
+                            // Cập nhật Slider
+                            binding.sliderSize.valueFrom = 0f
+                            binding.sliderSize.valueTo = 100f
+                            binding.sliderSize.value = newVal.coerceIn(0f, 100f)
+
+                            binding.tvSizeValue.text = "${newVal.toInt()}cm"
+                        }
+                    }
+                    com.example.leafyapp.R.id.btn_in -> {
+                        if (isCm) { // Đang là CM, chuyển sang IN
+                            isCm = false
+                            val currentVal = binding.sliderSize.value
+                            val newVal = currentVal / 2.54f
+
+                            // Cập nhật Slider (Max của Inch nhỏ hơn)
+                            binding.sliderSize.valueFrom = 0f
+                            binding.sliderSize.valueTo = 40f
+                            binding.sliderSize.value = newVal.coerceIn(0f, 40f)
+
+                            binding.tvSizeValue.text = "${newVal.toInt()}in"
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun setupNavigation() {
@@ -79,13 +167,19 @@ class WateringCalculatorActivity : AppCompatActivity() {
         // Slider Size
         binding.sliderSize.addOnChangeListener { _, value, _ ->
             potSize = value.toInt()
-            binding.tvSizeValue.text = "${potSize}cm"
+
+            // KIỂM TRA ĐƠN VỊ ĐỂ HIỂN THỊ ĐÚNG
+            val unitText = if (isCm) "cm" else "in"
+            binding.tvSizeValue.text = "$potSize$unitText"
         }
 
         // Slider Temp
         binding.sliderTemp.addOnChangeListener { _, value, _ ->
             temp = value.toInt()
-            binding.tvTempValue.text = "${temp}°C"
+
+            // KIỂM TRA ĐƠN VỊ NHIỆT ĐỘ
+            val unitText = if (isCelsius) "°C" else "°F"
+            binding.tvTempValue.text = "$temp$unitText"
         }
 
         // Slider Humidity
@@ -165,17 +259,28 @@ class WateringCalculatorActivity : AppCompatActivity() {
     }
 
     private fun calculateWater() {
-        // --- CÔNG THỨC TÍNH TOÁN GIẢ LẬP ---
-        // 1. Lượng nước cơ bản theo kích thước chậu (Ví dụ: 1cm = 20ml)
-        var water = potSize * 20.0
 
+        // 1. Nhiệt độ: Luôn quy đổi về độ C để tính toán
+        // Nếu đang là độ F thì đổi về C, nếu đang là C thì giữ nguyên
+        val tempInCelsius = if (isCelsius) temp.toDouble() else (temp - 32) / 1.8
+
+        // 2. Kích thước chậu: Luôn quy đổi về CM để tính toán
+        // Nếu đang là Inch thì đổi về Cm
+        val sizeInCm = if (isCm) potSize.toDouble() else potSize * 2.54
+
+        // --- CÔNG THỨC TÍNH TOÁN ---
+
+        // Dùng sizeInCm thay vì potSize
+        var water = sizeInCm * 20.0
+
+        // ...
+
+        // Dùng tempInCelsius thay vì temp
+        val tempFactor = 1.0 + (tempInCelsius - 20) * 0.02
+        water *= tempFactor
         // 2. Hệ số vị trí
         if (!isIndoor) water *= 1.5 // Ngoài trời cần nhiều nước hơn
 
-        // 3. Hệ số nhiệt độ (Nóng hơn = Tăng nước)
-        // Lấy mốc 20 độ. Cứ tăng 1 độ thì thêm 2% nước
-        val tempFactor = 1.0 + (temp - 20) * 0.02
-        water *= tempFactor
 
         // 4. Hệ số độ ẩm (Khô hơn = Tăng nước)
         // Lấy mốc 50%. Cứ giảm 1% độ ẩm thì thêm 1% nước
