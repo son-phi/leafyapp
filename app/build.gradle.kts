@@ -11,7 +11,7 @@ android {
     compileSdk = 34 // Giữ 34 là chuẩn
 
     defaultConfig {
-        applicationId = "com.example.leafyapp"
+        applicationId = "leafyapp.dev"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -122,4 +122,6 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 }

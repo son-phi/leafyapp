@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <ImageView
+        android:id="@+id/btn_back"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_arrow_back"
+        app:tint="#2979FF"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"/> <ImageView
+    android:id="@+id/btn_close"
+    android:layout_width="32dp"
+    android:layout_height="32dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginTop="16dp"
+    android:src="@android:drawable/ic_menu_close_clear_cancel"
+    app:tint="#BDBDBD"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent"/>
+
+    <ViewFlipper
+        android:id="@+id/view_flipper"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/btn_back"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp">
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/ic_water"
+                app:tint="#2979FF"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Watering Calculator"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:layout_marginTop="24dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Complete quiz to find how much water your plant needs"
+                android:textAlignment="center"
+                android:textColor="#757575"
+                android:layout_marginTop="12dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_start"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Let's Start"
+                android:backgroundTint="#2979FF"
+                app:cornerRadius="30dp"
+                android:layout_marginTop="60dp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose where your plant is located"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:textAlignment="center"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="40dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_outdoor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#E0E0E0"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+                    <ImageView
+                        android:id="@+id/iv_outdoor"
+                        android:layout_width="32dp" android:layout_height="32dp"
+                        android:src="@drawable/sun_plant_wilt_solid_full" app:tint="#000000"/>
+                    <TextView
+                        android:id="@+id/tv_title_outdoor"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Outdoor Area" android:textStyle="bold" android:textSize="18sp"
+                        android:layout_marginTop="12dp" android:textColor="#000000"/>
+                    <TextView
+                        android:id="@+id/tv_desc_outdoor"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Only Garden" android:textColor="#757575"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_indoor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#2979FF"
+                app:strokeWidth="0dp"
+                app:cardElevation="4dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+                    <ImageView
+                        android:id="@+id/iv_indoor"
+                        android:layout_width="32dp" android:layout_height="32dp"
+                        android:src="@drawable/ic_home" app:tint="#FFFFFF"/>
+                    <TextView
+                        android:id="@+id/tv_title_indoor"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Indoor Area" android:textStyle="bold" android:textSize="18sp"
+                        android:layout_marginTop="12dp" android:textColor="#FFFFFF"/>
+                    <TextView
+                        android:id="@+id/tv_desc_indoor"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Living room, kitchen, bedroom..." android:textColor="#E0E0E0"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn_next_1" android:layout_width="match_parent" android:layout_height="60dp" android:text="Next" android:backgroundTint="#2979FF" app:cornerRadius="30dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
+
+            <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/calendar_solid_full" app:tint="#2979FF" android:layout_marginTop="40dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Indicate the pot's diameter"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:textAlignment="center"
+                android:layout_marginTop="24dp"/>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggle_unit_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@id/btn_cm">
+                <Button android:id="@+id/btn_cm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CM" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                <Button android:id="@+id/btn_in" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IN" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#F5F5F5"
+                app:strokeWidth="0dp"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="24dp">
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/slider_size"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:valueFrom="0"
+                        android:valueTo="100"
+                        android:value="28"
+                        app:thumbColor="#FFFFFF"
+                        app:thumbStrokeColor="#2979FF"
+                        app:thumbStrokeWidth="2dp"
+                        app:trackColorActive="#2979FF"
+                        app:trackColorInactive="#E0E0E0"/>
+
+                    <TextView
+                        android:id="@+id/tv_size_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="28cm"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="#000000"
+                        android:layout_marginStart="16dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.chip.Chip
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="I don't know"
+                android:layout_marginTop="16dp"
+                app:chipBackgroundColor="@android:color/transparent"/>
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn_next_2" android:layout_width="match_parent" android:layout_height="60dp" android:text="Next" android:backgroundTint="#2979FF" app:cornerRadius="30dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
+
+            <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_sun" app:tint="#2979FF" android:layout_marginTop="40dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Indicate temperature around the plant"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:textAlignment="center"
+                android:layout_marginTop="24dp"/>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggle_unit_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@id/btn_c">
+                <Button android:id="@+id/btn_c" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="°C" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                <Button android:id="@+id/btn_f" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="°F" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#F5F5F5"
+                app:strokeWidth="0dp"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="24dp">
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/slider_temp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:valueFrom="0"
+                        android:valueTo="50"
+                        android:value="25"
+                        app:thumbColor="#FFFFFF"
+                        app:thumbStrokeColor="#2979FF"
+                        app:thumbStrokeWidth="2dp"
+                        app:trackColorActive="#2979FF"
+                        app:trackColorInactive="#E0E0E0"/>
+
+                    <TextView
+                        android:id="@+id/tv_temp_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="25°C"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="#000000"
+                        android:layout_marginStart="16dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn_next_3" android:layout_width="match_parent" android:layout_height="60dp" android:text="Next" android:backgroundTint="#2979FF" app:cornerRadius="30dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
+
+            <ImageView android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_water" app:tint="#2979FF" android:layout_marginTop="40dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Indicate humidity level around the plant"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:textAlignment="center"
+                android:layout_marginTop="24dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="80dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#F5F5F5"
+                app:strokeWidth="0dp"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="24dp">
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/slider_humidity"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:valueFrom="0"
+                        android:valueTo="100"
+                        android:value="60"
+                        app:thumbColor="#FFFFFF"
+                        app:thumbStrokeColor="#2979FF"
+                        app:thumbStrokeWidth="2dp"
+                        app:trackColorActive="#2979FF"
+                        app:trackColorInactive="#E0E0E0"/>
+
+                    <TextView
+                        android:id="@+id/tv_humidity_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="60%"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="#000000"
+                        android:layout_marginStart="16dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btn_calculate" android:layout_width="match_parent" android:layout_height="60dp" android:text="Next" android:backgroundTint="#2979FF" app:cornerRadius="30dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tv_final_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1539ml"
+                android:textSize="60sp"
+                android:textStyle="bold"
+                android:textColor="#2979FF"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your plant needs"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:layout_marginTop="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="P.S. Plant requirements depend on pot, soil, light, season, and location."
+                android:textAlignment="center"
+                android:textColor="#757575"
+                android:layout_marginTop="16dp"
+                android:paddingHorizontal="24dp"/>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                app:singleSelection="true"
+                app:checkedButton="@id/btn_ml_res"
+                android:visibility="invisible"
+                >
+                <Button android:id="@+id/btn_ml_res" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ML" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                <Button android:id="@+id/btn_oz_res" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OZ" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_finish"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Great!"
+                android:backgroundTint="#2979FF"
+                app:cornerRadius="30dp"/>
+        </LinearLayout>
+
+    </ViewFlipper>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
