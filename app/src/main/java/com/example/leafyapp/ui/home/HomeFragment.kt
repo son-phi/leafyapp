@@ -30,6 +30,7 @@ import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.leafyapp.ui.information.ResultActivity
+import com.bumptech.glide.Glide
 
 
 class HomeFragment : Fragment() {
@@ -74,10 +75,13 @@ class HomeFragment : Fragment() {
             findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
         }
         binding.sectionTools.cardToolLight.setOnClickListener {
-            Toast.makeText(requireContext(), "Light Meter", Toast.LENGTH_SHORT).show()
+            // Mở màn hình đo sáng
+            val intent = Intent(requireContext(), com.example.leafyapp.ui.tools.LightMeterActivity::class.java)
+            startActivity(intent)
         }
         binding.sectionTools.cardToolWater.setOnClickListener {
-            Toast.makeText(requireContext(), "Water Meter", Toast.LENGTH_SHORT).show()
+            val intent = Intent(requireContext(), com.example.leafyapp.ui.tools.WateringCalculatorActivity::class.java)
+            startActivity(intent)
         }
 
 
@@ -143,7 +147,23 @@ class HomeFragment : Fragment() {
 
         // Observer Weather
         viewModel.weatherData.observe(viewLifecycleOwner) { weather ->
-            binding.sectionHeader.tvTemp.text = "${weather.main.temp}°C"
+            // 1. Hiển thị nhiệt độ
+            binding.sectionHeader.tvTemp.text = "${weather.main.temp.toInt()}°C"
+
+            // 2. Lấy mã icon (ví dụ: "10d")
+            val iconCode = weather.weather.firstOrNull()?.icon
+
+            if (!iconCode.isNullOrEmpty()) {
+                // 3. Tạo URL ảnh icon chuẩn của OpenWeatherMap
+                // @2x để lấy ảnh sắc nét hơn
+                val iconUrl = "https://openweathermap.org/img/wn/$iconCode@2x.png"
+
+                // 4. Dùng Glide tải ảnh vào ImageView (iv_weather)
+                Glide.with(this)
+                    .load(iconUrl)
+                    .error(com.example.leafyapp.R.drawable.cloud_solid_full)       // Ảnh nếu lỗi mạng
+                    .into(binding.sectionHeader.ivWeather)
+            }
         }
 
         // Observer Plants (Dữ liệu cây lấy từ Firebase) -> Cập nhật vào Trending
