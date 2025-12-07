@@ -31,7 +31,7 @@ class TrendingAdapter(private val onClick: (Plant) -> Unit) :
         // 2. Công thức: (Chiều rộng cha / 2.5) - Margin
         // Lưu ý: item_trending_plant.xml của bạn có layout_marginEnd="16dp"
         // Ta cần đổi 16dp ra pixel để tính toán chính xác
-        val marginInPixels = (16 * parent.context.resources.displayMetrics.density).toInt()
+        val marginInPixels = (10 * parent.context.resources.displayMetrics.density).toInt()
 
         // Chiều rộng mỗi item sẽ bằng: (Tổng chiều rộng / 2.5) - khoảng cách margin
         val itemWidth = (parentWidth / 2.5).toInt() - marginInPixels

@@ -60,7 +60,7 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:padding="4dp"
-        android:src="@android:drawable/ic_menu_more"
+        android:src="@drawable/pen_to_square_regular_full"
         app:tint="#757575"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"

@@ -20,7 +20,6 @@ import com.example.leafyapp.R
 import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.FragmentMyPlantsBinding
 import com.example.leafyapp.ui.camera.LoadingActivity
-import com.example.leafyapp.ui.information.ResultActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class MyPlantsFragment : Fragment() {

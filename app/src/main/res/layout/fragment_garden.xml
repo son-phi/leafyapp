@@ -4,36 +4,51 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF"
+    android:background="#F5F5F5">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="12dp">
 
-    android:paddingBottom="105dp"
-    android:clipToPadding="false"
-    >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My Garden"
+                android:fontFamily="sans-serif-black"
+                android:textSize="28sp"
+                android:textColor="#1B5E20" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Track and care for your plants"
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
 
-    <!-- Tiêu đề (nếu cần, hoặc xóa nếu Activity đã có Toolbar) -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="My Garden"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:padding="16dp"
-        android:background="#FFFFFF"/>
-
-    <!-- Tab Layout -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
-        app:tabIndicatorColor="#2DDA93"
-        app:tabSelectedTextColor="#2DDA93"
-        app:tabTextColor="#808080"
-        app:tabMode="fixed"
-        app:tabGravity="fill"/>
+        android:paddingBottom="8dp"
 
-    <!-- ViewPager2: Nơi hiển thị nội dung Tab -->
+        app:tabIndicatorFullWidth="false"
+        app:tabIndicatorHeight="4dp"
+        app:tabIndicatorColor="#4CAF50"
+
+        app:tabSelectedTextColor="#4CAF50"
+        app:tabTextColor="#9E9E9E"
+        app:tabTextAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+
+        app:tabRippleColor="#204CAF50" />
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
