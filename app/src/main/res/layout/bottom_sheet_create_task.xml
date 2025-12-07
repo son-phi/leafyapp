@@ -41,7 +41,7 @@
             android:id="@+id/btn_close_sheet"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:src="@drawable/circle_xmark_solid_full"
             app:tint="#757575"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
