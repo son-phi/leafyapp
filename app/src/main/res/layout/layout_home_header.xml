@@ -74,10 +74,10 @@
 
             <ImageView
                 android:id="@+id/iv_weather"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginStart="8dp"
-                android:src="@drawable/ic_cloud"
+                android:src="@drawable/cloud_solid_full"
                 android:contentDescription="@string/app_name" />
         </LinearLayout>
 

@@ -59,6 +59,14 @@
         <!-- ĐĂNG KÝ RECEIVER Ở ĐÂY (QUAN TRỌNG) -->
         <receiver android:name=".ui.notifications.AlarmReceiver" />
 
+        <activity
+            android:name=".ui.tools.LightMeterActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+
+        <activity android:name=".ui.tools.WateringCalculatorActivity" android:exported="false"/>
+
+
     </application>
 
 </manifest>

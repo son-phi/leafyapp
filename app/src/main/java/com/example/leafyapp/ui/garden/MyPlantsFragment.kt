@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
@@ -101,7 +102,11 @@ class MyPlantsFragment : Fragment() {
         val bottomSheet = AddPlantBottomSheet(
             onTakePhotoClick = {
                 try {
-                    findNavController().navigate(R.id.navigation_camera)
+                    // Tạo gói dữ liệu: Key là "CAMERA_MODE", Value là "Plant"
+                    val args = bundleOf("CAMERA_MODE" to "Plant")
+
+                    // TODO: điều hướng tới màn nhận dạng cây
+                    findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Lỗi điều hướng Camera", Toast.LENGTH_SHORT).show()
                 }
