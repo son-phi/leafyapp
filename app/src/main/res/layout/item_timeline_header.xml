@@ -22,7 +22,7 @@
         android:id="@+id/img_arrow"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:src="@android:drawable/arrow_up_float"
+        android:src="@drawable/caret_up_solid_full"
         android:contentDescription="Expand/Collapse"
         android:tint="#000000" />
 </LinearLayout>

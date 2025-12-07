@@ -20,54 +20,55 @@
         <!-- Search bar -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            app:cardCornerRadius="24dp"
-            app:cardBackgroundColor="#F9F9F9">
+            android:layout_marginEnd="12dp"
+            app:cardCornerRadius="26dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="#F0F2F5">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="12dp"
+                android:paddingStart="16dp"
                 android:paddingEnd="8dp">
 
-                <!-- Search icon -->
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:src="@drawable/ic_search"
-                    app:tint="?attr/colorOnSurfaceVariant"
-                    />
+                    app:tint="#757575" />
 
-                <!-- Search input -->
-                <com.google.android.material.textfield.TextInputEditText
+                <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/et_search"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@android:color/transparent"
+                    android:background="@null"
                     android:gravity="center_vertical"
                     android:hint="@string/search_hint"
+                    android:textColorHint="#9E9E9E"
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:maxLines="1"
-                    android:paddingStart="8dp"
+                    android:paddingStart="12dp"
                     android:paddingEnd="8dp"
-                    android:textColor="#222"
+                    android:textColor="#1A1C1E"
+                    android:fontFamily="sans-serif-medium"
                     android:textSize="16sp" />
-
-                <!-- Clear button -->
                 <ImageButton
                     android:id="@+id/btn_clear"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/clear"
                     android:padding="6dp"
+                    android:scaleType="centerInside"
                     android:src="@drawable/ic_clear_24"
+                    app:tint="#757575"
                     android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
