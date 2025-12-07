@@ -23,7 +23,7 @@
     android:layout_height="32dp"
     android:layout_marginEnd="16dp"
     android:layout_marginTop="16dp"
-    android:src="@android:drawable/ic_menu_close_clear_cancel"
+    android:src="@drawable/circle_xmark_solid_full"
     app:tint="#BDBDBD"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toTopOf="parent"/>
