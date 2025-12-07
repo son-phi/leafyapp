@@ -15,6 +15,10 @@ class SplashActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySplashBinding
 
+    // Hai biến cờ để kiểm soát tiến trình
+    private var isAuthReady = false
+    private var isAnimReady = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
@@ -26,25 +30,11 @@ class SplashActivity : AppCompatActivity() {
             android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
 
+        // 1. Bắt đầu chạy Animation
         startAnimation()
 
-        val auth = Firebase.auth
-
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            // Đã có user rồi → vào thẳng Main
-            goToMain()
-        } else {
-            // Đăng nhập ẩn danh lần đầu
-            auth.signInAnonymously()
-                .addOnSuccessListener {
-                    goToMain()
-                }
-                .addOnFailureListener { e ->
-                    e.printStackTrace()
-                    // TODO: show dialog / retry tuỳ anh
-                }
-        }
+        // 2. Bắt đầu kiểm tra Đăng nhập song song
+        checkUserLogin()
     }
 
     private fun startAnimation() {
@@ -72,6 +62,33 @@ class SplashActivity : AppCompatActivity() {
                 }, 500)
             }
         })
+    }
+
+    private fun checkUserLogin() {
+        val auth = Firebase.auth
+        val currentUser = auth.currentUser
+
+        if (currentUser != null) {
+            // Đã đăng nhập -> Đánh dấu Auth đã xong
+            isAuthReady = true
+            checkNavigation() // Kiểm tra xem có chuyển màn hình được chưa
+        } else {
+            // Chưa đăng nhập -> Đăng nhập ẩn danh
+            auth.signInAnonymously()
+                .addOnCompleteListener {
+                    // Dù thành công hay thất bại cũng cho qua (hoặc xử lý lỗi nếu muốn)
+                    isAuthReady = true
+                    checkNavigation()
+                }
+        }
+    }
+
+    // Hàm quyết định chuyển màn hình
+    // Chỉ chạy khi CẢ Animation VÀ Auth đều đã xong
+    private fun checkNavigation() {
+        if (isAuthReady && isAnimReady) {
+            goToMain()
+        }
     }
 
     private fun goToMain() {

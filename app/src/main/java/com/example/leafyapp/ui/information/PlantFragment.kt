@@ -3,6 +3,7 @@ package com.example.leafyapp.ui.information
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,16 +13,15 @@ import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import coil.load
-import com.example.leafyapp.DatabaseHelper
+import com.bumptech.glide.Glide // Đổi sang Glide để đồng bộ
 import com.example.leafyapp.MainActivity
 import com.example.leafyapp.data.model.Plant
 import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.FragmentPlantBinding
 import com.example.leafyapp.ui.garden.GardenViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import java.io.File
 
 class PlantFragment : Fragment() {
 
@@ -31,7 +31,7 @@ class PlantFragment : Fragment() {
     private val gardenViewModel: GardenViewModel by viewModels()
 
     private var plantId: Int = -1
-    private var plantLabel: String = "Unknown"
+    private var plantLabel: String? = null
     private var plantConfidence: Float = 0f
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<NestedScrollView>
@@ -62,7 +62,9 @@ class PlantFragment : Fragment() {
         receiveArguments()
         setupBottomSheet()
         setupCloseButton()
-        loadPlantFromDatabase()
+
+        // Gọi hàm tải từ Firebase thay vì DatabaseHelper
+        fetchPlantFromFirebase()
     }
 
     private fun receiveArguments() {
@@ -80,6 +82,89 @@ class PlantFragment : Fragment() {
 
     private fun setupCloseButton() {
         binding.btnClose.setOnClickListener { requireActivity().finish() }
+    }
+
+    // --- LOGIC MỚI: LẤY TỪ FIREBASE ---
+    private fun fetchPlantFromFirebase() {
+        if (plantId == -1) {
+            showError("ID cây không hợp lệ.")
+            return
+        }
+
+        // Hiển thị tên tạm thời trong lúc chờ tải
+        binding.tvPlantName.text = plantLabel ?: "Đang tải..."
+
+        val db = FirebaseFirestore.getInstance()
+
+        // Truy vấn Document theo ID (Lưu ý: Không cộng 1 nữa)
+        db.collection("plants").document(plantId.toString())
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    // Convert dữ liệu Firebase thành Object Plant
+                    val plant = document.toObject(Plant::class.java)
+
+                    if (plant != null) {
+                        currentDisplayPlant = plant
+                        displayPlantInfo(plant)
+                        setupAddButton(plant)
+                    } else {
+                        showError("Dữ liệu cây bị lỗi.")
+                    }
+                } else {
+                    showError("Không tìm thấy thông tin cây này trên hệ thống.")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("PlantFragment", "Lỗi tải Firebase", e)
+                showError("Lỗi kết nối: ${e.message}")
+            }
+    }
+
+    private fun displayPlantInfo(plant: Plant) {
+        // Hiển thị ảnh bằng Glide (xử lý link Google Drive)
+        if (!plant.image.isNullOrBlank()) {
+            val directUrl = convertGoogleDriveLink(plant.image)
+            Glide.with(this)
+                .load(directUrl)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .error(android.R.drawable.ic_delete)
+                .centerCrop()
+                .into(binding.imgPlant)
+        }
+
+        // Gán thông tin text
+        binding.tvPlantName.text = plant.name
+        binding.tvScientificName.text = plant.scientificName
+        binding.tvDescription.text = plant.description ?: "Đang cập nhật..."
+
+        // Các thông số kỹ thuật (Ánh sáng, nước...)
+        binding.tvLight.text = "☀️ Ánh sáng: ${plant.light ?: "N/A"}"
+        binding.tvWater.text = "💧 Tưới nước: ${plant.watering ?: "N/A"}"
+        binding.tvSoil.text = "🪨 Đất: ${plant.soil ?: "N/A"}"
+        binding.tvFertilizer.text = "🧪 Phân bón: ${plant.fertilizer ?: "N/A"}"
+        binding.tvTemp.text = "🌡️ Nhiệt độ: ${plant.temperature ?: "N/A"}"
+        binding.tvHumidity.text = "💦 Độ ẩm: ${plant.humidity ?: "N/A"}"
+    }
+
+    private fun convertGoogleDriveLink(originalUrl: String): String {
+        return if (originalUrl.contains("drive.google.com")) {
+            try {
+                val id = originalUrl.substringAfter("/d/").substringBefore("/")
+                "https://drive.google.com/uc?export=view&id=$id"
+            } catch (e: Exception) {
+                originalUrl
+            }
+        } else {
+            originalUrl
+        }
+    }
+
+    private fun showError(msg: String) {
+        binding.tvPlantName.text = "Thông báo"
+        binding.tvDescription.text = msg
+        binding.btnAddPlant.isEnabled = false
+        binding.btnAddPlant.alpha = 0.5f
     }
 
     private fun setupAddButton(plant: Plant) {
@@ -118,98 +203,33 @@ class PlantFragment : Fragment() {
             .show()
     }
 
-    /// --- LOGIC MỚI: TỰ ĐỘNG ĐÁNH SỐ THỨ TỰ ---
     private fun addMultiplePlantsToGarden(plantToSave: Plant, quantity: Int) {
         lifecycleScope.launch {
-            // 1. Đếm số lượng cây hiện có trong DB trước
+            // Đếm số lượng cây hiện có để đánh số thứ tự (Ví dụ: Hoa hồng 3, Hoa hồng 4)
             val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
             val baseName = plantToSave.name
 
             for (i in 1..quantity) {
-                // 2. Tính số thứ tự mới = Số hiện có + i
                 val newIndex = currentCount + i
-
-                // Nếu chỉ có 1 cây duy nhất (và chưa có cây nào trước đó), có thể không cần số
-                // Nhưng để thống nhất, cứ thêm số nếu muốn: "Hoa hồng 1", "Hoa hồng 2"
-                // Hoặc logic: Nếu currentCount == 0 && quantity == 1 -> Giữ nguyên tên
-
                 val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
 
                 val newUserPlant = UserPlant(
                     plantId = plantToSave.id,
                     nickname = finalName,
-                    imagePath = plantToSave.image
+                    imagePath = plantToSave.image // Lưu lại link ảnh để hiển thị trong Garden
                 )
                 gardenViewModel.insert(newUserPlant)
             }
 
             Toast.makeText(context, "Đã thêm $quantity cây vào vườn!", Toast.LENGTH_SHORT).show()
 
-            // --- SỬA ĐỔI TẠI ĐÂY: CHUYỂN VỀ MY GARDEN ---
+            // Chuyển về màn hình My Garden
             val intent = Intent(requireContext(), MainActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-
-            // Gửi tín hiệu để MainActivity mở tab Garden
             intent.putExtra("OPEN_MY_GARDEN", true)
-
             startActivity(intent)
             requireActivity().finish()
         }
-    }
-
-    private fun convertDrive(url: String): String {
-        return if (url.contains("drive.google.com")) {
-            try {
-                val id = url.substringAfter("d/").substringBefore("/")
-                "https://drive.google.com/uc?export=view&id=$id"
-            } catch (e: Exception) { url }
-        } else url
-    }
-
-    private fun loadPlantFromDatabase() {
-        if (plantId < 0) {
-            showError("Không xác định được cây từ AI.")
-            return
-        }
-        val ctx = context ?: return
-        val db = DatabaseHelper(ctx)
-        val plant = db.getPlantById(plantId + 1)
-
-        if (plant == null) {
-            showError("Không tìm thấy cây trong database.")
-            return
-        }
-
-        currentDisplayPlant = plant
-        displayPlantInfo(plant)
-        setupAddButton(plant)
-    }
-
-    private fun showError(msg: String) {
-        binding.tvPlantName.text = "Lỗi"
-        binding.tvDescription.text = msg
-        binding.btnAddPlant.isEnabled = false
-    }
-
-    private fun displayPlantInfo(plant: Plant) {
-        val context = binding.root.context
-        val resId = context.resources.getIdentifier(plant.image, "drawable", context.packageName)
-
-        if (resId != 0) {
-            binding.imgPlant.load(resId) { crossfade(true) }
-        } else {
-            binding.imgPlant.load(convertDrive(plant.image ?: "")) { crossfade(true) }
-        }
-
-        binding.tvPlantName.text = plant.name
-        binding.tvScientificName.text = plant.scientificName
-        binding.tvDescription.text = plant.description ?: "Đang cập nhật..."
-        binding.tvLight.text = "☀️ Ánh sáng: ${plant.light ?: "N/A"}"
-        binding.tvWater.text = "💧 Tưới nước: ${plant.watering ?: "N/A"}"
-        binding.tvSoil.text = "🪨 Đất: ${plant.soil ?: "N/A"}"
-        binding.tvFertilizer.text = "🧪 Phân bón: ${plant.fertilizer ?: "N/A"}"
-        binding.tvTemp.text = "🌡️ Nhiệt độ: ${plant.temperature ?: "N/A"}"
-        binding.tvHumidity.text = "💦 Độ ẩm: ${plant.humidity ?: "N/A"}"
     }
 
     override fun onDestroyView() {

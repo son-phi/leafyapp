@@ -38,7 +38,7 @@ class GardenFragment : Fragment() {
         // 3. Kết nối Tab với ViewPager
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -> "My Garden"
+                0 -> "Your Plants"
                 1 -> "Tasks"
                 else -> ""
             }

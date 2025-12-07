@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -19,8 +20,8 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@android:drawable/ic_menu_edit"
-            android:tint="#000000"/>
+            android:src="@drawable/pen_solid_full"
+            app:tint="#000000" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -44,8 +45,8 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@android:drawable/ic_menu_delete"
-            android:tint="#FF5252"/>
+            android:src="@drawable/trash_can_solid_full"
+            app:tint="#FF5252" />
 
         <TextView
             android:layout_width="wrap_content"
