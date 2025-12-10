@@ -59,4 +59,60 @@ class AuthRepository {
             }
         }
     }
+
+
+    // Đăng ký/Liên kết bằng Email & Password
+    fun linkEmailAccount(email: String, pass: String, name: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = auth.currentUser
+
+        // Tạo Credential từ Email/Pass
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, pass)
+
+        if (currentUser != null && currentUser.isAnonymous) {
+            // 1. Đang là Anonymous -> Link Account
+            currentUser.linkWithCredential(credential)
+                .addOnSuccessListener {
+                    // Cập nhật tên hiển thị (Full Name)
+                    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+                    currentUser.updateProfile(profileUpdates).addOnCompleteListener {
+                        onSuccess()
+                    }
+                }
+                .addOnFailureListener { e ->
+                    // Nếu Email đã tồn tại -> Báo lỗi (hoặc gợi ý đăng nhập)
+                    onError(e.message ?: "Lỗi đăng ký")
+                }
+        } else {
+            // 2. Chưa có user -> Tạo mới hoàn toàn (Sign Up)
+            auth.createUserWithEmailAndPassword(email, pass)
+                .addOnSuccessListener { result ->
+                    val user = result.user
+                    val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+                    user?.updateProfile(profileUpdates)?.addOnCompleteListener {
+                        onSuccess()
+                    }
+                }
+                .addOnFailureListener {
+                    onError(it.message ?: "Đăng ký thất bại")
+                }
+        }
+    }
+
+    // Đăng nhập bằng Email & Password
+    fun signInEmailAccount(email: String, pass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        // Hàm này không cần xử lý link với Anonymous vì user đã có tài khoản
+        // và muốn đăng nhập thẳng.
+        auth.signInWithEmailAndPassword(email, pass)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener {
+                // Xử lý các lỗi: sai mật khẩu, email không tồn tại...
+                onError(it.message ?: "Đăng nhập thất bại")
+            }
+    }
 }

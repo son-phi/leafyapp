@@ -25,6 +25,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 
+
 class ProfileFragment : Fragment() {
 
     private var _binding: FragmentProfileBinding? = null
@@ -112,12 +113,21 @@ class ProfileFragment : Fragment() {
     private fun setupClicks() {
         binding.rowLocation.setOnClickListener { openAppSettings() }
 
+        binding.rowNotifications.setOnClickListener {
+            openNotificationSettings()
+        }
+
         binding.btnCopyUserid.setOnClickListener {
             copyToClipboard(binding.tvUserId.text.toString())
         }
 
         binding.cardSignUpBanner.setOnClickListener {
             showSignUpBottomSheet()
+        }
+
+        binding.rowFaq.setOnClickListener {
+            val intent = Intent(requireContext(), FaqActivity::class.java)
+            startActivity(intent)
         }
 
         binding.btnLogout.setOnClickListener {
@@ -156,6 +166,12 @@ class ProfileFragment : Fragment() {
         val view = layoutInflater.inflate(com.example.leafyapp.R.layout.bottom_sheet_login_options, null)
         dialog.setContentView(view)
 
+        // --- BƯỚC 1: Mở rộng toàn màn hình để có chỗ đẩy lên ---
+        dialog.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+
+        // --- BƯỚC 2: Cấu hình để Dialog tự co lại khi bàn phím hiện (Quan trọng nhất) ---
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
         // Xử lý click trong BottomSheet
         view.findViewById<View>(com.example.leafyapp.R.id.btn_close_login).setOnClickListener {
             dialog.dismiss()
@@ -167,7 +183,16 @@ class ProfileFragment : Fragment() {
              performGoogleLogin()
         }
 
-        // Tương tự cho Facebook, Email...
+        // NÚT EMAIL
+        view.findViewById<View>(com.example.leafyapp.R.id.btn_login_email).setOnClickListener {
+            dialog.dismiss() // Đóng menu chọn
+            showEmailSignUpForm() // Mở form điền thông tin
+        }
+
+        view.findViewById<View>(com.example.leafyapp.R.id.tv_login_link).setOnClickListener {
+            dialog.dismiss()
+            showEmailLoginForm() // Mở form đăng nhập
+        }
 
         dialog.show()
     }
@@ -213,6 +238,117 @@ class ProfileFragment : Fragment() {
             .show()
     }
 
+    // 2. Hàm hiển thị Form Đăng Ký Email
+    private fun showEmailSignUpForm() {
+        val dialog = BottomSheetDialog(requireContext())
+        // Để form full màn hình khi bàn phím hiện lên (tùy chọn)
+        dialog.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+
+        val view = layoutInflater.inflate(com.example.leafyapp.R.layout.bottom_sheet_signup_email, null)
+        dialog.setContentView(view)
+
+        val etName = view.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_fullname)
+        val etEmail = view.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_email)
+        val etPass = view.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_password)
+        val etRePass = view.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_repassword)
+        val cbPolicy = view.findViewById<android.widget.CheckBox>(com.example.leafyapp.R.id.cb_policy)
+        val btnSignUp = view.findViewById<View>(com.example.leafyapp.R.id.btn_signup_confirm)
+
+        view.findViewById<View>(com.example.leafyapp.R.id.btn_close_signup).setOnClickListener { dialog.dismiss() }
+
+        btnSignUp.setOnClickListener {
+            val name = etName.text.toString().trim()
+            val email = etEmail.text.toString().trim()
+            val pass = etPass.text.toString().trim()
+            val rePass = etRePass.text.toString().trim()
+
+            // Validate cơ bản
+            if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
+                Toast.makeText(context, "Vui lòng điền đủ thông tin", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (pass != rePass) {
+                Toast.makeText(context, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (pass.length < 6) {
+                Toast.makeText(context, "Mật khẩu phải trên 6 ký tự", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!cbPolicy.isChecked) {
+                Toast.makeText(context, "Bạn cần đồng ý với điều khoản", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Gọi Repository để xử lý
+            authRepository.linkEmailAccount(email, pass, name,
+                onSuccess = {
+                    Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                    updateUI() // Refresh lại giao diện Profile
+                },
+                onError = { msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+
+        view.findViewById<View>(com.example.leafyapp.R.id.btn_close_signup).setOnClickListener { dialog.dismiss() }
+
+        // Thêm: Sự kiện chuyển sang màn hình Login
+        view.findViewById<View>(com.example.leafyapp.R.id.tv_switch_login).setOnClickListener {
+            dialog.dismiss()
+            showEmailLoginForm() // Mở form đăng nhập
+        }
+
+        dialog.show()
+    }
+
+    // 3. Hàm hiển thị Form Đăng Nhập Email
+    private fun showEmailLoginForm() {
+        val dialog = BottomSheetDialog(requireContext())
+        dialog.behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+
+        val view = layoutInflater.inflate(com.example.leafyapp.R.layout.bottom_sheet_login_email, null)
+        dialog.setContentView(view)
+
+        val etEmail = view.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_login_email)
+        val etPass = view.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_login_password)
+        val btnLogin = view.findViewById<View>(com.example.leafyapp.R.id.btn_login_confirm)
+
+        view.findViewById<View>(com.example.leafyapp.R.id.btn_close_login_email).setOnClickListener { dialog.dismiss() }
+
+        // Sự kiện chuyển sang màn hình Sign Up
+        view.findViewById<View>(com.example.leafyapp.R.id.tv_switch_signup).setOnClickListener {
+            dialog.dismiss()
+            showEmailSignUpForm()
+        }
+
+        btnLogin.setOnClickListener {
+            val email = etEmail.text.toString().trim()
+            val pass = etPass.text.toString().trim()
+
+            if (email.isEmpty() || pass.isEmpty()) {
+                Toast.makeText(context, "Vui lòng điền Email và Mật khẩu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Gọi Repository để xử lý
+            authRepository.signInEmailAccount(email, pass,
+                onSuccess = {
+                    Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                    updateUI() // Refresh lại giao diện Profile
+                },
+                onError = { msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+
+        dialog.show()
+    }
+
     // ... (Hàm openAppSettings cũ giữ nguyên) ...
     private fun openAppSettings() {
         try {
@@ -224,6 +360,23 @@ class ProfileFragment : Fragment() {
             e.printStackTrace()
             startActivity(Intent(Settings.ACTION_SETTINGS))
         }
+    }
+
+    private fun openNotificationSettings() {
+        val intent = Intent().apply {
+            when {
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O -> {
+                    action = android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                    putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+                }
+                else -> {
+                    action = "android.settings.APP_NOTIFICATION_SETTINGS"
+                    putExtra("app_package", requireContext().packageName)
+                    putExtra("app_uid", requireContext().applicationInfo.uid)
+                }
+            }
+        }
+        startActivity(intent)
     }
 
     override fun onDestroyView() {
