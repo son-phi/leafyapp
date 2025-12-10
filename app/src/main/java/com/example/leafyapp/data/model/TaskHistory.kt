@@ -1,20 +1,12 @@
 package com.example.leafyapp.data.model
 
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import java.io.Serializable
 
-@Entity(
-    tableName = "task_history",
-    foreignKeys = [ForeignKey(
-        entity = CareTask::class,
-        parentColumns = ["id"],
-        childColumns = ["taskId"],
-        onDelete = ForeignKey.CASCADE
-    )]
-)
 data class TaskHistory(
-    @PrimaryKey(autoGenerate = true) val historyId: Long = 0,
-    val taskId: Long,
-    val completedDate: Long // Ngày đã hoàn thành (Millis)
-)
+    var id: String = "",        // Thay cho historyId (Long) -> Document ID của Firebase
+    var taskId: String = "",    // Thay cho taskId (Long) -> ID của CareTask (String)
+    val completedDate: Long = 0L // Giữ nguyên
+) : Serializable {
+    // Constructor rỗng bắt buộc cho Firebase
+    constructor() : this("", "", 0L)
+}

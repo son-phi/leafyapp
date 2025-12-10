@@ -34,8 +34,13 @@
         android:id="@+id/plantTimelineFragment"
         android:name="com.example.leafyapp.ui.garden.PlantTimelineFragment"
         android:label="Plant Timeline"
-        tools:layout="@layout/fragment_plant_timeline"> <argument
+        tools:layout="@layout/fragment_plant_timeline">
+
+    <argument
         android:name="PLANT_ID"
-        app:argType="integer" /> </fragment>
+        app:argType="string"
+        app:nullable="true"
+        android:defaultValue="@null" />
+    </fragment>
 
 </navigation>
