@@ -74,7 +74,7 @@ class ProfileFragment : Fragment() {
                 authRepository.linkGoogleAccount(account.idToken!!,
                     onSuccess = {
                         Toast.makeText(context, "Kết nối thành công!", Toast.LENGTH_SHORT).show()
-                        updateUI() // Refresh lại giao diện
+                        navigateToSplash()
                     },
                     onError = { msg ->
                         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
@@ -285,7 +285,7 @@ class ProfileFragment : Fragment() {
                 onSuccess = {
                     Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
-                    updateUI() // Refresh lại giao diện Profile
+                    navigateToSplash()
                 },
                 onError = { msg ->
                     Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
@@ -338,7 +338,7 @@ class ProfileFragment : Fragment() {
                 onSuccess = {
                     Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
-                    updateUI() // Refresh lại giao diện Profile
+                    navigateToSplash()
                 },
                 onError = { msg ->
                     Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
