@@ -98,11 +98,6 @@ dependencies {
     implementation("com.airbnb.android:lottie:6.3.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    // --- 8. ROOM DATABASE ---
-    val room_version = "2.6.1"
-    implementation("androidx.room:room-runtime:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
-    kapt("androidx.room:room-compiler:$room_version")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

@@ -109,6 +109,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun fetchPlantsFromFirebase() {
         val db = FirebaseFirestore.getInstance()
+        // 1. Lấy TOÀN BỘ dữ liệu (Không dùng limit, không orderBy ở đây để đỡ tốn index)
         db.collection("plants")
             .get()
             .addOnSuccessListener { result ->
@@ -116,15 +117,19 @@ class SearchActivity : AppCompatActivity() {
                 for (document in result) {
                     try {
                         val plant = document.toObject(Plant::class.java)
+                        // Nếu ID nằm ở Document Key thì gán vào đây
+                        // plant.id = document.id.toInt()
                         list.add(plant)
                     } catch (e: Exception) {
                         Log.e("SearchActivity", "Error parsing plant", e)
                     }
                 }
-                // Lưu toàn bộ danh sách vào biến tạm
-                allPlants = list
 
-                // Hiển thị 5 cây đầu tiên gợi ý khi chưa gõ gì
+                // 2. QUAN TRỌNG: Sắp xếp danh sách gốc giảm dần theo độ phổ biến
+                // Từ giờ biến allPlants sẽ luôn được sắp xếp xịn xò
+                allPlants = list.sortedByDescending { it.popularity }
+
+                // 3. Hiển thị 5 cây đầu tiên (Lúc này chính là 5 cây Trending cao nhất)
                 adapter.submitList(allPlants.take(5))
             }
             .addOnFailureListener { e ->

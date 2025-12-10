@@ -60,7 +60,6 @@
         <activity
             android:name=".ui.profile.FaqActivity"
             android:exported="false" />
-            android:exported="false" />
 
         <!-- ĐĂNG KÝ RECEIVER Ở ĐÂY (QUAN TRỌNG) -->
         <receiver android:name=".ui.notifications.AlarmReceiver" />

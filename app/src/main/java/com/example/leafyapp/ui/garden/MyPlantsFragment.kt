@@ -63,7 +63,7 @@ class MyPlantsFragment : Fragment() {
 //                intent.putExtra("RESULT_LABEL", plant.nickname)
 //                intent.putExtra("RESULT_MODE", "Plant")
 //                startActivity(intent)
-                val bundle = Bundle().apply { putInt("PLANT_ID", plant.id.toInt()) }
+                val bundle = Bundle().apply { putString("PLANT_ID", plant.id) }
                 try {
                     findNavController().navigate(R.id.action_garden_to_timeline, bundle)
                 } catch (e: Exception) {

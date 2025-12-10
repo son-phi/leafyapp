@@ -114,6 +114,9 @@ class HomeFragment : Fragment() {
 
         // 3. Quan sát dữ liệu (Location, Weather, Plants)
         setupObservers()
+
+        // Gọi hàm tải dữ liệu Trending
+        viewModel.fetchTrendingPlants()
     }
 
     private fun setupTrendingRecyclerView() {
@@ -167,11 +170,8 @@ class HomeFragment : Fragment() {
         }
 
         // Observer Plants (Dữ liệu cây lấy từ Firebase) -> Cập nhật vào Trending
-        viewModel.plants.observe(viewLifecycleOwner) { list ->
-            // Giả lập "Trending" bằng cách lấy 5 cây đầu tiên trong danh sách
-            // Hoặc bạn có thể dùng list.shuffled().take(5) để lấy ngẫu nhiên
-            val trendingList = list.take(5)
-            trendingAdapter.submitList(trendingList)
+        viewModel.trendingPlants.observe(viewLifecycleOwner) { list ->
+            trendingAdapter.submitList(list)
         }
     }
 
