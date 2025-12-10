@@ -24,4 +24,9 @@
         <item name="colorSecondaryContainer">@android:color/transparent</item>
     </style>
 
+    <style name="GreenInputTheme" parent="ThemeOverlay.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="colorPrimary">#4CAF50</item>
+        <item name="android:textColorHint">#4CAF50</item>
+    </style>
+
 </resources>
