@@ -61,6 +61,11 @@
             android:name=".ui.profile.FaqActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.profile.TextContentActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+
         <!-- ĐĂNG KÝ RECEIVER Ở ĐÂY (QUAN TRỌNG) -->
         <receiver android:name=".ui.notifications.AlarmReceiver" />
 
