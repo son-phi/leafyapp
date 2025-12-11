@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.leafyapp.data.repository.AuthRepository
 import com.example.leafyapp.databinding.FragmentProfileBinding
 import com.example.leafyapp.ui.splash.SplashActivity
@@ -22,8 +23,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.GoogleAuthProvider
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
+import android.graphics.drawable.Drawable
 
 
 class ProfileFragment : Fragment() {
@@ -57,6 +61,7 @@ class ProfileFragment : Fragment() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(com.example.leafyapp.R.string.default_web_client_id))
             .requestEmail()
+            .requestProfile()
             .build()
         googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
     }
@@ -70,8 +75,12 @@ class ProfileFragment : Fragment() {
             try {
                 val account = task.getResult(ApiException::class.java)!!
 
-                // Gọi Repo để xử lý Link với Firebase
-                authRepository.linkGoogleAccount(account.idToken!!,
+                // LẤY ẢNH TỪ GOOGLE Ở ĐÂY
+                val googlePhotoUrl = account.photoUrl?.toString()
+                android.util.Log.d("CHECK_AVATAR", "1. Link ảnh từ Google: $googlePhotoUrl")
+
+                // Truyền googlePhotoUrl vào hàm
+                authRepository.linkGoogleAccount(account.idToken!!, googlePhotoUrl,
                     onSuccess = {
                         Toast.makeText(context, "Kết nối thành công!", Toast.LENGTH_SHORT).show()
                         navigateToSplash()
@@ -87,25 +96,58 @@ class ProfileFragment : Fragment() {
     }
 
     private fun updateUI() {
-        val user = authRepository.getCurrentUser() // Lấy user từ Repository
+        val user = authRepository.getCurrentUser()
 
         if (user != null) {
-            binding.tvUserId.text = user.uid
+            // --- GIAI ĐOẠN 1: Hiển thị tạm thời từ Auth (nhanh) ---
+            binding.tvEmail.text = user.email
 
+            // Logic hiển thị Guest/User
             if (user.isAnonymous) {
-                // TRẠNG THÁI: GUEST
-//                binding.tvUsername.text = "Guest Gardener"
-//                binding.tvEmail.text = "Unregistered Account"
-                binding.cardSignUpBanner.visibility = View.VISIBLE
+                binding.tvUsername.text = "Guest Gardener"
+                binding.ivUserAvatar.setImageResource(com.example.leafyapp.R.drawable.ic_user_solid_full)
+                binding.btnEditProfile.visibility = View.GONE
                 binding.btnLogout.visibility = View.GONE
                 binding.btnDeleteAccount.visibility = View.GONE
+                binding.cardSignUpBanner.visibility = View.VISIBLE
+                return // Nếu là Guest thì dừng, không cần load Firestore
             } else {
-                // TRẠNG THÁI: USER CHÍNH THỨC
-//                binding.tvUsername.text = user.displayName ?: "Gardener"
-//                binding.tvEmail.text = user.email
-                binding.cardSignUpBanner.visibility = View.GONE
+                binding.tvUsername.text = user.displayName ?: "Gardener"
+                binding.btnEditProfile.visibility = View.VISIBLE
                 binding.btnLogout.visibility = View.VISIBLE
                 binding.btnDeleteAccount.visibility = View.VISIBLE
+                binding.cardSignUpBanner.visibility = View.GONE
+
+                // --- THÊM LOG TẠI ĐÂY ---
+                android.util.Log.d("CHECK_AVATAR", "2. Link ảnh từ Firebase Auth: ${user.photoUrl}")
+
+                val authPhotoUrl = user.photoUrl
+                if (authPhotoUrl != null) {
+                    Glide.with(this)
+                        .load(authPhotoUrl)
+                        .placeholder(com.example.leafyapp.R.drawable.ic_user_solid_full)
+                        .circleCrop()
+                        .into(binding.ivUserAvatar)
+                }
+            }
+
+            // --- GIAI ĐOẠN 2: Lấy dữ liệu chuẩn từ Firestore (Chậm hơn chút nhưng chính xác) ---
+            authRepository.getUserDetailsFromFirestore { userData ->
+                // 1. Cập nhật Tên (Lấy từ Firestore: displayName hoặc nối First+Last)
+                val firestoreName = userData["displayName"] as? String
+                if (!firestoreName.isNullOrEmpty()) {
+                    binding.tvUsername.text = firestoreName
+                }
+
+                // 2. Cập nhật Avatar (Nếu Firestore có ảnh xịn hơn thì load đè lên)
+                val firestorePhoto = userData["photoUrl"] as? String
+                if (!firestorePhoto.isNullOrEmpty()) {
+                    Glide.with(this)
+                        .load(firestorePhoto)
+                        .placeholder(com.example.leafyapp.R.drawable.ic_user_solid_full)
+                        .circleCrop()
+                        .into(binding.ivUserAvatar)
+                }
             }
         }
     }
@@ -116,9 +158,14 @@ class ProfileFragment : Fragment() {
         binding.rowNotifications.setOnClickListener {
             openNotificationSettings()
         }
+//
+//        binding.btnCopyUserid.setOnClickListener {
+//            copyToClipboard(binding.tvUserId.text.toString())
+//        }
 
-        binding.btnCopyUserid.setOnClickListener {
-            copyToClipboard(binding.tvUserId.text.toString())
+        // THÊM SỰ KIỆN EDIT PROFILE
+        binding.btnEditProfile.setOnClickListener {
+            showEditProfileDialog()
         }
 
         binding.cardSignUpBanner.setOnClickListener {
@@ -156,6 +203,55 @@ class ProfileFragment : Fragment() {
                     }
                 )
             }
+        }
+
+        // 1. Click Terms of Use -> Mở Activity mới
+        binding.rowTerm.setOnClickListener {
+            val intent = Intent(requireContext(), TextContentActivity::class.java)
+            intent.putExtra("EXTRA_TITLE", "Terms of Use")
+            intent.putExtra("EXTRA_CONTENT", """
+                1. CHẤP THUẬN ĐIỀU KHOẢN
+                Chào mừng bạn đến với LeafyApp. Bằng việc truy cập hoặc sử dụng ứng dụng của chúng tôi, bạn đồng ý tuân thủ và bị ràng buộc bởi các Điều khoản và Điều kiện này.
+
+                2. QUYỀN SỞ HỮU TRÍ TUỆ
+                Toàn bộ nội dung, tính năng và chức năng (bao gồm nhưng không giới hạn ở thông tin, phần mềm, văn bản, hình ảnh hiển thị, video và âm thanh) là sở hữu của LeafyApp.
+
+                3. TÀI KHOẢN NGƯỜI DÙNG
+                Khi bạn tạo tài khoản với chúng tôi, bạn phải cung cấp thông tin chính xác, đầy đủ và cập nhật. Việc không làm như vậy cấu thành vi phạm Điều khoản, có thể dẫn đến việc chấm dứt ngay lập tức tài khoản của bạn.
+
+                4. GIỚI HẠN TRÁCH NHIỆM
+                Trong mọi trường hợp, LeafyApp sẽ không chịu trách nhiệm pháp lý đối với bất kỳ thiệt hại gián tiếp, ngẫu nhiên hoặc trừng phạt nào phát sinh từ việc bạn sử dụng dịch vụ.
+
+                5. THAY ĐỔI DỊCH VỤ
+                Chúng tôi bảo lưu quyền rút lại hoặc sửa đổi Dịch vụ của mình theo quyết định riêng của chúng tôi mà không cần thông báo trước.
+            """.trimIndent())
+            startActivity(intent)
+        }
+
+        // 2. Click Privacy Policy -> Mở Activity mới
+        binding.rowPrivacy.setOnClickListener {
+            val intent = Intent(requireContext(), TextContentActivity::class.java)
+            intent.putExtra("EXTRA_TITLE", "Privacy Policy")
+            intent.putExtra("EXTRA_CONTENT", """
+                1. THU THẬP THÔNG TIN
+                Chúng tôi thu thập thông tin bạn cung cấp trực tiếp cho chúng tôi khi bạn tạo tài khoản, cập nhật hồ sơ, hoặc sử dụng tính năng nhận diện cây. Các loại thông tin bao gồm: Email, Tên hiển thị, và Hình ảnh cây trồng.
+
+                2. CÁCH CHÚNG TÔI SỬ DỤNG THÔNG TIN
+                Chúng tôi sử dụng thông tin thu thập được để:
+                - Cung cấp, duy trì và cải thiện dịch vụ.
+                - Gửi thông báo kỹ thuật, cập nhật bảo mật và tin nhắn hỗ trợ.
+                - Đồng bộ hóa dữ liệu vườn cây của bạn trên nhiều thiết bị.
+
+                3. CHIA SẺ THÔNG TIN
+                Chúng tôi không chia sẻ thông tin cá nhân của bạn với bên thứ ba trừ khi có sự đồng ý của bạn hoặc để tuân thủ pháp luật.
+
+                4. BẢO MẬT DỮ LIỆU
+                Chúng tôi thực hiện các biện pháp hợp lý để giúp bảo vệ thông tin về bạn khỏi bị mất, trộm cắp, lạm dụng và truy cập trái phép.
+
+                5. QUYỀN CỦA BẠN
+                Bạn có thể xem lại, sửa đổi hoặc xóa thông tin cá nhân của mình bất cứ lúc nào bằng cách đăng nhập vào tài khoản và truy cập trang Cài đặt.
+            """.trimIndent())
+            startActivity(intent)
         }
     }
 
@@ -203,13 +299,52 @@ class ProfileFragment : Fragment() {
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
+    // Hàm hiển thị Dialog sửa tên
+    private fun showEditProfileDialog() {
+        val user = authRepository.getCurrentUser() ?: return
 
+        // Tách First/Last name từ DisplayName hiện tại
+        val fullName = user.displayName ?: ""
+        val parts = fullName.split(" ")
+        val currentFirst = if (parts.isNotEmpty()) parts.first() else ""
+        val currentLast = if (parts.size > 1) parts.drop(1).joinToString(" ") else ""
 
-    private fun copyToClipboard(text: String) {
-        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("User ID", text)
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(context, "Đã sao chép ID vào bộ nhớ tạm", Toast.LENGTH_SHORT).show()
+        // Tạo layout cho dialog
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_edit_profile, null) // Cần tạo layout này ở bước dưới
+        val etFirstName = dialogView.findViewById<android.widget.EditText>(com.example.leafyapp.R.id.et_firstname)
+        val etLastName = dialogView.findViewById<android.widget.EditText>(com.example.leafyapp.R.id.et_lastname)
+
+        // Fill dữ liệu cũ
+        etFirstName.setText(currentFirst)
+        etLastName.setText(currentLast)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Profile")
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                val newFirst = etFirstName.text.toString().trim()
+                val newLast = etLastName.text.toString().trim()
+
+                if (newFirst.isEmpty()) {
+                    Toast.makeText(context, "First name cannot be empty", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                // Gọi Repo lưu lên Firebase
+                authRepository.updateUserProfile(newFirst, newLast,
+                    onSuccess = {
+                        Toast.makeText(context, "Profile Updated!", Toast.LENGTH_SHORT).show()
+                        updateUI() // Refresh lại giao diện Profile
+
+                        // Home sẽ tự cập nhật khi reload lại App hoặc chuyển tab
+                    },
+                    onError = {
+                        Toast.makeText(context, "Error: $it", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun navigateToSplash() {

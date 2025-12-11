@@ -45,8 +45,9 @@
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="4dp"
                 android:text="Trending"
+                android:textStyle="bold"
                 android:textColor="#FFFFFF"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
         </com.google.android.material.card.MaterialCardView>
 
         <TextView

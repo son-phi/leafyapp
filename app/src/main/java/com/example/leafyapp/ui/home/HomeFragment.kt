@@ -117,6 +117,22 @@ class HomeFragment : Fragment() {
 
         // Gọi hàm tải dữ liệu Trending
         viewModel.fetchTrendingPlants()
+
+
+        setupUserGreeting()
+    }
+
+    private fun setupUserGreeting() {
+        val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val greetingTextView = binding.sectionHeader.tvTitle // Ví dụ ID của dòng tiêu đề to nhất
+
+        if (user != null && !user.isAnonymous && !user.displayName.isNullOrEmpty()) {
+            // Lấy tên đầu tiên cho thân mật (Ví dụ: "Tùng Nguyễn" -> "Tùng")
+            val firstName = user.displayName?.split(" ")?.lastOrNull() ?: user.displayName
+            greetingTextView.text = "Hello, $firstName! \uD83D\uDC4B" // Thêm icon vẫy tay
+        } else {
+            greetingTextView.text = "Hello, Gardener!"
+        }
     }
 
     private fun setupTrendingRecyclerView() {
