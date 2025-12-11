@@ -49,6 +49,22 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     private val _currentGarden = MutableLiveData<Garden?>(null)
     val currentGarden: LiveData<Garden?> = _currentGarden
 
+    private val tasksObserver = androidx.lifecycle.Observer<List<TaskWithPlant>> { tasks ->
+        // Hễ danh sách thay đổi (do Firebase cập nhật) -> Đặt lại báo thức ngay
+        rescheduleAllAlarms(tasks)
+    }
+
+    init {
+        // Đăng ký lắng nghe
+        _allTasksSource.observeForever(tasksObserver)
+    }
+
+    override fun onCleared() {
+        // Hủy lắng nghe khi thoát app để tránh rò rỉ bộ nhớ
+        _allTasksSource.removeObserver(tasksObserver)
+        super.onCleared()
+    }
+
     // --- HÀM CHUYỂN ĐỔI CHẾ ĐỘ (Gọi từ UI khi gạt Switch) ---
     fun setGardenMode(garden: Garden?) {
         _currentGarden.value = garden
@@ -273,7 +289,7 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
             val myIndex = garden.members.indexOf(currentUid)
             if (myIndex > 0) {
                 // Người thứ 1: 0p, Người thứ 2: 30p, Người thứ 3: 60p...
-                delayMillis = myIndex * 5L * 60 * 1000
+                delayMillis = myIndex * 1L * 60 * 1000
             }
         }
 
@@ -308,6 +324,30 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
                 alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
             }
         } catch (e: SecurityException) { e.printStackTrace() }
+    }
+
+    // --- [MỚI] TỰ ĐỘNG ĐẶT BÁO THỨC KHI DỮ LIỆU VỀ ---
+    private fun rescheduleAllAlarms(tasks: List<TaskWithPlant>) {
+        val garden = _currentGarden.value
+
+        for (item in tasks) {
+            val task = item.task
+            // Chỉ đặt báo thức nếu:
+            // 1. Task có bật nhắc nhở tự động
+            // 2. Task chưa hoàn thành hôm nay (Logic check LastCompletedDate)
+            // 3. Thời gian nhắc nhở (NextDueDate) chưa trôi qua quá lâu (hoặc tùy logic ông)
+
+            if (task.isAutoReminder) {
+                // Tính toán lại xem hôm nay đã làm chưa
+                val todayStart = getStartOfDay(System.currentTimeMillis())
+                val lastCompleted = if (task.lastCompletedDate != null) getStartOfDay(task.lastCompletedDate!!) else 0L
+
+                if (lastCompleted != todayStart) {
+                    // Chưa làm -> Đặt báo thức
+                    scheduleAlarm(task, task.id.hashCode(), garden)
+                }
+            }
+        }
     }
 
     fun markPlantsAsInfected(plants: List<UserPlant>, diseaseName: String) = viewModelScope.launch {

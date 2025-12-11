@@ -277,6 +277,13 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         calendar.set(Calendar.HOUR_OF_DAY, selectedHour)
         calendar.set(Calendar.MINUTE, selectedMinute)
         calendar.set(Calendar.SECOND, 0)
+
+        // --- [THÊM ĐOẠN NÀY] LOGIC TỰ CỘNG 24H ---
+        // Nếu thời gian chọn < Hiện tại -> Tự động cộng thêm 1 ngày
+        if (calendar.timeInMillis <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+            Toast.makeText(context, "Đã đặt cho ngày mai vì giờ này qua rồi!", Toast.LENGTH_SHORT).show()
+        }
         val timeMillis = calendar.timeInMillis
 
         if (editingTaskId != null && editingTask != null) {
