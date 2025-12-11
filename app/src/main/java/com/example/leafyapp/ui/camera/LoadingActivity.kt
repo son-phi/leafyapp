@@ -7,9 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -17,8 +15,10 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.leafyapp.R
 import com.example.leafyapp.api.ApiClient
 import com.example.leafyapp.api.PredictionResponse
+import com.example.leafyapp.databinding.ActivityLoadingBinding
 import com.example.leafyapp.ui.information.ResultActivity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -28,39 +28,47 @@ import java.io.File
 
 class LoadingActivity : AppCompatActivity() {
 
-    private lateinit var imageView: ImageView
-
-    private lateinit var tvAnalyzing: TextView
-    private lateinit var tvDetecting: TextView
-    private lateinit var tvIdentifying: TextView
-
-    private lateinit var loading1: ProgressBar
-    private lateinit var loading2: ProgressBar
-    private lateinit var loading3: ProgressBar
-
-    private lateinit var check1: ImageView
-    private lateinit var check2: ImageView
-    private lateinit var check3: ImageView
+    private lateinit var binding: ActivityLoadingBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_loading)
+
+        // Setup ViewBinding
+        binding = ActivityLoadingBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         hideStatusBar()
-        initViews()
         applyAnimations()
 
         val photoPath = intent.getStringExtra("PHOTO_PATH")
-        val scanMode = intent.getStringExtra("SCAN_MODE")
+        // Lấy chế độ (Ưu tiên key SCAN_MODE, dự phòng key MODE)
+        val scanMode = intent.getStringExtra("SCAN_MODE") ?: intent.getStringExtra("MODE")
 
+        // 1. CHECK NULL TRƯỚC (Fail fast)
         if (photoPath.isNullOrEmpty() || scanMode.isNullOrEmpty()) {
-            Log.e("LoadingActivity", "Missing PHOTO_PATH or SCAN_MODE")
+            Toast.makeText(this, "Error: Missing data!", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
+        // 2. SET TEXT TIẾNG ANH (Chỉ 1 lần duy nhất ở đây)
+        if (scanMode == "Disease") {
+            // Chế độ BỆNH (Disease)
+            binding.tvTitle.text = "Diagnosing Disease..."
+            binding.tvAnalyzing.text = "Analyzing symptoms"
+            binding.tvDetecting.text = "Scanning infection area"
+            binding.tvIdentifying.text = "Formulating diagnosis"
+        } else {
+            // Chế độ CÂY (Plant)
+            binding.tvTitle.text = "Identifying Plant..."
+            binding.tvAnalyzing.text = "Analyzing leaf structure"
+            binding.tvDetecting.text = "Matching botanical data"
+            binding.tvIdentifying.text = "Retrieving species info"
+        }
+
+        // 3. CHẠY LOGIC
         loadImage(photoPath)
-        startRecognition(photoPath, scanMode)
+        startRecognition(photoPath, scanMode!!)
     }
 
     private fun hideStatusBar() {
@@ -69,54 +77,43 @@ class LoadingActivity : AppCompatActivity() {
         window.statusBarColor = Color.BLACK
     }
 
-    private fun initViews() {
-        imageView = findViewById(R.id.imageViewScan)
-
-        tvAnalyzing = findViewById(R.id.tvAnalyzing)
-        tvDetecting = findViewById(R.id.tvDetecting)
-        tvIdentifying = findViewById(R.id.tvIdentifying)
-
-        loading1 = findViewById(R.id.loading1)
-        loading2 = findViewById(R.id.loading2)
-        loading3 = findViewById(R.id.loading3)
-
-        check1 = findViewById(R.id.check1)
-        check2 = findViewById(R.id.check2)
-        check3 = findViewById(R.id.check3)
-    }
-
     private fun applyAnimations() {
         val fade = AnimationUtils.loadAnimation(this, R.anim.fade_in)
         val pulse = AnimationUtils.loadAnimation(this, R.anim.pulse)
 
-        // Không animate imageView nữa để tránh xung đột với Glide load
-        tvAnalyzing.startAnimation(fade)
-        tvDetecting.startAnimation(fade)
-        tvIdentifying.startAnimation(fade)
+        binding.tvAnalyzing.startAnimation(fade)
+        binding.tvDetecting.startAnimation(fade)
+        binding.tvIdentifying.startAnimation(fade)
 
-        loading1.startAnimation(pulse)
-        loading2.startAnimation(pulse)
-        loading3.startAnimation(pulse)
+        binding.loading1.startAnimation(pulse)
+        binding.loading2.startAnimation(pulse)
+        binding.loading3.startAnimation(pulse)
     }
 
     private fun loadImage(photoPath: String) {
-        val finalFile = if (photoPath.startsWith("content://")) {
-            try {
-                val inputStream = contentResolver.openInputStream(Uri.parse(photoPath))
-                val temp = File(cacheDir, "preview_${System.currentTimeMillis()}.jpg")
-                temp.outputStream().use { out -> inputStream?.copyTo(out) }
-                temp
-            } catch (e: Exception) {
-                Log.e("LoadingActivity", "Error loading content URI", e)
-                null
-            }
-        } else File(photoPath)
+        // Chạy logic đọc file ở background để tránh lag UI
+        lifecycleScope.launch(Dispatchers.IO) {
+            val finalFile = if (photoPath.startsWith("content://")) {
+                try {
+                    val inputStream = contentResolver.openInputStream(Uri.parse(photoPath))
+                    val temp = File(cacheDir, "preview_${System.currentTimeMillis()}.jpg")
+                    temp.outputStream().use { out -> inputStream?.copyTo(out) }
+                    temp
+                } catch (e: Exception) {
+                    Log.e("LoadingActivity", "Error loading content URI", e)
+                    null
+                }
+            } else File(photoPath)
 
-        if (finalFile != null) {
-            Glide.with(this)
-                .load(finalFile)
-                .transition(DrawableTransitionOptions.withCrossFade())
-                .into(imageView)
+            // Quay lại Main Thread để hiển thị ảnh
+            withContext(Dispatchers.Main) {
+                if (finalFile != null) {
+                    Glide.with(this@LoadingActivity)
+                        .load(finalFile)
+                        .transition(DrawableTransitionOptions.withCrossFade())
+                        .into(binding.imageViewScan)
+                }
+            }
         }
     }
 
@@ -127,32 +124,34 @@ class LoadingActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             var result: PredictionResponse? = null
+            var errorMsg: String? = null
 
             try {
-                updateStep(0, true) // Xong bước 1: Phân tích ảnh
+                // Bước 1: Giả lập phân tích ảnh (để UI đẹp hơn)
+                delay(800)
+                updateStep(0, true)
 
-                // Giả lập delay 1 chút để người dùng kịp nhìn thấy hiệu ứng (tùy chọn)
-                // kotlinx.coroutines.delay(500)
-
+                // Bước 2: Gọi API
                 result = runRecognition(photoPath, mode)
 
-                updateStep(1, true) // Xong bước 2: Nhận diện vùng
-                updateStep(2, true) // Xong bước 3: Có kết quả
+                updateStep(1, true)
+
+                // Bước 3: Hoàn tất
+                delay(500)
+                updateStep(2, true)
 
             } catch (e: Exception) {
                 Log.e("LoadingActivity", "API ERROR", e)
-                // Nếu lỗi vẫn cho hiện check bước cuối để chuyển màn hình (hoặc xử lý lỗi riêng)
-                updateStep(2, true)
+                errorMsg = "Lỗi kết nối: ${e.message}"
             }
 
             // Chuyển màn hình
-            navigateToResultScreen(result, mode)
+            navigateToResultScreen(result, mode, errorMsg)
         }
     }
 
     private suspend fun runRecognition(imagePath: String, mode: String): PredictionResponse {
         return withContext(Dispatchers.IO) {
-
             val file = if (imagePath.startsWith("content://")) {
                 val inputStream = contentResolver.openInputStream(Uri.parse(imagePath))
                     ?: throw Exception("Cannot read image")
@@ -161,9 +160,8 @@ class LoadingActivity : AppCompatActivity() {
                 tmp
             } else File(imagePath)
 
-            // Nén ảnh nếu cần thiết tại đây (để upload nhanh hơn)
-            // ...
-
+            // Lưu ý: "file" là tên field server backend yêu cầu.
+            // Nếu server php/python của bạn yêu cầu tên khác (ví dụ "image") thì sửa ở đây.
             val req = file.asRequestBody("image/*".toMediaTypeOrNull())
             val multipart = MultipartBody.Part.createFormData("file", file.name, req)
 
@@ -173,9 +171,10 @@ class LoadingActivity : AppCompatActivity() {
     }
 
     private fun updateStep(index: Int, completed: Boolean) {
-        val loadingList = listOf(loading1, loading2, loading3)
-        val checkList = listOf(check1, check2, check3)
-        val textList = listOf(tvAnalyzing, tvDetecting, tvIdentifying)
+        // Dùng binding để truy cập view
+        val loadingList = listOf(binding.loading1, binding.loading2, binding.loading3)
+        val checkList = listOf(binding.check1, binding.check2, binding.check3)
+        val textList = listOf(binding.tvAnalyzing, binding.tvDetecting, binding.tvIdentifying)
 
         if (completed) {
             loadingList[index].clearAnimation()
@@ -185,8 +184,7 @@ class LoadingActivity : AppCompatActivity() {
             val fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in)
             checkList[index].startAnimation(fadeIn)
 
-            // Đổi màu chữ thành Xanh lá cho khớp với icon Check
-            textList[index].setTextColor(Color.parseColor("#4CAF50"))
+            textList[index].setTextColor(Color.parseColor("#4CAF50")) // Màu xanh thành công
         } else {
             loadingList[index].visibility = View.VISIBLE
             checkList[index].visibility = View.GONE
@@ -194,25 +192,26 @@ class LoadingActivity : AppCompatActivity() {
         }
     }
 
-    private fun navigateToResultScreen(result: PredictionResponse?, mode: String) {
-        // Delay nhỏ để người dùng thấy được bước 3 hoàn thành
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+    private fun navigateToResultScreen(result: PredictionResponse?, mode: String, errorMsg: String?) {
+        if (result == null) {
+            Toast.makeText(this, errorMsg ?: "Không nhận diện được", Toast.LENGTH_LONG).show()
+            finish() // Đóng loading quay về camera
+            return
+        }
 
-            if (result == null) {
-                // Xử lý khi lỗi (ví dụ Toast hoặc về màn hình trước)
-                finish()
-                return@postDelayed
-            }
+        val intent = Intent(this, ResultActivity::class.java)
 
-            val intent = Intent(this, ResultActivity::class.java)
-            // Truyền ID + 1 vì Database của bạn thường bắt đầu từ 1, AI trả về index từ 0 (hoặc giữ nguyên tùy logic server)
-            intent.putExtra("RESULT_ID", result.id)
-            intent.putExtra("RESULT_LABEL", result.label)
-            intent.putExtra("RESULT_CONF", result.confidence)
-            intent.putExtra("RESULT_MODE", mode)
-            startActivity(intent)
-            finish()
+        // Truyền ID gốc từ Model (0, 1, 2...)
+        // ResultActivity sẽ lo việc cộng thêm 1 nếu là Plant
+        intent.putExtra("RESULT_ID", result.id)
 
-        }, 500) // Delay 500ms
+        intent.putExtra("RESULT_LABEL", result.label)
+        intent.putExtra("RESULT_CONF", result.confidence)
+
+        // Truyền lại MODE để ResultActivity biết đường xử lý ID
+        intent.putExtra("RESULT_MODE", mode)
+
+        startActivity(intent)
+        finish()
     }
 }
