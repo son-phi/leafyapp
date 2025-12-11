@@ -12,46 +12,60 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.leafyapp.data.model.CareTask
+import com.example.leafyapp.data.model.Garden
 import com.example.leafyapp.data.model.TaskHistory
 import com.example.leafyapp.data.model.TaskWithPlant
 import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.data.repository.GardenRepository
 import com.example.leafyapp.ui.notifications.AlarmReceiver
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import com.example.leafyapp.data.model.DiseaseLog
+import com.google.firebase.firestore.FieldValue // [QUAN TRỌNG] Để thêm thành viên vào mảng
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 // Data class cho Group Task
 data class PlantTasksGroup(val plant: UserPlant, val tasks: List<CareTask>)
 
 class GardenViewModel(application: Application) : AndroidViewModel(application) {
 
-    // 1. THAY DAO BẰNG REPOSITORY
-    // private val gardenDao = AppDatabase.getDatabase(application).gardenDao() -> XÓA
-    private val repository = GardenRepository() // -> THÊM MỚI
+    // 1. Repository
+    private val repository = GardenRepository()
 
-    // 2. Lấy dữ liệu từ Repository
+    // 2. LiveData dữ liệu
     val allUserPlants: LiveData<List<UserPlant>> = repository.userPlants
     private val _allTasksSource = repository.allTasksWithPlant
-
     private val _selectedDate = MutableLiveData<Long>(System.currentTimeMillis())
 
-    // --- LOGIC TASK GROUP (Đã sửa để dùng Repository) ---
+    val allDiseaseLogs: LiveData<List<DiseaseLog>> = repository.diseaseLogs
+
+    // 3. [MỚI] Biến lưu Vườn hiện tại (để biết đang ở Vườn Riêng hay Chung)
+    private val _currentGarden = MutableLiveData<Garden?>(null)
+    val currentGarden: LiveData<Garden?> = _currentGarden
+
+    // --- HÀM CHUYỂN ĐỔI CHẾ ĐỘ (Gọi từ UI khi gạt Switch) ---
+    fun setGardenMode(garden: Garden?) {
+        _currentGarden.value = garden
+        // Báo cho Repository biết để đổi đường dẫn Firebase
+        repository.switchGardenMode(garden?.id)
+    }
+
+    // --- LOGIC TASK GROUP ---
     val groupedTasksForSelectedDate = MediatorLiveData<List<PlantTasksGroup>>().apply {
-        // Khi ngày chọn thay đổi
         addSource(_selectedDate) { date ->
             val tasks = _allTasksSource.value
             if (tasks != null) filterAndGroupTasks(date, tasks)
         }
-        // Khi danh sách Task từ Firebase thay đổi
         addSource(_allTasksSource) { tasks ->
             val date = _selectedDate.value ?: System.currentTimeMillis()
             filterAndGroupTasks(date, tasks)
         }
-        // Khi lịch sử hoàn thành thay đổi (để cập nhật tick xanh)
         addSource(repository.taskHistory) {
             val date = _selectedDate.value ?: System.currentTimeMillis()
             val tasks = _allTasksSource.value
@@ -73,9 +87,7 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
                     val diffDays = TimeUnit.MILLISECONDS.toDays(diffMillis)
 
                     if (diffDays % task.frequencyDays == 0L) {
-                        // --- SỬA: Lấy lịch sử từ RAM (Repository) thay vì query DB ---
                         val historyDates = repository.getHistoryDatesForTask(task.id)
-
                         val isCompleted = historyDates.any { getStartOfDay(it) == viewingDate }
                         val displayTask = task.copy(lastCompletedDate = if (isCompleted) viewingDate else null)
                         validTasks.add(item.copy(task = displayTask))
@@ -94,11 +106,10 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // --- CÁC HÀM CRUD (Gọi sang Repository) ---
+    // --- CÁC HÀM CRUD ---
 
     fun insert(plant: UserPlant) = viewModelScope.launch {
         repository.insertUserPlant(plant)
-        // saveCreationDate logic cũ vẫn dùng được vì lưu ở SharedPreferences
         saveCreationDate(plant.id, System.currentTimeMillis())
     }
 
@@ -118,25 +129,25 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     fun insertTask(task: CareTask) = viewModelScope.launch {
         repository.insertTask(task)
         if (task.isAutoReminder) {
-            // Task ID giờ là String, cần hashCode() để tạo PendingIntent ID (Int)
-            scheduleAlarm(task, task.id.hashCode())
+            // [SỬA] Truyền Garden hiện tại vào để tính delay
+            scheduleAlarm(task, task.id.hashCode(), _currentGarden.value)
         }
     }
 
-    // Thêm hàm này vào GardenViewModel
     fun updateTask(task: CareTask) = viewModelScope.launch {
         repository.updateTask(task)
         if (task.isAutoReminder) {
-            scheduleAlarm(task, task.id.hashCode())
+            // [SỬA] Truyền Garden hiện tại
+            scheduleAlarm(task, task.id.hashCode(), _currentGarden.value)
         }
     }
 
     fun markTaskAsCompleted(task: CareTask, completedDate: Long) = viewModelScope.launch {
-        // 1. Lưu history lên Firebase
+        // 1. Lưu history
         val history = TaskHistory(taskId = task.id, completedDate = completedDate)
         repository.insertHistory(history)
 
-        // 2. Cập nhật Next Due Date cho Task
+        // 2. Cập nhật Next Due Date
         val oneDayMillis = 24L * 60 * 60 * 1000
         val newNextDue = completedDate + (task.frequencyDays * oneDayMillis)
         val updatedTask = task.copy(nextDueDate = newNextDue)
@@ -145,71 +156,58 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
 
         // 3. Đặt lại báo thức
         if (task.isAutoReminder) {
-            scheduleAlarm(updatedTask, task.id.hashCode())
+            // [SỬA] Truyền Garden hiện tại
+            scheduleAlarm(updatedTask, task.id.hashCode(), _currentGarden.value)
         }
     }
 
-    // --- CÁC HÀM TRA CỨU (Thay thế SQL Query bằng lọc List trên RAM) ---
+    // --- TRA CỨU ---
 
-    // Kiểm tra xem đã có cây thuộc loài này trong vườn chưa (check theo plantId - species ID)
     suspend fun checkPlantExists(speciesId: Int): Boolean {
         val plants = allUserPlants.value ?: emptyList()
         return plants.any { it.plantId == speciesId }
     }
 
-    // Đếm số lượng cây thuộc loài này
     suspend fun getPlantCount(speciesId: Int): Int {
         val plants = allUserPlants.value ?: emptyList()
         return plants.count { it.plantId == speciesId }
     }
 
-    // --- TIMELINE (Viết lại hoàn toàn để không dùng DAO) ---
-    // Lưu ý: userPlantId bây giờ là String (UUID từ Firebase)
+    // --- TIMELINE ---
     fun getPlantTimeline(userPlantId: String): LiveData<List<TimelineItem>> = androidx.lifecycle.liveData(Dispatchers.Default) {
         val rawEvents = ArrayList<TimelineItem>()
 
-        // 1. Lấy thông tin cây (Tìm trong list đã tải về)
+        // 1. SỰ KIỆN: THÊM CÂY
         val plants = allUserPlants.value ?: emptyList()
         val plant = plants.find { it.id == userPlantId }
-
         if (plant != null) {
-            // Lấy ngày tạo (ưu tiên lấy từ SharedPreferences nếu có, hoặc dùng dateAdded từ object)
             val creationDate = getOrInitCreationDate(userPlantId, plant.dateAdded)
             rawEvents.add(TimelineItem.PlantAdded(creationDate, plant.nickname, plant.imagePath))
         }
 
-        // 2. Lấy các Task và Lịch sử hoàn thành của cây này
+        // 2. SỰ KIỆN: CHĂM SÓC (Task History)
         val allTasks = _allTasksSource.value ?: emptyList()
-        val plantTasks = allTasks.filter { it.plant.id == userPlantId } // Lọc task của cây này
+        val plantTasks = allTasks.filter { it.plant.id == userPlantId }
 
         for (item in plantTasks) {
             val task = item.task
-            // Lấy lịch sử từ Repository
             val historyDates = repository.getHistoryDatesForTask(task.id)
             for (date in historyDates) {
                 rawEvents.add(TimelineItem.CareEvent(date, task.type))
             }
         }
 
-        // 3. Lấy nhật ký bệnh (Lưu Local SharedPreferences - Giữ nguyên logic cũ)
-        val prefs = getApplication<Application>().getSharedPreferences("plant_diseases", Context.MODE_PRIVATE)
-        val logs = prefs.getStringSet("disease_logs", emptySet()) ?: emptySet()
+        // 3. [SỬA] SỰ KIỆN: BỆNH TẬT (Lấy từ Repository thay vì SharedPreferences)
+        val allLogs = repository.diseaseLogs.value ?: emptyList()
 
-        for (log in logs) {
-            val parts = log.split("|") // Format: "PlantID|DiseaseName|Time"
-            if (parts.size == 3) {
-                val pId = parts[0] // ID cây
-                val dName = parts[1]
-                val dTime = parts[2].toLongOrNull()
+        // Lọc ra những log thuộc về cây này
+        val infectedLogs = allLogs.filter { it.plantId == userPlantId }
 
-                // So sánh String ID
-                if (pId == userPlantId && dTime != null) {
-                    rawEvents.add(TimelineItem.DiseaseEvent(dTime, dName))
-                }
-            }
+        for (log in infectedLogs) {
+            rawEvents.add(TimelineItem.DiseaseEvent(log.timestamp, log.diseaseName))
         }
 
-        // 4. Sắp xếp và Gom nhóm (Giữ nguyên logic cũ)
+        // 4. SẮP XẾP & GOM NHÓM (Logic cũ)
         rawEvents.sortByDescending { it.dateMillis }
 
         val groupedList = ArrayList<TimelineItem>()
@@ -251,7 +249,6 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         _selectedDate.value = date.time
     }
 
-    // Sửa lại hàm này dùng String ID thay vì Int
     private fun saveCreationDate(plantId: String, date: Long) {
         val prefs = getApplication<Application>().getSharedPreferences("plant_birthdays", Context.MODE_PRIVATE)
         prefs.edit().putLong("dob_$plantId", date).apply()
@@ -263,47 +260,163 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         return if (savedDate != 0L) savedDate else fallbackDate
     }
 
-    // Logic Alarm giữ nguyên
-    private fun scheduleAlarm(task: CareTask, taskId: Int) {
-        val alarmManager = getApplication<Application>().getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(getApplication(), AlarmReceiver::class.java).apply {
+    // --- [MỚI] LOGIC ALARM CHO GIA ĐÌNH ---
+    private fun scheduleAlarm(task: CareTask, taskId: Int, garden: Garden? = null) {
+        val context = getApplication<Application>()
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+
+        // 1. TÍNH TOÁN ĐỘ TRỄ (DELAY)
+        var delayMillis: Long = 0
+
+        if (garden != null && currentUid != null) {
+            val myIndex = garden.members.indexOf(currentUid)
+            if (myIndex > 0) {
+                // Người thứ 1: 0p, Người thứ 2: 30p, Người thứ 3: 60p...
+                delayMillis = myIndex * 5L * 60 * 1000
+            }
+        }
+
+        // Thời gian báo thức thực tế
+        val triggerTime = task.nextDueDate + delayMillis
+
+        // 2. CHUẨN BỊ INTENT
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("TASK_TITLE", "Đến giờ chăm sóc: ${task.type.displayName}")
             putExtra("TASK_MESSAGE", "Đừng quên nhiệm vụ của bạn nhé!")
             putExtra("TASK_ID", taskId)
+
+            // Gửi thông tin để Receiver check Firebase (quan trọng cho logic hủy kèo)
+            putExtra("GARDEN_ID", garden?.id)
+            putExtra("TASK_FIRESTORE_ID", task.id)
         }
+
         val pendingIntent = PendingIntent.getBroadcast(
-            getApplication(), taskId, intent,
+            context, taskId, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        // 3. ĐẶT BÁO THỨC
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.nextDueDate, pendingIntent)
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
                 } else {
-                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.nextDueDate, pendingIntent)
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
                 }
             } else {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, task.nextDueDate, pendingIntent)
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
             }
         } catch (e: SecurityException) { e.printStackTrace() }
     }
 
-    // --- XỬ LÝ LƯU BỆNH CÂY (Dùng SharedPreferences) ---
-    // Hàm này giúp lưu lại lịch sử cây bị bệnh để hiện thị lên Timeline
-    fun markPlantsAsInfected(plants: List<UserPlant>, diseaseName: String) = viewModelScope.launch(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
-        val prefs = getApplication<Application>().getSharedPreferences("plant_diseases", Context.MODE_PRIVATE)
-
-        // Lấy danh sách cũ
-        val existingSet = prefs.getStringSet("disease_logs", HashSet())?.toMutableSet() ?: HashSet()
-
+    fun markPlantsAsInfected(plants: List<UserPlant>, diseaseName: String) = viewModelScope.launch {
+        // Không dùng SharedPreferences nữa!
+        // Duyệt qua từng cây được chọn và tạo log
         for (plant in plants) {
-            // Format lưu trữ: "ID_Cây|Tên_Bệnh|Thời_Gian"
-            val logEntry = "${plant.id}|$diseaseName|$now"
-            existingSet.add(logEntry)
+            val log = DiseaseLog(
+                plantId = plant.id,
+                diseaseName = diseaseName,
+                timestamp = System.currentTimeMillis()
+            )
+            // Gọi Repository để đẩy lên Firestore (Vườn riêng hay chung do Repo tự lo)
+            repository.insertDiseaseLog(log)
+        }
+    }
+
+    // --- LOGIC NHẬP MÃ MỜI (JOIN GARDEN) ---
+    fun joinGardenByCode(inviteCode: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            onError("Vui lòng đăng nhập!")
+            return
         }
 
-        // Lưu ngược lại vào máy
-        prefs.edit().putStringSet("disease_logs", existingSet).apply()
+        val db = FirebaseFirestore.getInstance()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // BƯỚC 1: KIỂM TRA XEM ĐANG CÓ VƯỜN NÀO CHƯA
+                val checkQuery = db.collection("gardens")
+                    .whereArrayContains("members", currentUser.uid)
+                    .get()
+                    .await()
+
+                if (!checkQuery.isEmpty) {
+                    // Đã có vườn rồi -> Chặn luôn
+                    withContext(Dispatchers.Main) {
+                        onError("Bạn đang ở trong một Vườn Gia Đình rồi. Hãy rời đi trước khi tham gia vườn mới!")
+                    }
+                    return@launch
+                }
+
+                // BƯỚC 2: TÌM VƯỜN THEO MÃ CODE
+                val codeQuery = db.collection("gardens")
+                    .whereEqualTo("inviteCode", inviteCode)
+                    .limit(1)
+                    .get()
+                    .await()
+
+                if (codeQuery.isEmpty) {
+                    withContext(Dispatchers.Main) {
+                        onError("Mã mời không chính xác hoặc vườn không tồn tại.")
+                    }
+                    return@launch
+                }
+
+                // BƯỚC 3: THÊM USER VÀO VƯỜN ĐÓ
+                val gardenDoc = codeQuery.documents[0]
+
+                // Dùng FieldValue.arrayUnion để thêm vào mảng (tránh ghi đè danh sách cũ)
+                db.collection("gardens").document(gardenDoc.id)
+                    .update("members", com.google.firebase.firestore.FieldValue.arrayUnion(currentUser.uid))
+                    .await()
+
+                // Thành công!
+                withContext(Dispatchers.Main) {
+                    // Cập nhật ngay trạng thái ViewModel sang vườn mới
+                    val newGarden = gardenDoc.toObject(Garden::class.java)?.apply { id = gardenDoc.id }
+                    setGardenMode(newGarden)
+                    onSuccess()
+                }
+
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onError("Lỗi kết nối: ${e.message}")
+                }
+            }
+        }
+    }
+
+    // --- HÀM RỜI VƯỜN (LEAVE GARDEN) ---
+    fun leaveCurrentGarden(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val garden = _currentGarden.value
+
+        if (currentUser == null || garden == null) {
+            onError("Lỗi xác thực!")
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Dùng arrayRemove để xóa UID khỏi mảng members
+                db.collection("gardens").document(garden.id)
+                    .update("members", FieldValue.arrayRemove(currentUser.uid))
+                    .await()
+
+                withContext(Dispatchers.Main) {
+                    // Xóa thành công -> Quay về vườn cá nhân
+                    setGardenMode(null)
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    onError("Lỗi: ${e.message}")
+                }
+            }
+        }
     }
 }
