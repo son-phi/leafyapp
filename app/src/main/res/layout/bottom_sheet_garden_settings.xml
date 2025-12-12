@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_bottom_sheet_rounded"
+    android:padding="24dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="#E0E0E0"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:id="@+id/tvGardenName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Garden Settings"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#1A1C1E"
+        android:layout_marginBottom="24dp"/>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="#F1F8E9"
+        app:strokeColor="#C8E6C9"
+        app:strokeWidth="1dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INVITE CODE"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/tvSheetInviteCode"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="------"
+                    android:textSize="28sp"
+                    android:letterSpacing="0.1"
+                    android:textStyle="bold"
+                    android:textColor="#1B5E20"/>
+
+                <ImageButton
+                    android:id="@+id/btnSheetCopy"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_save"
+                    app:tint="#2E7D32"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Share this code with family members to let them join."
+                android:textSize="12sp"
+                android:textColor="#558B2F"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_user_solid_full"
+            app:tint="#757575"/>
+
+        <TextView
+            android:id="@+id/tvSheetMembers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Total Members: 1"
+            android:textSize="16sp"
+            android:textColor="#424242"
+            android:layout_marginStart="12dp"/>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#EEEEEE"
+        android:layout_marginVertical="24dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSheetLeave"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Leave Garden"
+        android:textColor="#D32F2F"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        app:strokeColor="#FFCDD2"
+        app:strokeWidth="1dp"
+        app:iconTint="#D32F2F"/>
+
+</LinearLayout>
