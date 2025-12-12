@@ -7,20 +7,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.leafyapp.R
-import com.example.leafyapp.data.model.TaskType
+// [ĐÃ XÓA IMPORT TaskType VÌ KHÔNG DÙNG NỮA]
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    // 1. Thay đổi cấu trúc list:
-    // fullList: Chứa toàn bộ dữ liệu gốc
     private val fullList = ArrayList<TimelineItem>()
-    // visibleList: Chỉ chứa những item ĐANG ĐƯỢC HIỆN (đã trừ đi những tháng bị đóng)
     private val visibleList = ArrayList<TimelineItem>()
-
-    // 2. Biến lưu trạng thái: Những tháng nào đang bị đóng (Collapse)
     private val collapsedMonths = HashSet<String>()
 
     companion object {
@@ -28,15 +23,12 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private const val TYPE_ITEM = 1
     }
 
-    // 3. Hàm nạp dữ liệu mới
     fun submitList(newItems: List<TimelineItem>) {
         fullList.clear()
         fullList.addAll(newItems)
-        // Sau khi nạp dữ liệu gốc, tính toán xem cần hiện cái gì
         recalculateVisibleList()
     }
 
-    // 4. LOGIC QUAN TRỌNG: Tính toán hiển thị (Expand/Collapse)
     private fun recalculateVisibleList() {
         visibleList.clear()
         var currentHeaderKey: String? = null
@@ -44,14 +36,10 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         for (item in fullList) {
             if (item is TimelineItem.Header) {
-                // Header thì luôn luôn hiện
                 visibleList.add(item)
-                currentHeaderKey = item.key // Lưu lại key của tháng này (VD: "12-2025")
-
-                // Kiểm tra xem tháng này có đang nằm trong danh sách "Bị đóng" không
+                currentHeaderKey = item.key
                 isCurrentGroupCollapsed = collapsedMonths.contains(currentHeaderKey)
             } else {
-                // Nếu là item con: Chỉ hiện nếu nhóm KHÔNG bị đóng
                 if (!isCurrentGroupCollapsed) {
                     visibleList.add(item)
                 }
@@ -77,7 +65,6 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
-    // Lưu ý: Dùng visibleList thay vì items
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = visibleList[position]
         if (holder is HeaderViewHolder && item is TimelineItem.Header) {
@@ -89,37 +76,25 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun getItemCount(): Int = visibleList.size
 
-    // --- ViewHolder Header (Xử lý bấm mở/đóng) ---
     inner class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvHeader: TextView = itemView.findViewById(R.id.tv_month_header)
-        private val imgArrow: ImageView = itemView.findViewById(R.id.img_arrow) // Nhớ thêm ID này vào layout header
+        private val imgArrow: ImageView = itemView.findViewById(R.id.img_arrow)
 
         fun bind(item: TimelineItem.Header) {
-            val dateFormat = SimpleDateFormat("MMMM yyyy", Locale("vi", "VN"))
-            tvHeader.text = dateFormat.format(item.dateMillis).capitalize()
+            // Hiển thị dạng: "Tháng 12-2025" (Đơn giản hóa format để tránh lỗi font)
+            tvHeader.text = "Tháng ${item.key}"
 
-            // Xử lý mũi tên: Nếu đóng thì xoay 180 độ (xuống), mở thì để thường (lên)
             val isCollapsed = collapsedMonths.contains(item.key)
             imgArrow.rotation = if (isCollapsed) 180f else 0f
 
-            // Xử lý sự kiện CLICK vào Header
             itemView.setOnClickListener {
-                if (isCollapsed) {
-                    collapsedMonths.remove(item.key) // Đang đóng -> Mở ra
-                } else {
-                    collapsedMonths.add(item.key)    // Đang mở -> Đóng lại
-                }
-                // Tính toán lại danh sách hiển thị
+                if (isCollapsed) collapsedMonths.remove(item.key)
+                else collapsedMonths.add(item.key)
                 recalculateVisibleList()
             }
         }
-
-        private fun String.capitalize(): String {
-            return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-        }
     }
 
-    // --- ViewHolder Item (Xử lý định dạng ngày Fancy) ---
     inner class TimelineViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvDate: TextView = itemView.findViewById(R.id.tv_timeline_date)
         private val tvTitle: TextView = itemView.findViewById(R.id.tv_timeline_title)
@@ -127,11 +102,8 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val imgIcon: ImageView = itemView.findViewById(R.id.img_timeline_icon)
 
         fun bind(item: TimelineItem) {
-
-            // --- 5. LOGIC FORMAT NGÀY: "Saturday 06th, 14:14" ---
             tvDate.text = getFancyDate(item.dateMillis)
 
-            // Reset UI
             tvTitle.setTextColor(android.graphics.Color.BLACK)
             imgIcon.clearColorFilter()
 
@@ -142,14 +114,18 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     imgIcon.setImageResource(R.drawable.baseline_emoji_nature_24)
                 }
                 is TimelineItem.CareEvent -> {
-                    tvTitle.text = item.taskType.displayName
+                    // [SỬA LỖI]: taskType bây giờ là String, hiển thị trực tiếp
+                    tvTitle.text = item.taskType
                     tvDesc.text = "Đã hoàn thành chăm sóc."
+
+                    // [SỬA LỖI]: So sánh String để chọn icon
                     val iconRes = when (item.taskType) {
-                        TaskType.WATER -> R.drawable.ic_water_drop
-                        TaskType.MIST -> R.drawable.ic_mist
-                        TaskType.FERTILIZER -> R.drawable.ic_fertilizer
-                        TaskType.ROTATE -> R.drawable.ic_rotate
-                        TaskType.CUT -> R.drawable.ic_cut
+                        "Tưới nước" -> R.drawable.ic_water_drop
+                        "Phun sương" -> R.drawable.ic_mist
+                        "Bón phân" -> R.drawable.ic_fertilizer
+                        "Xoay cây" -> R.drawable.ic_rotate
+                        "Cắt tỉa" -> R.drawable.ic_cut
+                        else -> R.drawable.ic_water_drop // Default icon
                     }
                     imgIcon.setImageResource(iconRes)
                 }
@@ -164,24 +140,20 @@ class TimelineAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             }
         }
 
-        // Hàm helper format ngày đặc biệt
         private fun getFancyDate(millis: Long): String {
             val date = Date(millis)
-            val dayNameFormat = SimpleDateFormat("EEEE", Locale.US) // Saturday
-            val dayNumFormat = SimpleDateFormat("d", Locale.US)    // 6
-            val timeFormat = SimpleDateFormat("HH:mm", Locale.US)  // 14:14
+            val dayNameFormat = SimpleDateFormat("EEEE", Locale.US)
+            val dayNumFormat = SimpleDateFormat("d", Locale.US)
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.US)
 
             val dayName = dayNameFormat.format(date)
             val dayNum = dayNumFormat.format(date).toInt()
             val time = timeFormat.format(date)
+            val suffix = getDaySuffix(dayNum)
 
-            val suffix = getDaySuffix(dayNum) // Lấy đuôi th, st, nd
-
-            // Kết quả: "Saturday 06th, 14:14"
             return String.format("%s %02d%s, %s", dayName, dayNum, suffix, time)
         }
 
-        // Hàm tính đuôi ngày
         private fun getDaySuffix(n: Int): String {
             if (n in 11..13) return "th"
             return when (n % 10) {

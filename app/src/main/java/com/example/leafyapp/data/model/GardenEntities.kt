@@ -3,24 +3,26 @@ package com.example.leafyapp.data.model
 import java.io.Serializable
 
 data class UserPlant(
-    // Đổi id từ Long thành String để khớp với Document ID của Firebase
     var id: String = "",
-    var userId: String = "", // QUAN TRỌNG: ID của người dùng sở hữu cây
+    var userId: String = "",
 
-    val plantId: Int = 0, // ID của loại cây trong database gốc (static db)
-    val nickname: String = "",
+    val plantId: Int = 0,
+    var nickname: String = "", // var để sửa tên (Family)
     val imagePath: String? = null,
-    val dateAdded: Long = System.currentTimeMillis()
+    val dateAdded: Long = System.currentTimeMillis(),
+    var gardenId: String? = null
 ) : Serializable {
-    // Firebase cần constructor rỗng
     constructor() : this("", "", 0, "", null)
 }
 
 data class CareTask(
     var id: String = "",
-    var userPlantId: String = "", // String để khớp với UserPlant.id mới
+    var userPlantId: String = "",
 
-    val type: TaskType = TaskType.WATER, // Enum cần xử lý riêng hoặc đổi sang String
+    // [QUAN TRỌNG 1] Thêm tên cây để hiển thị trên thông báo cho đẹp
+    val plantName: String? = null,
+
+    val type: TaskType = TaskType.WATER,
     val frequencyDays: Int = 1,
     val timeHour: Int = 8,
     val timeMinute: Int = 0,
@@ -31,18 +33,26 @@ data class CareTask(
     val isAutoReminder: Boolean = true,
     val lastCompletedDate: Long? = null,
 
-    // [QUAN TRỌNG NHẤT] THÊM FIELD NÀY: Dùng để lưu Task thuộc về Garden nào (giúp Server biết mà gửi Noti)
-    val gardenId: String? = null
+    // [QUAN TRỌNG 2] ID Vườn (null = Cá nhân, có giá trị = Family)
+    val gardenId: String? = null,
+
+    // [QUAN TRỌNG 3] ID Người tạo (Để xử lý logic báo thức so le 30p)
+    val ownerId: String = ""
+
 ) : Serializable {
-    // Cập nhật lại constructor rỗng cho khớp với field mới
-    constructor() : this("", "", TaskType.WATER, 1, 8, 0, System.currentTimeMillis(), System.currentTimeMillis(), true, null, null)
+    // Constructor rỗng cho Firebase (cập nhật đủ trường)
+    constructor() : this(
+        "", "", null, TaskType.WATER, 1, 8, 0,
+        System.currentTimeMillis(), System.currentTimeMillis(),
+        true, null, null, ""
+    )
 }
 
-// Enum vẫn giữ nguyên, nhưng khi lưu lên Firebase nó sẽ lưu dạng String "WATER"
 enum class TaskType(val displayName: String) {
-    WATER("Watering"),
-    MIST("Misting"),
-    FERTILIZER("Fertilizing"),
-    ROTATE("Rotating"),
-    CUT("Cutting")
+    WATER("Tưới nước"),
+    MIST("Phun sương"),
+    FERTILIZER("Bón phân"),
+    ROTATE("Xoay cây"),
+    CUT("Cắt tỉa"),
+    OTHER("Khác")
 }
