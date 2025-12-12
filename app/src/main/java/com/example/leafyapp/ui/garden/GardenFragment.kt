@@ -43,7 +43,7 @@ class GardenFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupViewPager()
-        setupSwitch()
+        setupGardenSelector()
         setupButtons()
         observeViewModel()
 
@@ -53,8 +53,12 @@ class GardenFragment : Fragment() {
 
     private fun checkIntentArguments() {
         val shouldOpenFamily = requireActivity().intent.getBooleanExtra("OPEN_FAMILY_MODE", false)
+
         if (shouldOpenFamily) {
-            binding.switchFamilyMode.isChecked = true
+            // SỬA: Thay vì switch.isChecked = true
+            // Ta dùng lệnh check() để chọn nút Family trong Toggle Group
+            binding.toggleGardenMode.check(com.example.leafyapp.R.id.btnModeFamily)
+
             // Xóa cờ để không bị mở lại lần sau
             requireActivity().intent.removeExtra("OPEN_FAMILY_MODE")
         }
@@ -77,49 +81,63 @@ class GardenFragment : Fragment() {
         }.attach()
     }
 
-    private fun setupSwitch() {
-        binding.switchFamilyMode.setOnCheckedChangeListener { _, isChecked ->
+    private fun setupGardenSelector() {
+        // Xử lý sự kiện khi bấm nút chuyển đổi
+        binding.toggleGardenMode.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
-                // BẬT CHẾ ĐỘ GIA ĐÌNH (Đã xóa icon ngôi nhà)
-                binding.tvModeTitle.text = "Family Garden"
-                checkIfUserHasGarden()
-            } else {
-                // TẮT CHẾ ĐỘ (Đã xóa icon người)
-                binding.tvModeTitle.text = "My Personal Garden"
-                viewModel.setGardenMode(null)
-                updateUI(isFamilyMode = false, hasGarden = false)
+                when (checkedId) {
+                    com.example.leafyapp.R.id.btnModeFamily -> {
+                        // CHUYỂN SANG FAMILY
+                        checkIfUserHasGarden()
+                    }
+                    com.example.leafyapp.R.id.btnModePersonal -> {
+                        // CHUYỂN SANG PERSONAL
+                        viewModel.setGardenMode(null)
+                        updateUI(isFamilyMode = false, hasGarden = false)
+                    }
+                }
             }
         }
     }
 
+    // Cập nhật hàm observeViewModel để highlight đúng nút khi dữ liệu thay đổi
     private fun observeViewModel() {
-        // Lắng nghe thay đổi vườn hiện tại để cập nhật UI
         viewModel.currentGarden.observe(viewLifecycleOwner) { garden ->
             if (garden != null) {
-                // Đang ở trong một vườn cụ thể
-                binding.switchFamilyMode.isChecked = true // Đảm bảo switch bật
+                // Nếu ViewModel có vườn -> Đảm bảo nút Family đang sáng
+                if (binding.toggleGardenMode.checkedButtonId != com.example.leafyapp.R.id.btnModeFamily) {
+                    binding.toggleGardenMode.check(com.example.leafyapp.R.id.btnModeFamily)
+                }
                 updateUI(isFamilyMode = true, hasGarden = true)
 
-                // Hiển thị thông tin
-                binding.tvInviteCode.text = garden.inviteCode
-                binding.tvMemberCount.text = "Thành viên: ${garden.members.size}"
             }
         }
     }
 
     private fun updateUI(isFamilyMode: Boolean, hasGarden: Boolean) {
         if (!isFamilyMode) {
-            // Mode Riêng tư: Ẩn hết dashboard
+            // Personal Mode
             binding.layoutNoGarden.visibility = View.GONE
-            binding.layoutGardenInfo.visibility = View.GONE
+            binding.btnGardenSettings.visibility = View.GONE // Ẩn nút cài đặt
+
+            binding.tabLayout.visibility = View.VISIBLE
+            binding.viewPager.visibility = View.VISIBLE
         } else {
-            // Mode Gia đình
+            // Family Mode
             if (hasGarden) {
+                // Có vườn -> Hiện nút Cài đặt nhỏ + Hiện Tab
                 binding.layoutNoGarden.visibility = View.GONE
-                binding.layoutGardenInfo.visibility = View.VISIBLE
+                binding.btnGardenSettings.visibility = View.VISIBLE // Hiện nút cài đặt
+
+                binding.tabLayout.visibility = View.VISIBLE
+                binding.viewPager.visibility = View.VISIBLE
             } else {
+                // Chưa có vườn -> Ẩn nút Cài đặt + Ẩn Tab
                 binding.layoutNoGarden.visibility = View.VISIBLE
-                binding.layoutGardenInfo.visibility = View.GONE
+                binding.btnGardenSettings.visibility = View.GONE
+
+                binding.tabLayout.visibility = View.GONE
+                binding.viewPager.visibility = View.GONE
             }
         }
     }
@@ -168,18 +186,55 @@ class GardenFragment : Fragment() {
         }
 
         // Nút Copy mã
-        binding.btnCopyCode.setOnClickListener {
-            val code = binding.tvInviteCode.text.toString()
-            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = ClipData.newPlainText("Invite Code", code)
-            clipboard.setPrimaryClip(clip)
-            Toast.makeText(context, "Đã copy mã: $code", Toast.LENGTH_SHORT).show()
-        }
+//        binding.btnCopyCode.setOnClickListener {
+//            val code = binding.tvInviteCode.text.toString()
+//            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+//            val clip = ClipData.newPlainText("Invite Code", code)
+//            clipboard.setPrimaryClip(clip)
+//            Toast.makeText(context, "Đã copy mã: $code", Toast.LENGTH_SHORT).show()
+//        }
 
         // Nút Rời Vườn
-        binding.btnLeaveGarden.setOnClickListener {
-            showLeaveConfirmationDialog()
+//        binding.btnLeaveGarden.setOnClickListener {
+//            showLeaveConfirmationDialog()
+//        }
+
+        binding.btnGardenSettings.setOnClickListener {
+            showGardenSettingsBottomSheet()
         }
+    }
+
+    private fun showGardenSettingsBottomSheet() {
+        val garden = viewModel.currentGarden.value ?: return
+
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
+        val view = layoutInflater.inflate(com.example.leafyapp.R.layout.bottom_sheet_garden_settings, null)
+        dialog.setContentView(view)
+
+        // 1. Bind dữ liệu lên View
+        val tvName = view.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tvGardenName)
+        val tvCode = view.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tvSheetInviteCode)
+        val tvMembers = view.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tvSheetMembers)
+
+        tvName.text = "Cài đặt: ${garden.name}"
+        tvCode.text = garden.inviteCode
+        tvMembers.text = "Thành viên hiện tại: ${garden.members.size}"
+
+        // 2. Xử lý nút Copy
+        view.findViewById<View>(com.example.leafyapp.R.id.btnSheetCopy).setOnClickListener {
+            val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Invite Code", garden.inviteCode)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(context, "Đã copy mã mời!", Toast.LENGTH_SHORT).show()
+        }
+
+        // 3. Xử lý nút Rời vườn
+        view.findViewById<View>(com.example.leafyapp.R.id.btnSheetLeave).setOnClickListener {
+            dialog.dismiss() // Đóng sheet trước khi hiện confirm dialog
+            showLeaveConfirmationDialog() // Gọi lại hàm confirm cũ
+        }
+
+        dialog.show()
     }
 
     private fun showLeaveConfirmationDialog() {
@@ -190,7 +245,12 @@ class GardenFragment : Fragment() {
                 viewModel.leaveCurrentGarden(
                     onSuccess = {
                         Toast.makeText(context, "You left the garden.", Toast.LENGTH_SHORT).show()
-                        // Tự động update UI về trạng thái chưa có vườn
+
+                        // SỬA LOGIC Ở ĐÂY:
+                        // 1. Reset tên nút Family về mặc định
+                        binding.btnModeFamily.text = "Family"
+
+                        // 2. Vẫn giữ chế độ Family nhưng ở trạng thái "Chưa có vườn"
                         updateUI(isFamilyMode = true, hasGarden = false)
                     },
                     onError = { msg ->
