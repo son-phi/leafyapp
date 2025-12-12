@@ -43,6 +43,8 @@ class TaskAdapter(
 
             // 1. Hiển thị thông tin cơ bản
             binding.tvTaskType.text = task.type.displayName
+            // Vì đã thêm plantName vào CareTask, bạn có thể dùng task.plantName
+            // Tuy nhiên dùng item.plant.nickname vẫn an toàn hơn nếu object plant có sẵn
             binding.tvPlantName.text = item.plant.nickname
 
             val iconRes = when (task.type) {
@@ -51,6 +53,10 @@ class TaskAdapter(
                 TaskType.FERTILIZER -> R.drawable.ic_fertilizer
                 TaskType.ROTATE -> R.drawable.ic_rotate
                 TaskType.CUT -> R.drawable.ic_cut
+
+                // [ĐÃ SỬA LỖI] Thêm trường hợp OTHER hoặc else
+                TaskType.OTHER -> R.drawable.ic_water_drop // Bạn có thể thay bằng R.drawable.ic_task_other nếu có
+                else -> R.drawable.ic_water_drop // Fallback cho an toàn
             }
             binding.imgTaskIcon.setImageResource(iconRes)
 
@@ -63,12 +69,10 @@ class TaskAdapter(
 
             if (isCompletedOnSelectedDate) {
                 // --- TRƯỜNG HỢP 1: ĐÃ HOÀN THÀNH ---
-                // Hiển thị dấu tick, không cho bỏ tick
                 binding.cbTaskDone.visibility = View.VISIBLE
                 binding.cbTaskDone.isChecked = true
                 binding.cbTaskDone.isEnabled = false
 
-                // Hiển thị thông tin "Today Completed" và "Next Task"
                 binding.layoutCompletedInfo.visibility = View.VISIBLE
 
                 val nextDate = Calendar.getInstance()
@@ -76,7 +80,6 @@ class TaskAdapter(
                 val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
                 binding.tvNextDueDate.text = "Next task: ${dateFormat.format(nextDate.time)}"
 
-                // Gạch ngang chữ
                 binding.tvTaskType.paintFlags = binding.tvTaskType.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
 
             } else {
@@ -86,11 +89,9 @@ class TaskAdapter(
                 binding.tvTaskType.paintFlags = binding.tvTaskType.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
 
                 if (isFuture) {
-                    // Nếu xem ngày tương lai -> Ẩn checkbox
                     binding.cbTaskDone.visibility = View.INVISIBLE
                     binding.cbTaskDone.isEnabled = false
                 } else {
-                    // Nếu xem hôm nay (hoặc quá khứ sót lại) -> Hiện checkbox để tick
                     binding.cbTaskDone.visibility = View.VISIBLE
                     binding.cbTaskDone.isEnabled = true
                 }

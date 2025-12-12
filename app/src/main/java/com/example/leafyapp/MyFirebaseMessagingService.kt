@@ -1,61 +1,55 @@
-package com.example.leafyapp
+package com.example.leafyapp // Đổi package cho đúng
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import android.media.RingtoneManager
-import android.os.Build
-import androidx.core.app.NotificationCompat
+import android.util.Log
+import com.example.leafyapp.ui.notifications.NotificationHelper
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
-    // Hàm này chạy khi có tin nhắn từ Server đến
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // Lấy thông tin từ tin nhắn
-        val title = remoteMessage.notification?.title ?: "Leafy App"
-        val body = remoteMessage.notification?.body ?: "Bạn có thông báo mới"
+        super.onMessageReceived(remoteMessage)
 
-        // Hiển thị lên thanh trạng thái
-        sendNotification(title, body)
-    }
-
-    private fun sendNotification(title: String, messageBody: String) {
-        val intent = Intent(this, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-
-        // PendingIntent để khi bấm vào thông báo thì mở App
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val channelId = "leafy_garden_channel"
-        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
-        val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.mipmap.ic_launcher) // Đổi icon app của ông ở đây
-            .setContentTitle(title)
-            .setContentText(messageBody)
-            .setAutoCancel(true)
-            .setSound(defaultSoundUri)
-            .setContentIntent(pendingIntent)
-
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        // Android 8.0+ bắt buộc phải có Channel
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Garden Notifications",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            notificationManager.createNotificationChannel(channel)
+        // Chỉ xử lý nếu có Data
+        if (remoteMessage.data.isNotEmpty()) {
+            handleDataMessage(remoteMessage.data)
         }
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+        // (Nếu có notification payload thì Android tự hiện, nhưng ở đây mình dùng data-only)
+    }
+
+    private fun handleDataMessage(data: Map<String, String>) {
+        val type = data["type"] ?: return
+        val ownerId = data["ownerId"] ?: ""
+        val taskId = data["taskId"] ?: ""
+        val title = data["taskTitle"] ?: "Nhắc nhở"
+        val body = data["taskBody"] ?: ""
+
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // --- LOGIC PHÂN QUYỀN (CHÌA KHÓA CỦA BẠN) ---
+
+        var shouldShow = false
+
+        if (type == "due_now") {
+            // Case 1: Đúng giờ -> Chỉ hiện nếu MÌNH LÀ CHỦ TASK
+            if (currentUid == ownerId) {
+                shouldShow = true
+            }
+        } else if (type == "escalate") {
+            // Case 2: Trễ 30p -> Chỉ hiện nếu MÌNH KHÔNG PHẢI CHỦ (Vợ/Thành viên khác)
+            if (currentUid != ownerId) {
+                shouldShow = true
+            }
+        }
+
+        // --- HIỆN THÔNG BÁO ---
+        if (shouldShow) {
+            val helper = NotificationHelper(this)
+            helper.createNotificationChannel()
+            // Dùng hashCode của taskId làm ID để update lại thông báo cũ nếu cần
+            helper.showNotification(taskId.hashCode(), title, body)
+        }
     }
 }

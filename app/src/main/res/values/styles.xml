@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="SplashLetter">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -8,8 +9,15 @@
         <item name="android:textStyle">bold</item>
         <item name="android:gravity">center</item>
         <item name="android:includeFontPadding">false</item>
-
         <item name="android:alpha">0</item>
         <item name="android:translationY">50dp</item>
     </style>
+
+    <!-- Cho ShapeableImageView tròn -->
+    <style name="ShapeAppearanceOverlay.CircleImage"
+        parent="ShapeAppearance.Material3.Corner.None">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
 </resources>

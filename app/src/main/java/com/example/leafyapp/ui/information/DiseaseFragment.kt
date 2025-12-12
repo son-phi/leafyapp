@@ -57,10 +57,17 @@ class DiseaseFragment : Fragment() {
 
         setupCloseButton()
 
-        // 1. Lắng nghe danh sách cây (Để dùng cho Dialog chọn cây bị bệnh)
+        // 1. Lắng nghe danh sách cây
         gardenViewModel.allUserPlants.observe(viewLifecycleOwner) { plants ->
             myPlants = plants
+            // Log ra xem nó lấy được bao nhiêu cây
+            // Log.d("DiseaseFragment", "Đã load được: ${plants.size} cây")
         }
+
+        // --- [THÊM DÒNG NÀY] ---
+        // Gọi hàm load gộp cả 2 nguồn cây ngay khi mở màn hình
+        gardenViewModel.loadCombinedPlants()
+        // -----------------------
 
         loadDisease()
     }
@@ -95,6 +102,7 @@ class DiseaseFragment : Fragment() {
     }
 
     // ----------- UI: HEALTHY (Cây khỏe) ----------
+    // [GIỮ NGUYÊN - KHÔNG ĐỘNG VÀO]
     private fun showHealthyUi() {
         binding.layoutHealthy.visibility = View.VISIBLE
         binding.scrollDisease.visibility = View.GONE
@@ -107,7 +115,7 @@ class DiseaseFragment : Fragment() {
             // Font lỗi thì thôi, dùng mặc định
         }
 
-        binding.tvHealthy.text = "Your plant is healthy! 🎉" // Tiếng Anh
+        binding.tvHealthy.text = "Your plant is healthy!" // Tiếng Anh
         binding.tvHealthy.paint.isFakeBoldText = true
         binding.tvHealthy.invalidate()
 
@@ -117,27 +125,28 @@ class DiseaseFragment : Fragment() {
     }
 
     // ----------- UI: DISEASE (Cây bệnh) ----------
+    // [CHỈ ĐỔI PHẦN THÔNG TIN BỆNH SANG TIẾNG VIỆT]
     private fun showDiseaseBlocks(d: Disease) {
         binding.layoutHealthy.visibility = View.GONE
         binding.scrollDisease.visibility = View.VISIBLE
 
         binding.containerDiseases.removeAllViews()
 
-        // Tiêu đề Tiếng Anh
-        binding.tvDiseaseTitle.text = "Disease Info: ${d.diseaseName}"
+        // Tiêu đề TIẾNG VIỆT
+        binding.tvDiseaseTitle.text = "Thông tin bệnh: ${d.diseaseName}"
 
-        // Nút lưu bệnh
-        binding.btnMarkSick.text = "Mark plants as Infected"
+        // Nút lưu bệnh (TIẾNG VIỆT)
+        binding.btnMarkSick.text = "Đánh dấu cây bị bệnh"
         binding.btnMarkSick.visibility = View.VISIBLE
 
         for (i in d.reasons.indices) {
             val item = ItemDiseaseBlockBinding.inflate(layoutInflater, binding.containerDiseases, false)
 
-            // Nội dung chi tiết (Dữ liệu database có thể là tiếng Việt, nhưng nhãn là tiếng Anh)
-            item.tvDiseaseName.text = "🌱 Cause #${i + 1}"
-            item.tvReason.text = "• Reason: ${d.reasons[i]}"
-            item.tvSolution.text = "• Solution: ${d.solutions.getOrNull(i) ?: "N/A"}"
-            item.tvPlants.text = "• Affected Plants: ${d.plants.getOrNull(i) ?: "N/A"}"
+            // Nhãn TIẾNG VIỆT (dữ liệu từ DB giữ nguyên)
+            item.tvDiseaseName.text = "🌱 Nguyên nhân #${i + 1}"
+            item.tvReason.text = "• Nguyên nhân: ${d.reasons[i]}"
+            item.tvSolution.text = "• Cách xử lý: ${d.solutions.getOrNull(i) ?: "Không có"}"
+            item.tvPlants.text = "• Cây bị ảnh hưởng: ${d.plants.getOrNull(i) ?: "Không có"}"
 
             binding.containerDiseases.addView(item.root)
         }
@@ -149,9 +158,10 @@ class DiseaseFragment : Fragment() {
     }
 
     // --- HÀM HIỆN DIALOG CHỌN CÂY ---
+    // [CHỈ ĐỔI TEXT TIẾNG VIỆT]
     private fun showSelectPlantsDialog() {
         if (myPlants.isEmpty()) {
-            Toast.makeText(context, "Your garden is empty!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Vườn của bạn đang trống!", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -161,7 +171,7 @@ class DiseaseFragment : Fragment() {
         val selectedPlants = ArrayList<UserPlant>()
 
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Select affected plants") // Tiếng Anh
+            .setTitle("Chọn cây bị ảnh hưởng")
             .setMultiChoiceItems(plantNames, checkedItems) { _, which, isChecked ->
                 if (isChecked) {
                     selectedPlants.add(myPlants[which])
@@ -169,15 +179,18 @@ class DiseaseFragment : Fragment() {
                     selectedPlants.remove(myPlants[which])
                 }
             }
-            .setPositiveButton("Save") { dialog, _ ->
+            .setPositiveButton("Lưu") { dialog, _ ->
                 if (selectedPlants.isNotEmpty()) {
-                    // Gọi ViewModel để lưu vào SharedPreferences (hoặc Firebase sau này)
                     gardenViewModel.markPlantsAsInfected(selectedPlants, currentDiseaseName)
-                    Toast.makeText(context, "Marked ${selectedPlants.size} plants as infected.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Đã đánh dấu ${selectedPlants.size} cây bị bệnh.",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 dialog.dismiss()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Hủy", null)
             .show()
     }
 

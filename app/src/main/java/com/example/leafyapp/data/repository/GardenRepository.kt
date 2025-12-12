@@ -3,7 +3,7 @@ package com.example.leafyapp.data.repository
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.leafyapp.data.model.CareTask
-import com.example.leafyapp.data.model.DiseaseLog // [MỚI] Nhớ import cái này
+import com.example.leafyapp.data.model.DiseaseLog
 import com.example.leafyapp.data.model.TaskHistory
 import com.example.leafyapp.data.model.TaskWithPlant
 import com.example.leafyapp.data.model.UserPlant
@@ -11,6 +11,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+// [QUAN TRỌNG] Các import cho Coroutines & Flow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 
 class GardenRepository {
 
@@ -31,7 +36,6 @@ class GardenRepository {
     private val _taskHistory = MutableLiveData<List<TaskHistory>>()
     val taskHistory: LiveData<List<TaskHistory>> = _taskHistory
 
-    // [MỚI] LiveData cho Lịch sử bệnh
     private val _diseaseLogs = MutableLiveData<List<DiseaseLog>>()
     val diseaseLogs: LiveData<List<DiseaseLog>> = _diseaseLogs
 
@@ -39,7 +43,7 @@ class GardenRepository {
     private var plantsListener: ListenerRegistration? = null
     private var tasksListener: ListenerRegistration? = null
     private var historyListener: ListenerRegistration? = null
-    private var diseaseListener: ListenerRegistration? = null // [MỚI]
+    private var diseaseListener: ListenerRegistration? = null
 
     init {
         startListening()
@@ -50,8 +54,7 @@ class GardenRepository {
         if (currentGardenId == gardenId) return
         currentGardenId = gardenId
         stopListening()
-//        _userPlants.value = emptyList()
-//        _allTasks.value = emptyList()
+        // _userPlants.value = emptyList() // Có thể bỏ comment nếu muốn xóa trắng khi chuyển
         startListening()
     }
 
@@ -74,14 +77,11 @@ class GardenRepository {
         }
     }
 
-    // [MỚI] Lấy đường dẫn Disease Logs
     private fun getDiseaseLogsRef(): CollectionReference {
         val uid = currentUserId ?: throw Exception("No User")
         return if (currentGardenId == null) {
-            // Vườn riêng: users/{uid}/disease_logs
             db.collection("users").document(uid).collection("disease_logs")
         } else {
-            // Vườn chung: gardens/{gardenId}/disease_logs
             db.collection("gardens").document(currentGardenId!!).collection("disease_logs")
         }
     }
@@ -113,10 +113,9 @@ class GardenRepository {
                 _taskHistory.value = list
             }
 
-        // 4. [MỚI] Disease Logs (Bệnh án)
+        // 4. Disease Logs (Tổng hợp để hiển thị realtime nếu cần)
         diseaseListener = getDiseaseLogsRef().addSnapshotListener { snap, _ ->
             val list = snap?.toObjects(DiseaseLog::class.java) ?: emptyList()
-            // Gán ID document nếu cần xóa sửa sau này
             list.forEachIndexed { i, item -> item.id = snap!!.documents[i].id }
             _diseaseLogs.value = list
         }
@@ -126,10 +125,9 @@ class GardenRepository {
         plantsListener?.remove()
         tasksListener?.remove()
         historyListener?.remove()
-        diseaseListener?.remove() // [MỚI]
+        diseaseListener?.remove()
     }
 
-    // --- LOGIC GHÉP DỮ LIỆU ---
     private fun combineTasksAndPlants() {
         val plants = _userPlants.value ?: return
         val tasks = _allTasks.value ?: return
@@ -142,7 +140,7 @@ class GardenRepository {
     }
 
     // --- CRUD FUNCTIONS ---
-    // (Giữ nguyên các hàm insert/update/delete Plant và Task cũ...)
+
     fun insertUserPlant(plant: UserPlant) {
         val ref = getPlantsRef().document()
         plant.id = ref.id
@@ -169,10 +167,67 @@ class GardenRepository {
         return allHistory.filter { it.taskId == taskId }.map { it.completedDate }
     }
 
-    // [MỚI] Hàm thêm log bệnh
-    fun insertDiseaseLog(log: DiseaseLog) {
-        val ref = getDiseaseLogsRef().document()
-        log.id = ref.id
-        ref.set(log)
+    // --- [DISEASE LOGIC] ---
+
+    // 1. Insert Log (Lưu đúng Vườn)
+    fun insertDiseaseLog(log: DiseaseLog, gardenId: String?) {
+        val uid = currentUserId ?: return
+        val ref = if (gardenId != null) {
+            db.collection("gardens").document(gardenId).collection("disease_logs")
+        } else {
+            db.collection("users").document(uid).collection("disease_logs")
+        }
+
+        val docRef = ref.document()
+        log.id = docRef.id
+        docRef.set(log)
     }
+
+    // 2. Get Log One-Shot (Lấy 1 lần - Dùng cho các tác vụ không cần realtime)
+    suspend fun getDiseaseLogsForPlant(plantId: String, gardenId: String?): List<DiseaseLog> {
+        val uid = currentUserId ?: return emptyList()
+        return try {
+            val ref = if (gardenId != null) {
+                db.collection("gardens").document(gardenId).collection("disease_logs")
+            } else {
+                db.collection("users").document(uid).collection("disease_logs")
+            }
+            val snapshot = ref.whereEqualTo("plantId", plantId).get().await()
+            snapshot.toObjects(DiseaseLog::class.java)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    // 3. Listen Log Real-time (Dùng cho Timeline để tự cập nhật)
+    fun listenToDiseaseLogs(plantId: String, gardenId: String?): Flow<List<DiseaseLog>> = callbackFlow {
+        val uid = currentUserId ?: run {
+            trySend(emptyList())
+            return@callbackFlow
+        }
+
+        // Chọn đúng đường dẫn
+        val ref = if (gardenId != null) {
+            db.collection("gardens").document(gardenId).collection("disease_logs")
+        } else {
+            db.collection("users").document(uid).collection("disease_logs")
+        }
+
+        // Lắng nghe thay đổi
+        val subscription = ref.whereEqualTo("plantId", plantId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val logs = snapshot.toObjects(DiseaseLog::class.java)
+                    trySend(logs)
+                }
+            }
+
+        awaitClose { subscription.remove() }
+    }
+
+
 }
