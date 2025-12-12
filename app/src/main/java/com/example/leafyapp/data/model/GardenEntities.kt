@@ -4,7 +4,6 @@ import java.io.Serializable
 
 data class UserPlant(
     // Đổi id từ Long thành String để khớp với Document ID của Firebase
-    // Nếu vẫn muốn giữ Room, bạn cần mapping. Ở đây mình hướng dẫn chuyển sang String cho chuẩn Cloud.
     var id: String = "",
     var userId: String = "", // QUAN TRỌNG: ID của người dùng sở hữu cây
 
@@ -30,9 +29,13 @@ data class CareTask(
     val nextDueDate: Long = System.currentTimeMillis(),
 
     val isAutoReminder: Boolean = true,
-    val lastCompletedDate: Long? = null
+    val lastCompletedDate: Long? = null,
+
+    // [QUAN TRỌNG NHẤT] THÊM FIELD NÀY: Dùng để lưu Task thuộc về Garden nào (giúp Server biết mà gửi Noti)
+    val gardenId: String? = null
 ) : Serializable {
-    constructor() : this("", "", TaskType.WATER, 1, 8, 0)
+    // Cập nhật lại constructor rỗng cho khớp với field mới
+    constructor() : this("", "", TaskType.WATER, 1, 8, 0, System.currentTimeMillis(), System.currentTimeMillis(), true, null, null)
 }
 
 // Enum vẫn giữ nguyên, nhưng khi lưu lên Firebase nó sẽ lưu dạng String "WATER"

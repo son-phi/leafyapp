@@ -10,7 +10,7 @@ import android.widget.Spinner
 import android.widget.TimePicker
 import android.widget.Toast
 import androidx.core.os.bundleOf
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels // <--- QUAN TRỌNG: Dùng cái này
 import com.example.leafyapp.R
 import com.example.leafyapp.data.model.CareTask
 import com.example.leafyapp.data.model.TaskType
@@ -24,8 +24,9 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetCreateTaskBinding? = null
     private val binding get() = _binding!!
-    // Sử dụng requireParentFragment() để chung ViewModel với Fragment cha
-    private val viewModel: GardenViewModel by viewModels({ requireParentFragment() })
+
+    // [QUAN TRỌNG] Đổi thành activityViewModels() để nhận biết chế độ Family/Personal từ GardenFragment
+    private val viewModel: GardenViewModel by activityViewModels()
 
     private val selectedPlants = ArrayList<UserPlant>()
 
@@ -34,13 +35,12 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     private var selectedHour: Int = 8
     private var selectedMinute: Int = 0
 
-    // --- SỬA 1: Đổi ID từ Long sang String? (Có thể null) ---
+    // ID task đang sửa (String từ Firebase)
     private var editingTaskId: String? = null
     private var editingTask: CareTask? = null
     private var availablePlants: List<UserPlant> = emptyList()
 
     companion object {
-        // --- SỬA 2: Tham số đầu vào là String ---
         fun newInstance(taskId: String? = null): CreateTaskBottomSheet {
             return CreateTaskBottomSheet().apply {
                 arguments = bundleOf("TASK_ID" to taskId)
@@ -59,16 +59,18 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- SỬA 3: Lấy String từ Bundle ---
+        // Lấy ID task cần sửa (nếu có)
         editingTaskId = arguments?.getString("TASK_ID")
 
+        // Lắng nghe danh sách cây từ ViewModel CHUNG
         viewModel.allUserPlants.observe(viewLifecycleOwner) { plants ->
             availablePlants = plants
 
-            // --- SỬA 4: Kiểm tra null thay vì -1L ---
             if (editingTaskId != null) {
+                // Nếu đang sửa -> Load dữ liệu cũ lên
                 loadTaskData(plants)
             } else {
+                // Nếu tạo mới -> UI mặc định
                 binding.tvSheetTitle.text = "Create Task"
                 binding.btnDeleteTask.visibility = View.GONE
             }
@@ -80,8 +82,8 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         val groupedTasks = viewModel.groupedTasksForSelectedDate.value ?: emptyList()
         var foundTask: CareTask? = null
 
+        // Tìm task cần sửa trong danh sách hiện có
         for (group in groupedTasks) {
-            // --- SỬA 5: So sánh String == String (Hết lỗi đỏ) ---
             val task = group.tasks.find { it.id == editingTaskId }
             if (task != null) {
                 foundTask = task
@@ -91,25 +93,32 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
 
         if (foundTask != null) {
             editingTask = foundTask
-            // Chế độ Edit
+            // Tìm cây tương ứng với task này
             val plant = plants.find { it.id == foundTask!!.userPlantId }
             if (plant != null) {
                 selectedPlants.clear()
                 selectedPlants.add(plant)
             }
+
+            // Gán các giá trị cũ vào biến tạm
             selectedTaskType = foundTask!!.type
             selectedFrequency = foundTask!!.frequencyDays
             selectedHour = foundTask!!.timeHour
             selectedMinute = foundTask!!.timeMinute
 
+            // Cập nhật UI
             binding.tvSheetTitle.text = "Edit Task"
-            binding.tvSelectedPlant.text = selectedPlants.firstOrNull()?.nickname
+            binding.tvSelectedPlant.text = selectedPlants.firstOrNull()?.nickname ?: "Unknown Plant"
             binding.tvSelectedTaskType.text = selectedTaskType?.displayName
             binding.tvSelectedFrequency.text = "$selectedFrequency Days"
             binding.tvSelectedTime.text = String.format("%02d:%02d", selectedHour, selectedMinute)
             binding.switchAutoReminder.isChecked = foundTask!!.isAutoReminder
 
             binding.btnDeleteTask.visibility = View.VISIBLE
+        } else {
+            // Trường hợp hy hữu: Có ID nhưng không tìm thấy Task (do load chậm hoặc đã bị xóa)
+            Toast.makeText(context, "Task not found!", Toast.LENGTH_SHORT).show()
+            dismiss()
         }
     }
 
@@ -120,6 +129,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         binding.optionTime.setOnClickListener { showTimePickerDialog() }
         binding.btnSaveTask.setOnClickListener { saveTask() }
         binding.btnCloseSheet.setOnClickListener { dismiss() }
+
         binding.btnDeleteTask.setOnClickListener {
             if (editingTask != null) {
                 viewModel.deleteTask(editingTask!!)
@@ -135,34 +145,43 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
-        // --- SỬA 6: Kiểm tra null ---
         if (editingTaskId != null) {
-            // Edit Mode: Chọn 1 cây
+            // CHẾ ĐỘ SỬA: Chỉ được chọn 1 cây (Radio Button)
             val plantNames = availablePlants.map { it.nickname }.toTypedArray()
+
+            // Tìm vị trí cây đang chọn hiện tại
+            var checkedItem = -1
+            if (selectedPlants.isNotEmpty()) {
+                checkedItem = availablePlants.indexOfFirst { it.id == selectedPlants[0].id }
+            }
+
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Select Plant")
-                .setItems(plantNames) { _, which ->
+                .setSingleChoiceItems(plantNames, checkedItem) { dialog, which ->
                     selectedPlants.clear()
                     selectedPlants.add(availablePlants[which])
                     binding.tvSelectedPlant.text = selectedPlants[0].nickname
+                    dialog.dismiss() // Đóng dialog ngay sau khi chọn
                 }
+                .setNegativeButton("Cancel", null)
                 .show()
         } else {
-            // Create Mode: Chọn nhiều cây
+            // CHẾ ĐỘ TẠO MỚI: Được chọn nhiều cây (Checkbox)
             val plantNames = availablePlants.map { it.nickname }.toTypedArray()
             val checkedItems = BooleanArray(availablePlants.size) { i ->
-                selectedPlants.contains(availablePlants[i])
+                selectedPlants.any { it.id == availablePlants[i].id }
             }
 
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Select Plants")
                 .setMultiChoiceItems(plantNames, checkedItems) { _, which, isChecked ->
                     if (isChecked) {
-                        if (!selectedPlants.contains(availablePlants[which])) {
+                        // Tránh thêm trùng lặp
+                        if (selectedPlants.none { it.id == availablePlants[which].id }) {
                             selectedPlants.add(availablePlants[which])
                         }
                     } else {
-                        selectedPlants.remove(availablePlants[which])
+                        selectedPlants.removeAll { it.id == availablePlants[which].id }
                     }
                 }
                 .setPositiveButton("OK") { _, _ ->
@@ -181,7 +200,6 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    // (Giữ nguyên các hàm showSelectTaskTypeDialog, showSelectFrequencyDialog, showTimePickerDialog...)
     private fun showSelectTaskTypeDialog() {
         val types = TaskType.values()
         val typeNames = types.map { it.displayName }.toTypedArray()
@@ -210,7 +228,11 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
                 val count = if (countStr.isNotEmpty()) countStr.toInt() else 1
                 val unitIndex = spUnit.selectedItemPosition
                 val days = when (unitIndex) {
-                    0 -> count; 1 -> count * 7; 2 -> count * 30; 3 -> count * 365; else -> count
+                    0 -> count          // Days
+                    1 -> count * 7      // Weeks
+                    2 -> count * 30     // Months (Xấp xỉ)
+                    3 -> count * 365    // Years
+                    else -> count
                 }
                 selectedFrequency = days
                 val unitText = units[unitIndex]
@@ -250,31 +272,38 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
+        // Tính thời gian bắt đầu (Ngày hôm nay + Giờ đã chọn)
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, selectedHour)
         calendar.set(Calendar.MINUTE, selectedMinute)
         calendar.set(Calendar.SECOND, 0)
+
+        // --- [THÊM ĐOẠN NÀY] LOGIC TỰ CỘNG 24H ---
+        // Nếu thời gian chọn < Hiện tại -> Tự động cộng thêm 1 ngày
+        if (calendar.timeInMillis <= System.currentTimeMillis()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1)
+            Toast.makeText(context, "Đã đặt cho ngày mai vì giờ này qua rồi!", Toast.LENGTH_SHORT).show()
+        }
         val timeMillis = calendar.timeInMillis
 
-        // --- SỬA 7: Logic Lưu ---
         if (editingTaskId != null && editingTask != null) {
-            // UPDATE
+            // --- TRƯỜNG HỢP 1: CẬP NHẬT TASK CŨ ---
             val taskToSave = editingTask!!.copy(
-                userPlantId = selectedPlants[0].id,
+                userPlantId = selectedPlants[0].id, // Lấy cây đầu tiên (vì edit chỉ cho chọn 1)
                 type = selectedTaskType!!,
                 frequencyDays = selectedFrequency,
                 timeHour = selectedHour,
                 timeMinute = selectedMinute,
-                nextDueDate = timeMillis,
+                nextDueDate = timeMillis, // Reset lại ngày nhắc tiếp theo
                 isAutoReminder = binding.switchAutoReminder.isChecked
             )
-            // QUAN TRỌNG: Phải gọi hàm update, không gọi insert (sẽ bị trùng)
             viewModel.updateTask(taskToSave)
             Toast.makeText(context, "Task Updated", Toast.LENGTH_SHORT).show()
         } else {
-            // CREATE NEW
+            // --- TRƯỜNG HỢP 2: TẠO TASK MỚI (Cho nhiều cây) ---
             for (plant in selectedPlants) {
                 val newTask = CareTask(
+                    id = "", // Để rỗng, Repository sẽ tự tạo ID mới
                     userPlantId = plant.id,
                     type = selectedTaskType!!,
                     frequencyDays = selectedFrequency,

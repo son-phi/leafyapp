@@ -10,21 +10,35 @@ class ResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
 
-        // 1. Nhận dữ liệu từ Model gửi sang
-        val modelId = intent.getIntExtra("RESULT_ID", -1)
+        // 1. Nhận dữ liệu (Hỗ trợ cả Key cũ "RESULT_ID" và Key mới "ID")
+        // Ưu tiên lấy "ID" trước (từ Home/Search), nếu không có thì lấy "RESULT_ID" (từ Camera cũ)
+        var rawId = intent.getIntExtra("ID", -1)
+        if (rawId == -1) {
+            rawId = intent.getIntExtra("RESULT_ID", -1)
+        }
+
         val label = intent.getStringExtra("RESULT_LABEL") ?: "Unknown"
         val confidence = intent.getFloatExtra("RESULT_CONF", 0f)
         val mode = intent.getStringExtra("RESULT_MODE") ?: "Plant"
 
-        // 2. Xử lý ID để khớp với Database
-        val finalId = if (modelId != -1) {
+        // [QUAN TRỌNG] Kiểm tra cờ hiệu "IS_FROM_DB"
+        // - true: Dữ liệu từ Database (Home/Search) -> ID đã chuẩn (1, 2, 3...)
+        // - false (mặc định): Dữ liệu từ AI Camera -> ID bị lệch (0, 1, 2...)
+        val isFromDb = intent.getBooleanExtra("IS_FROM_DB", false)
+
+        // 2. Xử lý ID cuối cùng
+        val finalId = if (rawId != -1) {
             if (mode == "Plant") {
-                // CÂY: Model (0,1,2...) -> DB (1,2,3...) => Cần cộng 1
-                modelId + 1
+                if (isFromDb) {
+                    // Trường hợp 1: Từ Home/Search -> Giữ nguyên
+                    rawId
+                } else {
+                    // Trường hợp 2: Từ Camera AI -> Cộng 1
+                    rawId + 1
+                }
             } else {
-                // BỆNH: Model (0,1,2...) -> DB (0,1,2...) => Giữ nguyên
-                // (Dựa theo ảnh bảng 'diseases' em gửi, id bắt đầu từ 0)
-                modelId
+                // BỆNH: Logic cũ của bạn (AI và DB khớp nhau -> Giữ nguyên)
+                rawId
             }
         } else {
             -1
@@ -32,10 +46,8 @@ class ResultActivity : AppCompatActivity() {
 
         // 3. Chọn Fragment phù hợp để hiển thị
         val fragment = if (mode == "Plant") {
-            // Truyền ID đã xử lý vào PlantFragment
             PlantFragment.newInstance(finalId, label, confidence)
         } else {
-            // Truyền ID đã xử lý vào DiseaseFragment
             DiseaseFragment.newInstance(finalId, label, confidence)
         }
 
