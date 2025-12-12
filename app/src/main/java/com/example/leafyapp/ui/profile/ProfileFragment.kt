@@ -453,11 +453,18 @@ class ProfileFragment : Fragment() {
 
         view.findViewById<View>(com.example.leafyapp.R.id.btn_close_login_email).setOnClickListener { dialog.dismiss() }
 
-        // Sự kiện chuyển sang màn hình Sign Up
+        // Switch to Sign Up
         view.findViewById<View>(com.example.leafyapp.R.id.tv_switch_signup).setOnClickListener {
             dialog.dismiss()
-            showEmailSignUpForm()
+            showSignUpBottomSheet()
         }
+
+        // --- NEW: Handle Google Login inside Email Sheet ---
+        view.findViewById<View>(com.example.leafyapp.R.id.btn_google_login_email_sheet)?.setOnClickListener {
+            dialog.dismiss() // Close the email sheet
+            performGoogleLogin() // Trigger the Google Login logic
+        }
+        // --------------------------------------------------
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
@@ -468,7 +475,7 @@ class ProfileFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Gọi Repository để xử lý
+            // Call Repository
             authRepository.signInEmailAccount(email, pass,
                 onSuccess = {
                     Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
