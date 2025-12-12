@@ -176,17 +176,70 @@
                 android:textAlignment="center"
                 android:layout_marginTop="24dp"/>
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggle_unit_size"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:checkedButton="@id/btn_cm">
-                <Button android:id="@+id/btn_cm" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CM" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-                <Button android:id="@+id/btn_in" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="IN" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#2979FF"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggle_unit_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true"
+                    app:checkedButton="@id/btn_cm"
+                    app:strokeWidth="0dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_cm"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="CM"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+
+                        android:minWidth="60dp"
+                        android:paddingHorizontal="12dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+
+                        app:cornerRadius="0dp"
+                        app:strokeWidth="0dp"
+
+                        android:textColor="@color/selector_toggle_text_blue"
+                        app:backgroundTint="@color/selector_toggle_bg_blue"
+                        />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_in"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="IN"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+
+                        android:minWidth="60dp"
+                        android:paddingHorizontal="12dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+
+                        app:cornerRadius="0dp"
+                        app:strokeWidth="0dp"
+
+                        android:textColor="@color/selector_toggle_text_blue"
+                        app:backgroundTint="@color/selector_toggle_bg_blue"
+                        />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -229,13 +282,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.chip.Chip
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="I don't know"
-                android:layout_marginTop="16dp"
-                app:chipBackgroundColor="@android:color/transparent"/>
-
             <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
             <com.google.android.material.button.MaterialButton android:id="@+id/btn_next_2" android:layout_width="match_parent" android:layout_height="60dp" android:text="Next" android:backgroundTint="#2979FF" app:cornerRadius="30dp"/>
         </LinearLayout>
@@ -259,17 +305,70 @@
                 android:textAlignment="center"
                 android:layout_marginTop="24dp"/>
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggle_unit_temp"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:checkedButton="@id/btn_c">
-                <Button android:id="@+id/btn_c" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="°C" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-                <Button android:id="@+id/btn_f" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="°F" style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                app:cardCornerRadius="18dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#2979FF"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggle_unit_temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true"
+                    app:checkedButton="@id/btn_c"
+                    app:strokeWidth="0dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_c"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="°C"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+
+                        android:minWidth="60dp"
+                        android:paddingHorizontal="12dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+
+                        app:cornerRadius="0dp"
+                        app:strokeWidth="0dp"
+
+                        android:textColor="@color/selector_toggle_text_blue"
+                        app:backgroundTint="@color/selector_toggle_bg_blue"
+                        />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_f"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="°F"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+
+                        android:minWidth="60dp"
+                        android:paddingHorizontal="12dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+
+                        app:cornerRadius="0dp"
+                        app:strokeWidth="0dp"
+
+                        android:textColor="@color/selector_toggle_text_blue"
+                        app:backgroundTint="@color/selector_toggle_bg_blue"
+                        />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
