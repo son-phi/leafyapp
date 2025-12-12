@@ -28,5 +28,8 @@
     <string name="no_results">No results found</string>
     <string name="clear">Clear</string>
     <string name="default_web_client_id">713080689378-t9f0su6u37puhnbpd3cjimfgpreh29lk.apps.googleusercontent.com</string>
+    <string name="disease_info_title_short">Thông tin bệnh</string>
+    <string name="choose_affected_plants_vi">Chọn cây bị bệnh</string>
+
 
 </resources>

@@ -175,32 +175,62 @@ class PlantFragment : Fragment() {
         val context = requireContext()
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(50, 20, 50, 10)
-            gravity = android.view.Gravity.CENTER
+            setPadding(50, 40, 50, 10)
+            // gravity = android.view.Gravity.CENTER // Bỏ cái này đi để checkbox căn lề trái cho đẹp
         }
 
+        // 1. Chọn số lượng
         val numberPicker = NumberPicker(context).apply {
             minValue = 1
             maxValue = 10
             value = 1
             wrapSelectorWheel = false
         }
-        layout.addView(numberPicker)
+        // Cho NumberPicker ra giữa
+        val layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            gravity = android.view.Gravity.CENTER
+            bottomMargin = 30 // Cách đoạn checkbox ra 1 chút
+        }
+        layout.addView(numberPicker, layoutParams)
+
+        // 2. Tạo 2 Checkbox
+        val cbPersonal = CheckBox(context).apply {
+            text = "Thêm vào Vườn Cá Nhân" // Personal Garden
+            textSize = 16f
+            isChecked = true // Mặc định chọn Cá nhân
+        }
 
         val cbFamily = CheckBox(context).apply {
-            text = "Thêm vào Vườn Gia Đình"
+            text = "Thêm vào Vườn Gia Đình" // Family Garden
             textSize = 16f
             isChecked = false
-            setPadding(0, 20, 0, 0)
         }
+
+        // 3. Xử lý Logic "Chỉ được chọn 1 trong 2"
+        // Dùng setOnClickListener thay vì setOnCheckedChangeListener để tránh vòng lặp vô tận
+        cbPersonal.setOnClickListener {
+            cbPersonal.isChecked = true  // Luôn giữ trạng thái true khi bấm vào chính nó
+            cbFamily.isChecked = false   // Tắt cái kia đi
+        }
+
+        cbFamily.setOnClickListener {
+            cbFamily.isChecked = true    // Luôn giữ trạng thái true khi bấm vào chính nó
+            cbPersonal.isChecked = false // Tắt cái kia đi
+        }
+
+        layout.addView(cbPersonal)
         layout.addView(cbFamily)
 
         AlertDialog.Builder(context)
             .setTitle("Select Quantity")
-            .setMessage("How many ${plant.name} do you want to add?")
+            .setMessage("How many '${plant.name}' do you want to add?")
             .setView(layout)
             .setPositiveButton("Add") { _, _ ->
                 val quantity = numberPicker.value
+                // Chỉ cần kiểm tra cbFamily có được chọn hay không là biết mode nào
                 val isFamily = cbFamily.isChecked
                 addMultiplePlantsToGarden(plant, quantity, isFamily)
             }
