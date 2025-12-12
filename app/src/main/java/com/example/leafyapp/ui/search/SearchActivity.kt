@@ -24,14 +24,13 @@ import com.example.leafyapp.R
 import com.example.leafyapp.data.model.Plant
 import com.example.leafyapp.ui.information.ResultActivity
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.DocumentSnapshot
 
 class SearchActivity : AppCompatActivity() {
 
     private lateinit var etSearch: AppCompatEditText
     private lateinit var btnCancel: TextView
     private lateinit var rv: RecyclerView
-    private lateinit var adapter: SearchAdapter // Sử dụng SearchAdapter của bạn
+    private lateinit var adapter: SearchAdapter
     private lateinit var btnClear: ImageButton
 
     // Thay DatabaseHelper bằng List lưu trữ tạm
@@ -52,19 +51,21 @@ class SearchActivity : AppCompatActivity() {
 
         // Setup Adapter
         adapter = SearchAdapter { plant ->
-
             Log.d("DEBUG_CLICK", "Bạn vừa click vào: ${plant.name} - ID: ${plant.id}")
 
             val intent = Intent(this, ResultActivity::class.java).apply {
-                // Lưu ý: ID trên Firebase có thể là String hoặc Int tùy lúc migrate.
-                // Nếu ResultActivity cần Int, hãy đảm bảo plant.id là Int
-                putExtra("RESULT_ID", plant.id) // Bỏ -1 nếu ID đã chuẩn
+                // --- SỬA Ở ĐÂY ---
+
+                // 1. Đổi Key thành "ID" cho chuẩn với ResultActivity
+                putExtra("ID", plant.id)
+
+                // 2. Thêm cờ IS_FROM_DB để ResultActivity KHÔNG cộng thêm 1
+                putExtra("IS_FROM_DB", true)
+
                 putExtra("RESULT_LABEL", plant.name)
-                putExtra("RESULT_CONF", 1.0f)
                 putExtra("RESULT_MODE", "Plant")
             }
             startActivity(intent)
-            // finish() // Có thể bỏ finish nếu muốn quay lại search
         }
 
         rv.layoutManager = LinearLayoutManager(this)
@@ -109,7 +110,6 @@ class SearchActivity : AppCompatActivity() {
 
     private fun fetchPlantsFromFirebase() {
         val db = FirebaseFirestore.getInstance()
-        // 1. Lấy TOÀN BỘ dữ liệu (Không dùng limit, không orderBy ở đây để đỡ tốn index)
         db.collection("plants")
             .get()
             .addOnSuccessListener { result ->
@@ -117,19 +117,16 @@ class SearchActivity : AppCompatActivity() {
                 for (document in result) {
                     try {
                         val plant = document.toObject(Plant::class.java)
-                        // Nếu ID nằm ở Document Key thì gán vào đây
-                        // plant.id = document.id.toInt()
                         list.add(plant)
                     } catch (e: Exception) {
                         Log.e("SearchActivity", "Error parsing plant", e)
                     }
                 }
 
-                // 2. QUAN TRỌNG: Sắp xếp danh sách gốc giảm dần theo độ phổ biến
-                // Từ giờ biến allPlants sẽ luôn được sắp xếp xịn xò
+                // Sắp xếp danh sách gốc giảm dần theo độ phổ biến
                 allPlants = list.sortedByDescending { it.popularity }
 
-                // 3. Hiển thị 5 cây đầu tiên (Lúc này chính là 5 cây Trending cao nhất)
+                // Hiển thị 5 cây đầu tiên (Trending)
                 adapter.submitList(allPlants.take(5))
             }
             .addOnFailureListener { e ->
@@ -141,7 +138,7 @@ class SearchActivity : AppCompatActivity() {
         val filteredList = if (query.isBlank()) {
             allPlants.take(5) // Gợi ý mặc định
         } else {
-            // Lọc cục bộ (nhanh và không tốn tiền mạng)
+            // Lọc cục bộ
             allPlants.filter {
                 it.name.contains(query, ignoreCase = true) ||
                         it.scientificName.contains(query, ignoreCase = true)

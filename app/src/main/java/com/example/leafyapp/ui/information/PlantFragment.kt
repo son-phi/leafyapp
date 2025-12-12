@@ -7,20 +7,25 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
+import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide // Đổi sang Glide để đồng bộ
+import com.bumptech.glide.Glide
 import com.example.leafyapp.MainActivity
+import com.example.leafyapp.data.model.Garden
 import com.example.leafyapp.data.model.Plant
 import com.example.leafyapp.data.model.UserPlant
 import com.example.leafyapp.databinding.FragmentPlantBinding
 import com.example.leafyapp.ui.garden.GardenViewModel
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await // Cần import cái này để dùng await()
 import kotlinx.coroutines.launch
 
 class PlantFragment : Fragment() {
@@ -62,8 +67,6 @@ class PlantFragment : Fragment() {
         receiveArguments()
         setupBottomSheet()
         setupCloseButton()
-
-        // Gọi hàm tải từ Firebase thay vì DatabaseHelper
         fetchPlantFromFirebase()
     }
 
@@ -84,35 +87,29 @@ class PlantFragment : Fragment() {
         binding.btnClose.setOnClickListener { requireActivity().finish() }
     }
 
-    // --- LOGIC MỚI: LẤY TỪ FIREBASE ---
     private fun fetchPlantFromFirebase() {
         if (plantId == -1) {
             showError("ID cây không hợp lệ.")
             return
         }
 
-        // Hiển thị tên tạm thời trong lúc chờ tải
-        binding.tvPlantName.text = plantLabel ?: "Đang tải..."
+        binding.tvPlantName.text = plantLabel ?: "Loading..."
 
         val db = FirebaseFirestore.getInstance()
-
-        // Truy vấn Document theo ID (Lưu ý: Không cộng 1 nữa)
         db.collection("plants").document(plantId.toString())
             .get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
-                    // Convert dữ liệu Firebase thành Object Plant
                     val plant = document.toObject(Plant::class.java)
-
                     if (plant != null) {
                         currentDisplayPlant = plant
                         displayPlantInfo(plant)
                         setupAddButton(plant)
                     } else {
-                        showError("Dữ liệu cây bị lỗi.")
+                        showError("Lỗi dữ liệu cây.")
                     }
                 } else {
-                    showError("Không tìm thấy thông tin cây này trên hệ thống.")
+                    showError("Không tìm thấy cây này.")
                 }
             }
             .addOnFailureListener { e ->
@@ -122,7 +119,6 @@ class PlantFragment : Fragment() {
     }
 
     private fun displayPlantInfo(plant: Plant) {
-        // Hiển thị ảnh bằng Glide (xử lý link Google Drive)
         if (!plant.image.isNullOrBlank()) {
             val directUrl = convertGoogleDriveLink(plant.image)
             Glide.with(this)
@@ -133,18 +129,16 @@ class PlantFragment : Fragment() {
                 .into(binding.imgPlant)
         }
 
-        // Gán thông tin text
         binding.tvPlantName.text = plant.name
         binding.tvScientificName.text = plant.scientificName
-        binding.tvDescription.text = plant.description ?: "Đang cập nhật..."
+        binding.tvDescription.text = plant.description ?: "Updating..."
 
-        // Các thông số kỹ thuật (Ánh sáng, nước...)
-        binding.tvLight.text = "☀️ Ánh sáng: ${plant.light ?: "N/A"}"
-        binding.tvWater.text = "💧 Tưới nước: ${plant.watering ?: "N/A"}"
-        binding.tvSoil.text = "🪨 Đất: ${plant.soil ?: "N/A"}"
-        binding.tvFertilizer.text = "🧪 Phân bón: ${plant.fertilizer ?: "N/A"}"
-        binding.tvTemp.text = "🌡️ Nhiệt độ: ${plant.temperature ?: "N/A"}"
-        binding.tvHumidity.text = "💦 Độ ẩm: ${plant.humidity ?: "N/A"}"
+        binding.tvLight.text = "☀️ Light: ${plant.light ?: "N/A"}"
+        binding.tvWater.text = "💧 Water: ${plant.watering ?: "N/A"}"
+        binding.tvSoil.text = "🪨 Soil: ${plant.soil ?: "N/A"}"
+        binding.tvFertilizer.text = "🧪 Fertilizer: ${plant.fertilizer ?: "N/A"}"
+        binding.tvTemp.text = "🌡️ Temperature: ${plant.temperature ?: "N/A"}"
+        binding.tvHumidity.text = "💦 Humidity: ${plant.humidity ?: "N/A"}"
     }
 
     private fun convertGoogleDriveLink(originalUrl: String): String {
@@ -161,14 +155,14 @@ class PlantFragment : Fragment() {
     }
 
     private fun showError(msg: String) {
-        binding.tvPlantName.text = "Thông báo"
+        binding.tvPlantName.text = "Error"
         binding.tvDescription.text = msg
         binding.btnAddPlant.isEnabled = false
         binding.btnAddPlant.alpha = 0.5f
     }
 
     private fun setupAddButton(plant: Plant) {
-        binding.btnAddPlant.text = "Thêm vào vườn"
+        binding.btnAddPlant.text = "Add to Garden"
         binding.btnAddPlant.isEnabled = true
         binding.btnAddPlant.alpha = 1.0f
 
@@ -178,58 +172,121 @@ class PlantFragment : Fragment() {
     }
 
     private fun showQuantityDialog(plant: Plant) {
-        val numberPicker = NumberPicker(requireContext())
-        numberPicker.minValue = 1
-        numberPicker.maxValue = 10
-        numberPicker.value = 1
-        numberPicker.wrapSelectorWheel = false
+        val context = requireContext()
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 20, 50, 10)
+            gravity = android.view.Gravity.CENTER
+        }
 
-        val layout = android.widget.FrameLayout(requireContext())
-        layout.addView(numberPicker, android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-            android.view.Gravity.CENTER
-        ))
+        val numberPicker = NumberPicker(context).apply {
+            minValue = 1
+            maxValue = 10
+            value = 1
+            wrapSelectorWheel = false
+        }
+        layout.addView(numberPicker)
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Chọn số lượng")
-            .setMessage("Bạn muốn thêm bao nhiêu cây ${plant.name}?")
+        val cbFamily = CheckBox(context).apply {
+            text = "Thêm vào Vườn Gia Đình"
+            textSize = 16f
+            isChecked = false
+            setPadding(0, 20, 0, 0)
+        }
+        layout.addView(cbFamily)
+
+        AlertDialog.Builder(context)
+            .setTitle("Select Quantity")
+            .setMessage("How many ${plant.name} do you want to add?")
             .setView(layout)
-            .setPositiveButton("Thêm") { _, _ ->
+            .setPositiveButton("Add") { _, _ ->
                 val quantity = numberPicker.value
-                addMultiplePlantsToGarden(plant, quantity)
+                val isFamily = cbFamily.isChecked
+                addMultiplePlantsToGarden(plant, quantity, isFamily)
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
-    private fun addMultiplePlantsToGarden(plantToSave: Plant, quantity: Int) {
+    // --- LOGIC TỰ ĐỘNG TÌM ID VƯỜN ---
+    private fun addMultiplePlantsToGarden(plantToSave: Plant, quantity: Int, isFamilyMode: Boolean) {
         lifecycleScope.launch {
-            // Đếm số lượng cây hiện có để đánh số thứ tự (Ví dụ: Hoa hồng 3, Hoa hồng 4)
-            val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
-            val baseName = plantToSave.name
+            // Hiển thị loading nhẹ hoặc disable nút bấm nếu cần (ở đây làm đơn giản)
 
-            for (i in 1..quantity) {
-                val newIndex = currentCount + i
-                val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
+            if (isFamilyMode) {
+                // 1. Tự động tìm vườn của user trên Firebase
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                if (currentUser == null) {
+                    Toast.makeText(context, "Vui lòng đăng nhập!", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
 
-                val newUserPlant = UserPlant(
-                    plantId = plantToSave.id,
-                    nickname = finalName,
-                    imagePath = plantToSave.image // Lưu lại link ảnh để hiển thị trong Garden
-                )
-                gardenViewModel.insert(newUserPlant)
+                try {
+                    val db = FirebaseFirestore.getInstance()
+                    // Query tìm vườn nào có chứa UID của mình trong mảng 'members'
+                    val querySnapshot = db.collection("gardens")
+                        .whereArrayContains("members", currentUser.uid)
+                        .limit(1) // Lấy vườn đầu tiên tìm thấy
+                        .get()
+                        .await() // Đợi kết quả trả về
+
+                    if (!querySnapshot.isEmpty) {
+                        val gardenDoc = querySnapshot.documents[0]
+                        // Convert sang Object Garden
+                        val garden = gardenDoc.toObject(Garden::class.java)
+
+                        // Nếu object rỗng nhưng doc tồn tại, gán thủ công ID
+                        val finalGarden = garden?.apply { id = gardenDoc.id } ?: Garden(id = gardenDoc.id)
+
+                        // Set ViewModel sang chế độ Family với ID vừa tìm được
+                        gardenViewModel.setGardenMode(finalGarden)
+
+                        // Tiến hành thêm cây
+                        performAddPlants(plantToSave, quantity, true)
+
+                    } else {
+                        Toast.makeText(context, "Bạn chưa tham gia vườn gia đình nào!", Toast.LENGTH_LONG).show()
+                        // Không thêm cây nữa vì không có vườn
+                    }
+                } catch (e: Exception) {
+                    Log.e("PlantFragment", "Lỗi tìm vườn", e)
+                    Toast.makeText(context, "Lỗi kết nối: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+
+            } else {
+                // 2. Chế độ riêng tư -> Không cần tìm ID
+                gardenViewModel.setGardenMode(null)
+                performAddPlants(plantToSave, quantity, false)
             }
-
-            Toast.makeText(context, "Đã thêm $quantity cây vào vườn!", Toast.LENGTH_SHORT).show()
-
-            // Chuyển về màn hình My Garden
-            val intent = Intent(requireContext(), MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            intent.putExtra("OPEN_MY_GARDEN", true)
-            startActivity(intent)
-            requireActivity().finish()
         }
+    }
+
+    // Tách hàm thêm cây ra cho gọn code
+    private suspend fun performAddPlants(plantToSave: Plant, quantity: Int, isFamilyMode: Boolean) {
+        val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
+        val baseName = plantToSave.name
+
+        for (i in 1..quantity) {
+            val newIndex = currentCount + i
+            val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
+
+            val newUserPlant = UserPlant(
+                plantId = plantToSave.id,
+                nickname = finalName,
+                imagePath = plantToSave.image
+            )
+            gardenViewModel.insert(newUserPlant)
+        }
+
+        val dest = if (isFamilyMode) "Family Garden" else "My Garden"
+        Toast.makeText(context, "Added $quantity plants to $dest!", Toast.LENGTH_SHORT).show()
+
+        // Chuyển màn hình
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        intent.putExtra("OPEN_FAMILY_MODE", isFamilyMode)
+        startActivity(intent)
+        requireActivity().finish()
     }
 
     override fun onDestroyView() {

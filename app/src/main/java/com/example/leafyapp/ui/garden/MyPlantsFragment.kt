@@ -13,8 +13,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.navigation.findNavController
+import androidx.fragment.app.activityViewModels // <--- QUAN TRỌNG: Nhớ import cái này
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.leafyapp.R
@@ -27,7 +26,10 @@ class MyPlantsFragment : Fragment() {
 
     private var _binding: FragmentMyPlantsBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: GardenViewModel by viewModels()
+
+    // [QUAN TRỌNG] Đổi viewModels() -> activityViewModels()
+    // Để nhận được tín hiệu khi gạt Switch từ GardenFragment
+    private val viewModel: GardenViewModel by activityViewModels()
 
     private val galleryLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -50,37 +52,41 @@ class MyPlantsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Setup RecyclerView với Adapter mới
+        // Setup RecyclerView với Adapter
         val adapter = UserPlantAdapter(
             // Callback 1: Khi bấm nút 3 chấm (Menu)
             onMenuClick = { view, plant ->
-                showPlantOptionsBottomSheet(plant) // Gọi hàm private trong class này
+                showPlantOptionsBottomSheet(plant)
             },
-            // Callback 2: Khi bấm vào item cây
+            // Callback 2: Khi bấm vào item cây -> Mở Timeline
+            // Callback 2: Khi bấm vào item cây -> Mở Timeline
             onItemClick = { plant ->
-//                val intent = Intent(requireContext(), ResultActivity::class.java)
-//                intent.putExtra("RESULT_ID", plant.plantId - 1)
-//                intent.putExtra("RESULT_LABEL", plant.nickname)
-//                intent.putExtra("RESULT_MODE", "Plant")
-//                startActivity(intent)
-                val bundle = Bundle().apply { putString("PLANT_ID", plant.id) }
-                try {
-                    findNavController().navigate(R.id.action_garden_to_timeline, bundle)
-                } catch (e: Exception) {
-                    // Có thể bạn đang ở tab khác, nên tìm từ NavController của Activity
-                    requireActivity().findNavController(R.id.nav_host_fragment_activity_main)
-                        .navigate(R.id.action_garden_to_timeline, bundle)
+                // 1. Tạo gói dữ liệu (Bundle) chứa ID cây
+                val bundle = android.os.Bundle().apply {
+                    putString("PLANT_ID", plant.id)
                 }
 
+                try {
+                    // Cách 1: Thử điều hướng từ Fragment hiện tại
+                    findNavController().navigate(R.id.action_garden_to_timeline, bundle)
+                } catch (e: Exception) {
+                    // Cách 2: Nếu lỗi, tìm NavController từ Activity cha (Sửa lỗi Too many arguments)
+                    androidx.navigation.Navigation.findNavController(
+                        requireActivity(),
+                        R.id.nav_host_fragment_activity_main
+                    ).navigate(R.id.action_garden_to_timeline, bundle)
+                }
             }
         )
 
         binding.rvMyPlants.adapter = adapter
         binding.rvMyPlants.layoutManager = LinearLayoutManager(requireContext())
 
+        // Lắng nghe dữ liệu từ ViewModel CHUNG
         viewModel.allUserPlants.observe(viewLifecycleOwner) { plants ->
             adapter.submitList(plants)
 
+            // Hiển thị giao diện trống nếu không có cây
             if (plants.isEmpty()) {
                 binding.layoutEmptyState.visibility = View.VISIBLE
                 binding.rvMyPlants.visibility = View.GONE
@@ -93,20 +99,19 @@ class MyPlantsFragment : Fragment() {
         binding.btnAddFirstPlant.setOnClickListener {
             showAddPlantBottomSheet()
         }
-
     }
 
-    // --- CÁC HÀM RIÊNG CỦA FRAGMENT (Đặt ở đây là đúng) ---
+    // --- CÁC HÀM UI LOGIC (GIỮ NGUYÊN CỦA BẠN) ---
 
     private fun showAddPlantBottomSheet() {
+        // Kiểm tra xem class AddPlantBottomSheet của bạn có tồn tại không
+        // Nếu không thì bạn phải tạo class đó hoặc dùng code tạo dialog thủ công
+        // Giả sử class đó đã có sẵn:
         val bottomSheet = AddPlantBottomSheet(
             onTakePhotoClick = {
                 try {
-                    // Tạo gói dữ liệu: Key là "CAMERA_MODE", Value là "Plant"
                     val args = bundleOf("CAMERA_MODE" to "Plant")
-
-                    // TODO: điều hướng tới màn nhận dạng cây
-                    findNavController().navigate(com.example.leafyapp.R.id.navigation_camera, args)
+                    findNavController().navigate(R.id.navigation_camera, args)
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Lỗi điều hướng Camera", Toast.LENGTH_SHORT).show()
                 }
@@ -126,19 +131,16 @@ class MyPlantsFragment : Fragment() {
         startActivity(intent)
     }
 
-    // Hàm hiển thị Bottom Sheet tùy chọn (Sửa/Xóa)
     private fun showPlantOptionsBottomSheet(plant: UserPlant) {
         val dialog = BottomSheetDialog(requireContext())
         val view = layoutInflater.inflate(R.layout.bottom_sheet_plant_options, null)
         dialog.setContentView(view)
 
-        // Xử lý nút Sửa tên
         view.findViewById<View>(R.id.option_edit_name).setOnClickListener {
             dialog.dismiss()
             showRenameDialog(plant)
         }
 
-        // Xử lý nút Xóa
         view.findViewById<View>(R.id.option_delete_plant).setOnClickListener {
             dialog.dismiss()
             showDeleteConfirmation(plant)
@@ -147,7 +149,6 @@ class MyPlantsFragment : Fragment() {
         dialog.show()
     }
 
-    // Dialog đổi tên
     private fun showRenameDialog(plant: UserPlant) {
         val input = EditText(requireContext())
         input.setText(plant.nickname)
@@ -175,7 +176,6 @@ class MyPlantsFragment : Fragment() {
             .show()
     }
 
-    // Dialog xóa
     private fun showDeleteConfirmation(plant: UserPlant) {
         AlertDialog.Builder(requireContext())
             .setTitle("Delete Plant")

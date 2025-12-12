@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels // <--- QUAN TRỌNG: Import cái này
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.leafyapp.data.model.CareTask
 import com.example.leafyapp.databinding.FragmentTasksBinding
@@ -20,11 +20,12 @@ class TasksFragment : Fragment() {
 
     private var _binding: FragmentTasksBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: GardenViewModel by viewModels()
+
+    // [QUAN TRỌNG] Đổi viewModels() -> activityViewModels()
+    // Để nhận biết được chế độ Family/Personal từ GardenFragment
+    private val viewModel: GardenViewModel by activityViewModels()
 
     private var isViewingToday = true
-
-    // SỬA: Dùng TaskGroupAdapter thay vì TaskAdapter
     private lateinit var taskAdapter: TaskGroupAdapter
 
     override fun onCreateView(
@@ -48,6 +49,9 @@ class TasksFragment : Fragment() {
     }
 
     private fun setupCalendar() {
+        // Đảm bảo LayoutManager cho Calendar là Horizontal (nếu trong XML chưa set)
+        binding.rvCalendar.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
         val calendarAdapter = CalendarAdapter { selectedDate ->
             viewModel.setSelectedDate(selectedDate)
 
@@ -61,6 +65,7 @@ class TasksFragment : Fragment() {
 
         binding.rvCalendar.adapter = calendarAdapter
 
+        // Scroll đến ngày hôm nay
         val todayPos = calendarAdapter.getSelectedPositionInt()
         if (todayPos != -1) {
             (binding.rvCalendar.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(todayPos - 2, 0)
@@ -68,28 +73,24 @@ class TasksFragment : Fragment() {
     }
 
     private fun setupTasksList() {
-        // Adapter mới
         taskAdapter = TaskGroupAdapter(
             selectedDateMillis = System.currentTimeMillis(),
             onTaskChecked = { task ->
-                // --- SỬA Ở ĐÂY (QUAN TRỌNG) ---
-                // Code cũ: val completedAt = viewModel.getSelectedDayStart() -> Gây lỗi 00:00
-                // Code mới: Lấy thời gian thực tế lúc bấm nút
+                // Lấy thời gian thực tế lúc bấm hoàn thành
                 val completedAt = System.currentTimeMillis()
-
                 viewModel.markTaskAsCompleted(task, completedAt)
-                Toast.makeText(context, "Đã hoàn thành!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Completed!", Toast.LENGTH_SHORT).show()
             },
             onTaskClick = { task ->
                 showEditDeleteDialog(task)
             }
         )
 
-
         binding.rvTasks.adapter = taskAdapter
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
 
-        // Lắng nghe dữ liệu đã gom nhóm
+        // Lắng nghe dữ liệu từ ViewModel CHUNG
+        // Khi switch gạt -> groupedTasksForSelectedDate tự thay đổi -> List tự cập nhật
         viewModel.groupedTasksForSelectedDate.observe(viewLifecycleOwner) { groupedList ->
             taskAdapter.submitList(groupedList)
 
@@ -110,7 +111,7 @@ class TasksFragment : Fragment() {
             .setItems(options) { dialog, which ->
                 if (which == 0) {
                     viewModel.deleteTask(task)
-                    Toast.makeText(context, "Đã xóa task", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show()
                 } else if (which == 1) {
                     val bottomSheet = CreateTaskBottomSheet.newInstance(task.id)
                     bottomSheet.show(childFragmentManager, "EditTaskBottomSheet")

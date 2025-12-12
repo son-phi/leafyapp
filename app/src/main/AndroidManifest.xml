@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Quyền dùng camera -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-feature android:name="android.hardware.camera.any" />
@@ -12,7 +11,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- QUYỀN MỚI CHO NOTIFICATION (THÊM VÀO ĐÂY) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -31,22 +29,22 @@
         <activity
             android:name=".ui.splash.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"> <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
-        <!-- MAIN ACTIVITY -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
+            android:launchMode="singleTop"
             android:label="" />
 
         <activity android:name=".ui.search.SearchActivity"
             android:exported="false" />
 
-        <!-- HIDE BAR 100% -->
         <activity
             android:name=".ui.camera.LoadingActivity"
             android:label=""
@@ -66,9 +64,6 @@
             android:exported="false"
             android:screenOrientation="portrait"/>
 
-        <!-- ĐĂNG KÝ RECEIVER Ở ĐÂY (QUAN TRỌNG) -->
-        <receiver android:name=".ui.notifications.AlarmReceiver" />
-
         <activity
             android:name=".ui.tools.LightMeterActivity"
             android:exported="false"
@@ -76,7 +71,14 @@
 
         <activity android:name=".ui.tools.WateringCalculatorActivity" android:exported="false"/>
 
+        <receiver android:name=".ui.notifications.AlarmReceiver" />
 
-    </application>
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
-</manifest>
+    </application> </manifest>
