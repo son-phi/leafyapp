@@ -45,4 +45,25 @@
         <item name="cornerSizeBottomRight">24dp</item>
     </style>
 
+    <style name="Theme.Leafy.GreenInputs" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#4CAF50</item>
+
+        <item name="colorSecondary">#4CAF50</item>
+        <item name="colorAccent">#4CAF50</item>
+
+        <item name="android:textColorHighlight">#334CAF50</item>
+    </style>
+
+    <style name="LeafyDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/LeafyDialogShape</item>
+
+        <item name="colorPrimary">#4CAF50</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+    </style>
+
+    <style name="LeafyDialogShape" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
 </resources>

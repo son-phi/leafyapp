@@ -52,15 +52,35 @@ class GardenFragment : Fragment() {
     }
 
     private fun checkIntentArguments() {
-        val shouldOpenFamily = requireActivity().intent.getBooleanExtra("OPEN_FAMILY_MODE", false)
+        val intent = requireActivity().intent
 
-        if (shouldOpenFamily) {
-            // SỬA: Thay vì switch.isChecked = true
-            // Ta dùng lệnh check() để chọn nút Family trong Toggle Group
-            binding.toggleGardenMode.check(com.example.leafyapp.R.id.btnModeFamily)
+        // 1. Kiểm tra Mode Family/Personal (Logic cũ của bạn + Nâng cấp)
+        if (intent.hasExtra("IS_FAMILY_MODE")) {
+            val isFamily = intent.getBooleanExtra("IS_FAMILY_MODE", false)
 
-            // Xóa cờ để không bị mở lại lần sau
-            requireActivity().intent.removeExtra("OPEN_FAMILY_MODE")
+            if (isFamily) {
+                // Tự động bấm nút Family
+                if (binding.toggleGardenMode.checkedButtonId != com.example.leafyapp.R.id.btnModeFamily) {
+                    binding.toggleGardenMode.check(com.example.leafyapp.R.id.btnModeFamily)
+                }
+            } else {
+                // Tự động bấm nút Personal
+                if (binding.toggleGardenMode.checkedButtonId != com.example.leafyapp.R.id.btnModePersonal) {
+                    binding.toggleGardenMode.check(com.example.leafyapp.R.id.btnModePersonal)
+                }
+            }
+
+            // Xóa cờ sau khi xử lý xong
+            intent.removeExtra("IS_FAMILY_MODE")
+        }
+
+        // 2. [QUAN TRỌNG] Kiểm tra xem có cần mở Tab Tasks không?
+        // (Ví dụ khi bấm từ thông báo FCM)
+        val screen = intent.getStringExtra("screen")
+        if (screen == "TasksFragment") {
+            // Chuyển ViewPager sang trang 1 (Tab Tasks)
+            binding.viewPager.currentItem = 1
+            intent.removeExtra("screen")
         }
     }
 

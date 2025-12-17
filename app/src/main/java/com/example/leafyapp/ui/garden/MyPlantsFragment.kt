@@ -150,42 +150,103 @@ class MyPlantsFragment : Fragment() {
     }
 
     private fun showRenameDialog(plant: UserPlant) {
-        val input = EditText(requireContext())
-        input.setText(plant.nickname)
+        // 1. Inflate Layout
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_rename_plant, null)
 
-        val container = android.widget.FrameLayout(requireContext())
-        val params = android.widget.FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        params.leftMargin = 50; params.rightMargin = 50
-        input.layoutParams = params
-        container.addView(input)
+        // 2. Ánh xạ View
+        val etName = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(com.example.leafyapp.R.id.et_plant_name)
+        val btnSave = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_save)
+        val btnCancel = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_cancel)
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Edit Plant Name")
-            .setView(container)
-            .setPositiveButton("Save") { _, _ ->
-                val newName = input.text.toString().trim()
-                if (newName.isNotEmpty()) {
-                    viewModel.updatePlantName(plant, newName)
-                    Toast.makeText(context, "Updated name", Toast.LENGTH_SHORT).show()
-                }
+        // 3. Fill dữ liệu cũ & đưa con trỏ về cuối
+        etName.setText(plant.nickname)
+        etName.setSelection(plant.nickname.length) // Đưa con trỏ xuống cuối dòng cho tiện
+
+        // 4. Tạo Dialog
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setView(dialogView)
+        val dialog = builder.create()
+
+        // --- QUAN TRỌNG: Làm nền trong suốt để bo góc ---
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        // Tự động bật bàn phím khi dialog hiện lên (Tùy chọn, giúp UX tốt hơn)
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+
+        // 5. Xử lý sự kiện
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnSave.setOnClickListener {
+            val newName = etName.text.toString().trim()
+
+            if (newName.isNotEmpty()) {
+                // Gọi ViewModel cập nhật
+                viewModel.updatePlantName(plant, newName)
+                android.widget.Toast.makeText(context, "Updated name to '$newName'", android.widget.Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                // Báo lỗi nhẹ nhàng bằng cách set Error cho EditText
+                etName.error = "Name cannot be empty"
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
+
+        dialog.show()
     }
 
+    // Hàm này dùng chung cho các dialog xác nhận
     private fun showDeleteConfirmation(plant: UserPlant) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete Plant")
-            .setMessage("Are you sure you want to delete '${plant.nickname}'?")
-            .setPositiveButton("Delete") { _, _ ->
-                viewModel.delete(plant)
-                Toast.makeText(context, "Deleted ${plant.nickname}", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        showConfirmationDialog(
+            title = "Delete Plant",
+            message = "Are you sure you want to delete '${plant.nickname}'? This action cannot be undone.",
+            positiveButtonTitle = "Delete",
+            isDestructive = true // QUAN TRỌNG: Để nút hiện màu đỏ cảnh báo
+        ) {
+            // Hành động khi người dùng bấm nút Delete
+            viewModel.delete(plant)
+            android.widget.Toast.makeText(context, "Deleted ${plant.nickname}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Hàm này dùng chung cho các dialog xác nhận
+    private fun showConfirmationDialog(
+        title: String,
+        message: String,
+        positiveButtonTitle: String,
+        isDestructive: Boolean = false, // True = Màu đỏ, False = Màu xanh
+        onConfirm: () -> Unit
+    ) {
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_confirmation, null)
+
+        val tvTitle = dialogView.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tv_title)
+        val tvMessage = dialogView.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tv_message)
+        val btnConfirm = dialogView.findViewById<com.google.android.material.button.MaterialButton>(com.example.leafyapp.R.id.btn_confirm)
+        val btnCancel = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_cancel)
+
+        tvTitle.text = title
+        tvMessage.text = message
+        btnConfirm.text = positiveButtonTitle
+
+        // Xử lý màu nút
+        if (isDestructive) {
+            btnConfirm.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#D32F2F")) // Đỏ
+        } else {
+            btnConfirm.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50")) // Xanh
+        }
+
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setView(dialogView)
+        val dialog = builder.create()
+
+        // Nền trong suốt để bo góc đẹp
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        btnCancel.setOnClickListener { dialog.dismiss() }
+        btnConfirm.setOnClickListener {
+            dialog.dismiss()
+            onConfirm()
+        }
+        dialog.show()
     }
 
     override fun onDestroyView() {
