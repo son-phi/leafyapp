@@ -11,6 +11,8 @@ import android.widget.TimePicker
 import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.activityViewModels
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.leafyapp.R
 import com.example.leafyapp.data.model.CareTask
 import com.example.leafyapp.data.model.TaskType
@@ -145,52 +147,49 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
-        if (editingTaskId != null) {
-            // CHẾ ĐỘ SỬA: Chỉ được chọn 1 cây (Radio Button)
-            val plantNames = availablePlants.map { it.nickname }.toTypedArray()
-            var checkedItem = -1
-            if (selectedPlants.isNotEmpty()) {
-                checkedItem = availablePlants.indexOfFirst { it.id == selectedPlants[0].id }
-            }
+        val isMultiSelect = (editingTaskId == null)
 
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Select Plant")
-                .setSingleChoiceItems(plantNames, checkedItem) { dialog, which ->
-                    selectedPlants.clear()
-                    selectedPlants.add(availablePlants[which])
-                    binding.tvSelectedPlant.text = selectedPlants[0].nickname
-                    dialog.dismiss()
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
-        } else {
-            // CHẾ ĐỘ TẠO MỚI: Được chọn nhiều cây (Checkbox)
-            val plantNames = availablePlants.map { it.nickname }.toTypedArray()
-            val checkedItems = BooleanArray(availablePlants.size) { i ->
-                selectedPlants.any { it.id == availablePlants[i].id }
-            }
+        // Danh sách tạm để thao tác
+        val tempSelectedList = ArrayList<UserPlant>(selectedPlants)
 
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Select Plants")
-                .setMultiChoiceItems(plantNames, checkedItems) { _, which, isChecked ->
-                    if (isChecked) {
-                        if (selectedPlants.none { it.id == availablePlants[which].id }) {
-                            selectedPlants.add(availablePlants[which])
-                        }
-                    } else {
-                        selectedPlants.removeAll { it.id == availablePlants[which].id }
-                    }
-                }
-                .setPositiveButton("OK") { _, _ ->
-                    if (selectedPlants.isNotEmpty()) {
-                        binding.tvSelectedPlant.text = if (selectedPlants.size == 1) selectedPlants[0].nickname else "${selectedPlants.size} plants selected"
-                    } else {
-                        binding.tvSelectedPlant.text = "Select"
-                    }
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+        // 1. Tạo RecyclerView programmatically (hoặc dùng layout nếu muốn padding đẹp hơn)
+        val recyclerView = RecyclerView(requireContext()).apply {
+            layoutManager = LinearLayoutManager(context)
+            setPadding(0, 20, 0, 20) // Padding trên dưới cho đẹp
         }
+
+        // 2. Gắn Adapter
+        val adapter = SimplePlantAdapter(
+            plants = availablePlants,
+            initialSelection = selectedPlants,
+            isMultiSelect = isMultiSelect
+        ) { currentSelection ->
+            tempSelectedList.clear()
+            tempSelectedList.addAll(currentSelection)
+        }
+        recyclerView.adapter = adapter
+
+        // 3. Hiển thị Dialog với Theme đã tạo
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.LeafyDialogTheme)
+            .setTitle(if (isMultiSelect) "Select Plants" else "Select Plant")
+            .setView(recyclerView) // Đưa list vào dialog
+            .setPositiveButton("OK") { _, _ ->
+                // Lưu lại danh sách chọn
+                selectedPlants.clear()
+                selectedPlants.addAll(tempSelectedList)
+
+                // Cập nhật Text hiển thị bên ngoài
+                if (selectedPlants.isNotEmpty()) {
+                    binding.tvSelectedPlant.text = if (selectedPlants.size == 1)
+                        selectedPlants[0].nickname
+                    else
+                        "${selectedPlants.size} plants selected"
+                } else {
+                    binding.tvSelectedPlant.text = "Select"
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showSelectTaskTypeDialog() {

@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -18,10 +19,15 @@ import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import androidx.navigation.navOptions
 import com.example.leafyapp.databinding.ActivityMainBinding
+import com.example.leafyapp.ui.garden.GardenViewModel
+import com.example.leafyapp.data.model.Garden
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
+
+    private val gardenViewModel: GardenViewModel by viewModels()
 
     // [CÁCH MỚI] Khai báo biến xử lý kết quả xin quyền
     private val requestPermissionLauncher = registerForActivityResult(
@@ -86,11 +92,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        // Xử lý logic khi bấm vào thông báo FCM
-        // Nếu Server gửi kèm data "screen" = "TasksFragment" -> Chuyển tab
-        val screen = intent?.getStringExtra("screen")
-        if (screen == "TasksFragment" || intent?.getBooleanExtra("OPEN_MY_GARDEN", false) == true) {
-            binding.navView.selectedItemId = R.id.navigation_garden
+        intent?.let {
+            // Kiểm tra xem có yêu cầu mở tab Garden không
+            val shouldNavigateToGarden = it.getBooleanExtra("NAVIGATE_TO_GARDEN", false)
+                    || it.getBooleanExtra("OPEN_MY_GARDEN", false)
+                    || it.getStringExtra("screen") == "TasksFragment"
+
+            if (shouldNavigateToGarden) {
+                // A. Chuyển Tab
+                binding.navView.selectedItemId = R.id.navigation_garden
+
+                // B. Cấu hình Mode cho ViewModel (nếu có dữ liệu trong Intent)
+                if (it.hasExtra("IS_FAMILY_MODE")) {
+                    val isFamily = it.getBooleanExtra("IS_FAMILY_MODE", false)
+                    val gardenId = it.getStringExtra("TARGET_GARDEN_ID")
+
+                    if (isFamily && gardenId != null) {
+                        // Tạo object Garden tạm thời với ID đúng để ViewModel load data
+                        val targetGarden = Garden(id = gardenId)
+                        gardenViewModel.setGardenMode(targetGarden)
+                    } else {
+                        // Về chế độ Personal
+                        gardenViewModel.setGardenMode(null)
+                    }
+                }
+            }
         }
     }
 

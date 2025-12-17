@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="20dp"
+    app:cardCornerRadius="24dp"
     app:cardElevation="8dp"
     app:cardBackgroundColor="#FFFFFF">
 
@@ -14,13 +14,12 @@
         android:orientation="vertical"
         android:padding="24dp"
         android:theme="@style/Theme.Leafy.GreenInputs">
-        >
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Edit Profile"
-            android:textSize="22sp"
+            android:text="Rename Plant"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#1A1C1E"
             android:gravity="center"
@@ -29,7 +28,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="First Name"
+            android:hint="Plant Name"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             app:boxStrokeColor="#4CAF50"
             app:hintTextColor="#4CAF50"
@@ -37,40 +36,14 @@
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusBottomEnd="12dp"
-            app:cursorColor="#4CAF50"
-            android:layout_marginBottom="16dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_firstname"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPersonName"
-                android:textColor="#1A1C1E"
-                android:textCursorDrawable="@drawable/cursor_green"
-                android:maxLines="1"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Last Name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeColor="#4CAF50"
-            app:hintTextColor="#4CAF50"
-            app:boxCornerRadiusTopStart="12dp"
-            app:boxCornerRadiusTopEnd="12dp"
-            app:boxCornerRadiusBottomStart="12dp"
-            app:boxCornerRadiusBottomEnd="12dp"
-            app:cursorColor="#4CAF50"
             android:layout_marginBottom="24dp">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_lastname"
+                android:id="@+id/et_plant_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName"
+                android:inputType="textCapSentences"
                 android:textColor="#1A1C1E"
-                android:textCursorDrawable="@drawable/cursor_green"
                 android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 

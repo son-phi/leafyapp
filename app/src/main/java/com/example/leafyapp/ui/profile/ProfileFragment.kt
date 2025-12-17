@@ -28,6 +28,8 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import android.graphics.drawable.Drawable
+import android.widget.EditText
+import android.widget.TextView
 
 
 class ProfileFragment : Fragment() {
@@ -158,10 +160,6 @@ class ProfileFragment : Fragment() {
         binding.rowNotifications.setOnClickListener {
             openNotificationSettings()
         }
-//
-//        binding.btnCopyUserid.setOnClickListener {
-//            copyToClipboard(binding.tvUserId.text.toString())
-//        }
 
         // THÊM SỰ KIỆN EDIT PROFILE
         binding.btnEditProfile.setOnClickListener {
@@ -178,24 +176,30 @@ class ProfileFragment : Fragment() {
         }
 
         binding.btnLogout.setOnClickListener {
-            showConfirmationDialog("Đăng xuất", "Bạn muốn đăng xuất?", "Đồng ý") {
-                // 1. Đăng xuất khỏi Firebase (Xử lý backend)
+            // isDestructive = false (Mặc định, nút màu Xanh)
+            showConfirmationDialog(
+                title = "Log Out",
+                message = "Are you sure you want to log out?",
+                positiveButtonTitle = "Log Out"
+            ) {
                 authRepository.logout()
-
-                // 2. Đăng xuất khỏi Google Client (QUAN TRỌNG: Để xóa cache tài khoản Google)
                 googleSignInClient.signOut().addOnCompleteListener {
-                    // 3. Sau khi Google sign out xong thì mới chuyển màn hình
                     navigateToSplash()
                 }
             }
         }
 
         binding.btnDeleteAccount.setOnClickListener {
-            showConfirmationDialog("Xóa tài khoản", "Hành động này sẽ xóa vĩnh viễn dữ liệu.", "Xóa vĩnh viễn") {
-                // Gọi Repo xử lý xóa
+            // isDestructive = true -> Nút sẽ hiện màu ĐỎ để cảnh báo
+            showConfirmationDialog(
+                title = "Delete Account",
+                message = "This action is permanent and cannot be undone. All your data will be lost.",
+                positiveButtonTitle = "Delete Forever",
+                isDestructive = true
+            ) {
                 authRepository.deleteAccount(
                     onSuccess = {
-                        Toast.makeText(context, "Đã xóa tài khoản.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Account deleted.", Toast.LENGTH_SHORT).show()
                         navigateToSplash()
                     },
                     onError = { msg ->
@@ -303,48 +307,64 @@ class ProfileFragment : Fragment() {
     private fun showEditProfileDialog() {
         val user = authRepository.getCurrentUser() ?: return
 
-        // Tách First/Last name từ DisplayName hiện tại
+        // 1. Tách tên cũ
         val fullName = user.displayName ?: ""
         val parts = fullName.split(" ")
         val currentFirst = if (parts.isNotEmpty()) parts.first() else ""
         val currentLast = if (parts.size > 1) parts.drop(1).joinToString(" ") else ""
 
-        // Tạo layout cho dialog
-        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_edit_profile, null) // Cần tạo layout này ở bước dưới
-        val etFirstName = dialogView.findViewById<android.widget.EditText>(com.example.leafyapp.R.id.et_firstname)
-        val etLastName = dialogView.findViewById<android.widget.EditText>(com.example.leafyapp.R.id.et_lastname)
+        // 2. Inflate Layout
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_edit_profile, null)
 
-        // Fill dữ liệu cũ
+        // Ánh xạ View
+        val etFirstName = dialogView.findViewById<EditText>(com.example.leafyapp.R.id.et_firstname)
+        val etLastName = dialogView.findViewById<EditText>(com.example.leafyapp.R.id.et_lastname)
+        val btnSave = dialogView.findViewById<View>(com.example.leafyapp.R.id.btn_save)
+        val btnCancel = dialogView.findViewById<View>(com.example.leafyapp.R.id.btn_cancel)
+
+        // Fill dữ liệu
         etFirstName.setText(currentFirst)
         etLastName.setText(currentLast)
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Edit Profile")
-            .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                val newFirst = etFirstName.text.toString().trim()
-                val newLast = etLastName.text.toString().trim()
+        // 3. Tạo Dialog (KHÔNG SET TITLE HAY BUTTON Ở ĐÂY)
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setView(dialogView) // Chỉ set View thôi
 
-                if (newFirst.isEmpty()) {
-                    Toast.makeText(context, "First name cannot be empty", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
+        val dialog = builder.create()
 
-                // Gọi Repo lưu lên Firebase
-                authRepository.updateUserProfile(newFirst, newLast,
-                    onSuccess = {
-                        Toast.makeText(context, "Profile Updated!", Toast.LENGTH_SHORT).show()
-                        updateUI() // Refresh lại giao diện Profile
+        // --- QUAN TRỌNG NHẤT: Làm nền trong suốt ---
+        // Dòng này sẽ xóa bỏ cái hộp vuông trắng/đen mặc định của Android
+        // Giúp cái CardView bo tròn của bạn hiện ra đẹp mắt.
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
 
-                        // Home sẽ tự cập nhật khi reload lại App hoặc chuyển tab
-                    },
-                    onError = {
-                        Toast.makeText(context, "Error: $it", Toast.LENGTH_SHORT).show()
-                    }
-                )
+        // 4. Xử lý sự kiện click nút (Tự xử lý thay vì dùng PositiveButton)
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnSave.setOnClickListener {
+            val newFirst = etFirstName.text.toString().trim()
+            val newLast = etLastName.text.toString().trim()
+
+            if (newFirst.isEmpty()) {
+                // Báo lỗi vào layout thay vì Toast (nếu muốn đẹp hơn nữa)
+                return@setOnClickListener
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+
+            // Gọi hàm update (Code cũ của bạn)
+            authRepository.updateUserProfile(newFirst, newLast,
+                onSuccess = {
+                    Toast.makeText(context, "Profile Updated!", Toast.LENGTH_SHORT).show()
+                    updateUI()
+                    dialog.dismiss()
+                },
+                onError = {
+                    Toast.makeText(context, "Error: $it", Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+
+        dialog.show()
     }
 
     private fun navigateToSplash() {
@@ -358,19 +378,51 @@ class ProfileFragment : Fragment() {
         title: String,
         message: String,
         positiveButtonTitle: String,
+        isDestructive: Boolean = false, // Tham số mới để chỉnh màu nút
         onConfirm: () -> Unit
     ) {
-        AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(positiveButtonTitle) { dialog, _ ->
-                onConfirm()
-                dialog.dismiss()
-            }
-            .setNegativeButton("Hủy") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        // 1. Inflate layout
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_confirmation, null)
+
+        // 2. Ánh xạ View
+        val tvTitle = dialogView.findViewById<TextView>(com.example.leafyapp.R.id.tv_title)
+        val tvMessage = dialogView.findViewById<TextView>(com.example.leafyapp.R.id.tv_message)
+        val btnConfirm = dialogView.findViewById<com.google.android.material.button.MaterialButton>(com.example.leafyapp.R.id.btn_confirm)
+        val btnCancel = dialogView.findViewById<View>(com.example.leafyapp.R.id.btn_cancel)
+
+        // 3. Gán dữ liệu text
+        tvTitle.text = title
+        tvMessage.text = message
+        btnConfirm.text = positiveButtonTitle
+
+        // 4. Xử lý màu sắc nút dựa trên mức độ nguy hiểm
+        if (isDestructive) {
+            // Màu ĐỎ cho hành động xóa (#D32F2F)
+            btnConfirm.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#D32F2F"))
+        } else {
+            // Màu XANH cho hành động thường (#4CAF50)
+            btnConfirm.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50"))
+        }
+
+        // 5. Tạo Dialog
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setView(dialogView)
+        val dialog = builder.create()
+
+        // Làm nền trong suốt để bo góc đẹp
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        // 6. Sự kiện Click
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnConfirm.setOnClickListener {
+            dialog.dismiss() // Đóng dialog trước khi thực hiện hành động
+            onConfirm()
+        }
+
+        dialog.show()
     }
 
     // 2. Hàm hiển thị Form Đăng Ký Email
