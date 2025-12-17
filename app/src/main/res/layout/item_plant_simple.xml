@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="14dp"
+    android:paddingHorizontal="12dp"
+    android:gravity="center_vertical"
+    android:background="?attr/selectableItemBackground"> <TextView
+    android:id="@+id/tv_name"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:text="Plant Name"
+    android:textSize="16sp"
+    android:textColor="#1A1C1E"
+    android:textStyle="normal"/>
+
+    <ImageView
+        android:id="@+id/iv_check"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_check_circle_24dp"
+        app:tint="#4CAF50"
+        android:visibility="gone"
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+
+</LinearLayout>

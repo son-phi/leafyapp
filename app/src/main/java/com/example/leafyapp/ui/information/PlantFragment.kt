@@ -172,70 +172,65 @@ class PlantFragment : Fragment() {
     }
 
     private fun showQuantityDialog(plant: Plant) {
-        val context = requireContext()
-        val layout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-            // gravity = android.view.Gravity.CENTER // Bỏ cái này đi để checkbox căn lề trái cho đẹp
-        }
+        // 1. Inflate Layout
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_add_plant_quantity, null)
 
-        // 1. Chọn số lượng
-        val numberPicker = NumberPicker(context).apply {
-            minValue = 1
-            maxValue = 10
-            value = 1
-            wrapSelectorWheel = false
-        }
-        // Cho NumberPicker ra giữa
-        val layoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-            gravity = android.view.Gravity.CENTER
-            bottomMargin = 30 // Cách đoạn checkbox ra 1 chút
-        }
-        layout.addView(numberPicker, layoutParams)
+        // 2. Ánh xạ View
+        val tvPlantName = dialogView.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tv_plant_name)
+        val tvQuantity = dialogView.findViewById<android.widget.TextView>(com.example.leafyapp.R.id.tv_quantity)
+        val btnMinus = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_minus)
+        val btnPlus = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_plus)
 
-        // 2. Tạo 2 Checkbox
-        val cbPersonal = CheckBox(context).apply {
-            text = "Thêm vào Vườn Cá Nhân" // Personal Garden
-            textSize = 16f
-            isChecked = true // Mặc định chọn Cá nhân
-        }
+        val radioGroup = dialogView.findViewById<android.widget.RadioGroup>(com.example.leafyapp.R.id.radio_group_garden)
+        val rbFamily = dialogView.findViewById<android.widget.RadioButton>(com.example.leafyapp.R.id.rb_family)
 
-        val cbFamily = CheckBox(context).apply {
-            text = "Thêm vào Vườn Gia Đình" // Family Garden
-            textSize = 16f
-            isChecked = false
-        }
+        val btnAdd = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_add)
+        val btnCancel = dialogView.findViewById<android.view.View>(com.example.leafyapp.R.id.btn_cancel)
 
-        // 3. Xử lý Logic "Chỉ được chọn 1 trong 2"
-        // Dùng setOnClickListener thay vì setOnCheckedChangeListener để tránh vòng lặp vô tận
-        cbPersonal.setOnClickListener {
-            cbPersonal.isChecked = true  // Luôn giữ trạng thái true khi bấm vào chính nó
-            cbFamily.isChecked = false   // Tắt cái kia đi
-        }
+        // 3. Setup Data ban đầu
+        tvPlantName.text = "'${plant.name}'"
+        var currentQuantity = 1
 
-        cbFamily.setOnClickListener {
-            cbFamily.isChecked = true    // Luôn giữ trạng thái true khi bấm vào chính nó
-            cbPersonal.isChecked = false // Tắt cái kia đi
-        }
-
-        layout.addView(cbPersonal)
-        layout.addView(cbFamily)
-
-        AlertDialog.Builder(context)
-            .setTitle("Select Quantity")
-            .setMessage("How many '${plant.name}' do you want to add?")
-            .setView(layout)
-            .setPositiveButton("Add") { _, _ ->
-                val quantity = numberPicker.value
-                // Chỉ cần kiểm tra cbFamily có được chọn hay không là biết mode nào
-                val isFamily = cbFamily.isChecked
-                addMultiplePlantsToGarden(plant, quantity, isFamily)
+        // --- LOGIC TĂNG GIẢM SỐ LƯỢNG ---
+        btnMinus.setOnClickListener {
+            if (currentQuantity > 1) {
+                currentQuantity--
+                tvQuantity.text = currentQuantity.toString()
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+        }
+
+        btnPlus.setOnClickListener {
+            if (currentQuantity < 20) { // Giới hạn max là 20 (hoặc 10 tùy bạn)
+                currentQuantity++
+                tvQuantity.text = currentQuantity.toString()
+            }
+        }
+
+        // 4. Tạo Dialog
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setView(dialogView)
+        val dialog = builder.create()
+
+        // Làm nền trong suốt để bo góc đẹp
+        dialog.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+
+        // 5. Xử lý nút Hành động
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnAdd.setOnClickListener {
+            // Kiểm tra xem user chọn Family hay Personal
+            // Nếu radio Family được check -> isFamily = true
+            val isFamily = rbFamily.isChecked
+
+            // Gọi hàm thêm cây
+            addMultiplePlantsToGarden(plant, currentQuantity, isFamily)
+
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     // --- LOGIC TỰ ĐỘNG TÌM ID VƯỜN ---
@@ -272,7 +267,7 @@ class PlantFragment : Fragment() {
                         gardenViewModel.setGardenMode(finalGarden)
 
                         // Tiến hành thêm cây
-                        performAddPlants(plantToSave, quantity, true)
+                        performAddPlants(plantToSave, quantity, true, gardenDoc.id)
 
                     } else {
                         Toast.makeText(context, "Bạn chưa tham gia vườn gia đình nào!", Toast.LENGTH_LONG).show()
@@ -286,13 +281,12 @@ class PlantFragment : Fragment() {
             } else {
                 // 2. Chế độ riêng tư -> Không cần tìm ID
                 gardenViewModel.setGardenMode(null)
-                performAddPlants(plantToSave, quantity, false)
+                performAddPlants(plantToSave, quantity, false, null)
             }
         }
     }
 
-    // Tách hàm thêm cây ra cho gọn code
-    private suspend fun performAddPlants(plantToSave: Plant, quantity: Int, isFamilyMode: Boolean) {
+    private suspend fun performAddPlants(plantToSave: Plant, quantity: Int, isFamilyMode: Boolean, gardenId: String?) {
         val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
         val baseName = plantToSave.name
 
@@ -311,10 +305,16 @@ class PlantFragment : Fragment() {
         val dest = if (isFamilyMode) "Family Garden" else "My Garden"
         Toast.makeText(context, "Added $quantity plants to $dest!", Toast.LENGTH_SHORT).show()
 
-        // Chuyển màn hình
-        val intent = Intent(requireContext(), MainActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        intent.putExtra("OPEN_FAMILY_MODE", isFamilyMode)
+        val intent = Intent(requireContext(), MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+            // Gửi các cờ tín hiệu
+            putExtra("NAVIGATE_TO_GARDEN", true)
+            putExtra("IS_FAMILY_MODE", isFamilyMode)
+            if (gardenId != null) {
+                putExtra("TARGET_GARDEN_ID", gardenId)
+            }
+        }
         startActivity(intent)
         requireActivity().finish()
     }

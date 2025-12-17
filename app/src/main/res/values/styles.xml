@@ -20,4 +20,24 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="Widget.Leafy.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+
+        <item name="hintTextColor">?attr/colorOnSurface</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
+    <!-- (Tuỳ chọn) overlay cho dialog -->
+    <style name="ThemeOverlay.Leafy.MaterialDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.MaterialComponents.Body2</item>
+    </style>
+
+
 </resources>
