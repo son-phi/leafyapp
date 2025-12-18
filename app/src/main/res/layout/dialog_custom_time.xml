@@ -3,12 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center"
-    android:padding="16dp">
+    android:paddingTop="24dp"
+    android:paddingBottom="12dp"
+    android:orientation="vertical">
 
     <TimePicker
         android:id="@+id/time_picker_spinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:timePickerMode="spinner" />
+        android:timePickerMode="spinner"
+        android:theme="@style/Leafy.TimePicker.Spinner" />
 
 </LinearLayout>
