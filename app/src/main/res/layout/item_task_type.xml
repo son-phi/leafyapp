@@ -11,24 +11,33 @@
     app:cardElevation="0dp"
     app:strokeWidth="1dp"
     app:strokeColor="#E0E0E0"
-    app:cardBackgroundColor="#F5F5F5">
+    app:cardBackgroundColor="#FFFFFF">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingVertical="16dp"
-        android:paddingHorizontal="20dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="?attr/selectableItemBackground">
+
+        <ImageView
+            android:id="@+id/iv_task_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_water_drop"
+            app:tint="#757575"
+            android:layout_marginEnd="16dp"/>
 
         <TextView
-            android:id="@+id/tv_name"
+            android:id="@+id/tv_task_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Tên cây"
+            android:text="Water"
             android:textSize="16sp"
             android:textColor="#1A1C1E"
-            android:textStyle="bold"/>
+            android:textStyle="normal"/>
 
         <ImageView
             android:id="@+id/iv_check"
@@ -38,5 +47,4 @@
             app:tint="#4CAF50"
             android:visibility="gone"/>
     </LinearLayout>
-
 </com.google.android.material.card.MaterialCardView>

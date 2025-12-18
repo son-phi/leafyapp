@@ -55,11 +55,17 @@ class TasksFragment : Fragment() {
         val calendarAdapter = CalendarAdapter { selectedDate ->
             viewModel.setSelectedDate(selectedDate)
 
-            val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-            binding.tvMonthYear.text = monthFormat.format(selectedDate)
+            // --- ĐOẠN CODE MỚI ---
+            // Tách format riêng cho Tháng (MMM - Viết tắt 3 chữ) và Năm (yyyy)
+            val monthFormat = SimpleDateFormat("MMM", Locale.getDefault()) // Ví dụ: Nov, Dec
+            val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault()) // Ví dụ: 2025
+
+            // Cập nhật lên 2 TextView mới
+            binding.tvMonth.text = monthFormat.format(selectedDate)
+            binding.tvYear.text = yearFormat.format(selectedDate)
+            // ---------------------
 
             isViewingToday = isSameDay(selectedDate, Date())
-
             taskAdapter.updateSelectedDate(selectedDate.time)
         }
 
@@ -105,20 +111,41 @@ class TasksFragment : Fragment() {
     }
 
     private fun showEditDeleteDialog(task: CareTask) {
-        val options = arrayOf("Delete Task", "Edit Task", "Cancel")
-        AlertDialog.Builder(requireContext())
-            .setTitle("Task: ${task.type.displayName}")
-            .setItems(options) { dialog, which ->
-                if (which == 0) {
-                    viewModel.deleteTask(task)
-                    Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show()
-                } else if (which == 1) {
-                    val bottomSheet = CreateTaskBottomSheet.newInstance(task.id)
-                    bottomSheet.show(childFragmentManager, "EditTaskBottomSheet")
-                }
-                dialog.dismiss()
-            }
-            .show()
+        // 1. Inflate Layout mới
+        val dialogView = layoutInflater.inflate(com.example.leafyapp.R.layout.dialog_task_options, null)
+
+        // 2. Tìm các view
+        val cardEdit = dialogView.findViewById<View>(com.example.leafyapp.R.id.card_edit)
+        val cardDelete = dialogView.findViewById<View>(com.example.leafyapp.R.id.card_delete)
+
+        // 3. Tạo Dialog với Theme Leafy (Bo tròn, nền trắng)
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext(), com.example.leafyapp.R.style.LeafyDialogTheme)
+            .setTitle("Manage Task: ${task.type.displayName}") // Tiêu đề
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null) // Nút Cancel bên dưới
+            .create()
+
+        // 4. Xử lý sự kiện Click
+
+        // --- Nút SỬA ---
+        cardEdit.setOnClickListener {
+            dialog.dismiss() // Đóng dialog trước
+            // Mở BottomSheet sửa
+            val bottomSheet = CreateTaskBottomSheet.newInstance(task.id)
+            bottomSheet.show(childFragmentManager, "EditTaskBottomSheet")
+        }
+
+        // --- Nút XÓA ---
+        cardDelete.setOnClickListener {
+            // Có thể thêm 1 dialog xác nhận "Bạn có chắc chắn muốn xóa?" ở đây nếu muốn an toàn hơn
+            // Hiện tại làm xóa luôn cho nhanh như code cũ của bạn
+
+            viewModel.deleteTask(task)
+            Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun isSameDay(date1: Date, date2: Date): Boolean {
