@@ -1,16 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- App Theme (NO ACTION BAR + FULLSCREEN) -->
     <style name="Theme.LeafyApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Ẩn Title Bar / App Bar -->
         <item name="android:windowNoTitle">true</item>
         <item name="windowNoTitle">true</item>
-
-        <!-- Fullscreen không status bar -->
         <item name="android:windowFullscreen">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
 
-        <!-- Màu brand (tùy chọn) -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/teal_200</item>
@@ -47,23 +42,55 @@
 
     <style name="Theme.Leafy.GreenInputs" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">#4CAF50</item>
-
         <item name="colorSecondary">#4CAF50</item>
         <item name="colorAccent">#4CAF50</item>
-
         <item name="android:textColorHighlight">#334CAF50</item>
     </style>
 
     <style name="LeafyDialogTheme" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="android:background">@drawable/bg_dialog_rounded_white</item>
+
         <item name="shapeAppearanceOverlay">@style/LeafyDialogShape</item>
 
-        <item name="colorPrimary">#4CAF50</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Leafy.Dialog.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Leafy.Dialog.Button.Negative</item>
     </style>
 
     <style name="LeafyDialogShape" parent="">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="Leafy.Dialog.Button.Positive" parent="Widget.Material3.Button">
+        <item name="backgroundTint">#4CAF50</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="rippleColor">#33FFFFFF</item>
+    </style>
+
+    <style name="Leafy.Dialog.Button.Negative" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">#757575</item>
+        <item name="rippleColor">#334CAF50</item>
+    </style>
+
+    <style name="Leafy.Dropdown" parent="Widget.Material3.AutoCompleteTextView.OutlinedBox">
+        <item name="android:popupBackground">@drawable/bg_dialog_rounded_white</item>
+
+        <item name="materialThemeOverlay">@style/Leafy.Dropdown.Overlay</item>
+    </style>
+
+    <style name="Leafy.Dropdown.Overlay" parent="">
+        <item name="colorSurface">#FFFFFF</item>
+
+        <item name="colorControlHighlight">#334CAF50</item>
+    </style>
+
+    <style name="Leafy.TimePicker.Spinner" parent="android:Theme.Material.Light.Dialog">
+        <item name="android:colorControlNormal">#4CAF50</item>
+
+        <item name="android:colorControlActivated">#4CAF50</item>
+
+        <item name="android:textColorPrimary">#1A1C1E</item>
     </style>
 
 </resources>

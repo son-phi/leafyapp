@@ -1,6 +1,9 @@
 package com.example.leafyapp.data.model
 
 import java.io.Serializable
+import androidx.annotation.DrawableRes
+import com.example.leafyapp.R
+
 
 data class UserPlant(
     var id: String = "",
@@ -47,12 +50,18 @@ data class CareTask(
         true, null, null, ""
     )
 }
+enum class TaskType(
+    val displayName: String,
+    @DrawableRes val iconResId: Int // Chỉ cần Icon, không cần Color nữa
+) {
+    // Thay thế bằng tên file icon thực tế của bạn
+    WATER("Water", R.drawable.ic_water_drop), // Ví dụ icon giọt nước
+    FERTILIZER("Fertilizer", R.drawable.ic_fertilizer),
+    ROTATE("Rotate", R.drawable.ic_rotate),
+    MIST("Misting", R.drawable.ic_mist),
+    CUT("Cutting", R.drawable.ic_cut),
 
-enum class TaskType(val displayName: String) {
-    WATER("Tưới nước"),
-    MIST("Phun sương"),
-    FERTILIZER("Bón phân"),
-    ROTATE("Xoay cây"),
-    CUT("Cắt tỉa"),
-    OTHER("Khác")
+
+    OTHER("Other", R.drawable.leaf_solid_full);
+
 }

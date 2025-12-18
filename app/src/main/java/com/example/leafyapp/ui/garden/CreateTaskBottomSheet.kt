@@ -1,5 +1,7 @@
 package com.example.leafyapp.ui.garden
 
+import SimplePlantAdapter
+import TaskTypeAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -148,17 +150,16 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
 
         val isMultiSelect = (editingTaskId == null)
-
-        // Danh sách tạm để thao tác
         val tempSelectedList = ArrayList<UserPlant>(selectedPlants)
 
-        // 1. Tạo RecyclerView programmatically (hoặc dùng layout nếu muốn padding đẹp hơn)
+        // Setup RecyclerView
         val recyclerView = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(context)
-            setPadding(0, 20, 0, 20) // Padding trên dưới cho đẹp
+            // ClipToPadding = false giúp nội dung cuộn lên không bị cắt bóng đổ
+            clipToPadding = false
+            setPadding(0, 24, 0, 24)
         }
 
-        // 2. Gắn Adapter
         val adapter = SimplePlantAdapter(
             plants = availablePlants,
             initialSelection = selectedPlants,
@@ -169,65 +170,104 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
         recyclerView.adapter = adapter
 
-        // 3. Hiển thị Dialog với Theme đã tạo
+        // Hiển thị Dialog
         com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.LeafyDialogTheme)
             .setTitle(if (isMultiSelect) "Select Plants" else "Select Plant")
-            .setView(recyclerView) // Đưa list vào dialog
+            .setView(recyclerView)
             .setPositiveButton("OK") { _, _ ->
-                // Lưu lại danh sách chọn
                 selectedPlants.clear()
                 selectedPlants.addAll(tempSelectedList)
 
-                // Cập nhật Text hiển thị bên ngoài
-                if (selectedPlants.isNotEmpty()) {
-                    binding.tvSelectedPlant.text = if (selectedPlants.size == 1)
-                        selectedPlants[0].nickname
-                    else
-                        "${selectedPlants.size} plants selected"
-                } else {
-                    binding.tvSelectedPlant.text = "Select"
-                }
+                // Update Text UI
+                binding.tvSelectedPlant.text = if (selectedPlants.isNotEmpty()) {
+                    if (selectedPlants.size == 1) selectedPlants[0].nickname
+                    else "${selectedPlants.size} plants selected"
+                } else "Select"
             }
             .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun showSelectTaskTypeDialog() {
+        // 1. Setup RecyclerView
+        val recyclerView = androidx.recyclerview.widget.RecyclerView(requireContext()).apply {
+            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
+            setPadding(0, 24, 0, 24)
+            clipToPadding = false // Để bóng đổ không bị cắt
+        }
+
         val types = TaskType.values()
-        val typeNames = types.map { it.displayName }.toTypedArray()
-        MaterialAlertDialogBuilder(requireContext())
+
+        // 2. Tạo Dialog Builder
+        // Dùng LeafyDialogTheme để có bo góc 24dp và tiêu đề xanh
+        val builder = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.LeafyDialogTheme)
             .setTitle("Remind Me About")
-            .setItems(typeNames) { _, which ->
-                selectedTaskType = types[which]
-                binding.tvSelectedTaskType.text = selectedTaskType?.displayName
-            }
-            .show()
+            .setView(recyclerView)
+            .setNegativeButton("Cancel", null)
+
+        val dialog = builder.create()
+
+        // 3. Gắn Adapter
+        val adapter = TaskTypeAdapter(types, selectedTaskType) { newType ->
+            // Cập nhật biến tạm
+            selectedTaskType = newType
+
+            // Cập nhật UI bên ngoài Dialog
+            binding.tvSelectedTaskType.text = newType.displayName
+
+            // (Tùy chọn) Cập nhật cả icon bên ngoài nếu bạn muốn
+            // binding.ivTypeIcon.setImageResource(newType.iconResId)
+            // binding.ivTypeIcon.setColorFilter(Color.parseColor("#4CAF50"))
+
+            // Đóng dialog sau 150ms để user kịp thấy hiệu ứng chọn xanh
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                dialog.dismiss()
+            }, 150)
+        }
+        recyclerView.adapter = adapter
+
+        dialog.show()
     }
 
     private fun showSelectFrequencyDialog() {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_custom_repeat, null)
-        val etCount = dialogView.findViewById<EditText>(R.id.et_repeat_count)
-        val spUnit = dialogView.findViewById<Spinner>(R.id.sp_repeat_unit)
-        val units = arrayOf("Days", "Weeks", "Months", "Years")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, units)
-        spUnit.adapter = adapter
+        // 1. Inflate Layout mới
+        val dialogView = layoutInflater.inflate(R.layout.dialog_select_frequency, null)
 
-        MaterialAlertDialogBuilder(requireContext())
+        val etCount = dialogView.findViewById<android.widget.EditText>(R.id.et_repeat_count)
+        val tvUnit = dialogView.findViewById<android.widget.AutoCompleteTextView>(R.id.tv_repeat_unit)
+
+        // 2. Setup Dropdown Data (Thay thế Spinner)
+        val units = arrayOf("Days", "Weeks", "Months", "Years")
+        val adapter = android.widget.ArrayAdapter(requireContext(), com.google.android.material.R.layout.support_simple_spinner_dropdown_item, units)
+        tvUnit.setAdapter(adapter)
+
+        // Mặc định chọn cái đầu tiên (Days) và không cho nhập tay
+        tvUnit.setText(units[0], false) // false để không bung list ra ngay lập tức
+        tvUnit.keyListener = null // Chặn không cho user gõ phím vào ô Unit
+
+        // 3. Hiển thị Dialog (Dùng Theme LeafyDialogTheme)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.LeafyDialogTheme)
             .setTitle("Repeat Every")
             .setView(dialogView)
             .setPositiveButton("OK") { _, _ ->
+                // Lấy số lượng
                 val countStr = etCount.text.toString()
                 val count = if (countStr.isNotEmpty()) countStr.toInt() else 1
-                val unitIndex = spUnit.selectedItemPosition
-                val days = when (unitIndex) {
-                    0 -> count
-                    1 -> count * 7
-                    2 -> count * 30
-                    3 -> count * 365
+
+                // Lấy đơn vị (Text từ AutoCompleteTextView)
+                val unitText = tvUnit.text.toString()
+
+                // Tính toán số ngày
+                val days = when (unitText) {
+                    "Days" -> count
+                    "Weeks" -> count * 7
+                    "Months" -> count * 30
+                    "Years" -> count * 365
                     else -> count
                 }
+
+                // Lưu và cập nhật UI
                 selectedFrequency = days
-                val unitText = units[unitIndex]
                 binding.tvSelectedFrequency.text = "$count $unitText"
             }
             .setNegativeButton("Cancel", null)
@@ -235,18 +275,24 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun showTimePickerDialog() {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_custom_time, null)
+        // 1. Inflate Layout
+        val dialogView = layoutInflater.inflate(R.layout.dialog_custom_time, null)
         val timePicker = dialogView.findViewById<TimePicker>(R.id.time_picker_spinner)
-        timePicker.setIs24HourView(true)
+
+        // 2. Cấu hình TimePicker
+        timePicker.setIs24HourView(true) // Chế độ 24h
         timePicker.hour = selectedHour
         timePicker.minute = selectedMinute
 
-        MaterialAlertDialogBuilder(requireContext())
+        // 3. Hiển thị Dialog với Theme bo tròn (LeafyDialogTheme)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext(), R.style.LeafyDialogTheme)
             .setTitle("Set Time")
             .setView(dialogView)
             .setPositiveButton("OK") { _, _ ->
                 selectedHour = timePicker.hour
                 selectedMinute = timePicker.minute
+
+                // Format giờ đẹp (VD: 08:05)
                 val timeStr = String.format("%02d:%02d", selectedHour, selectedMinute)
                 binding.tvSelectedTime.text = timeStr
             }
