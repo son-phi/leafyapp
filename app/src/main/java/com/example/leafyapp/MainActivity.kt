@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -21,6 +22,9 @@ import androidx.navigation.navOptions
 import com.example.leafyapp.databinding.ActivityMainBinding
 import com.example.leafyapp.ui.garden.GardenViewModel
 import com.example.leafyapp.data.model.Garden
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,9 +34,7 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
-            // Quyền thông báo đã được cấp
-        } else {
+        if (!isGranted) {
             Toast.makeText(this, "Bạn cần cấp quyền để nhận thông báo chăm sóc cây!", Toast.LENGTH_LONG).show()
         }
     }
@@ -41,16 +43,88 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         DatabaseCopier.copyDatabase(this)
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         supportActionBar?.hide()
 
-        // Tạo kênh thông báo
+        // 1. Khởi tạo kênh thông báo (Đảm bảo ID khớp 100% với NotificationHelper)
         createNotificationChannel()
 
-        // Setup Navigation
+        // 2. Setup Navigation
+        setupNavigation()
+
+        // 3. Xử lý điều hướng khi nhấn vào thông báo
+        handleIntent(intent)
+
+        // 4. Xin quyền thông báo (Android 13+)
+        askNotificationPermission()
+
+        // 5. [HOÀN THIỆN] Tự động đăng ký nhận tin cho tất cả các vườn
+        subscribeToUserTopics()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) // Cập nhật intent mới để handleIntent lấy dữ liệu mới nhất
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.let {
+            val screen = it.getStringExtra("screen")
+            val gardenId = it.getStringExtra("TARGET_GARDEN_ID")
+            val isFamily = it.getBooleanExtra("IS_FAMILY_MODE", false)
+            val openGarden = it.getBooleanExtra("OPEN_GARDEN", false) || screen != null
+
+            if (openGarden) {
+                // Chuyển sang Tab Garden
+                binding.navView.selectedItemId = R.id.navigation_garden
+
+                // Nếu là thông báo từ vườn, yêu cầu ViewModel tải đúng vườn đó
+                if (!gardenId.isNullOrEmpty()) {
+                    val targetGarden = Garden(id = gardenId)
+                    gardenViewModel.setGardenMode(if (isFamily) targetGarden else null)
+                    Log.d("FCM_NAV", "Navigating to Garden: $gardenId, Mode: $screen")
+                }
+
+                // Xóa dữ liệu Intent sau khi dùng để tránh nhảy tab khi xoay màn hình
+                it.removeExtra("screen")
+                it.removeExtra("TARGET_GARDEN_ID")
+                it.removeExtra("OPEN_GARDEN")
+            }
+        }
+    }
+
+    /**
+     * Tự động đăng ký (Subscribe) các kênh thông báo:
+     * 1. Kênh cá nhân (user_UID) để nhận báo thức cho cây riêng từ Server.
+     * 2. Toàn bộ các kênh gia đình (garden_ID) mà người dùng tham gia.
+     */
+    private fun subscribeToUserTopics() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        // 1. Đăng ký kênh cá nhân
+        FirebaseMessaging.getInstance().subscribeToTopic("user_$uid")
+            .addOnCompleteListener { Log.d("FCM_LEAFY", "Subscribed to personal topic: user_$uid") }
+
+        // 2. Quét Firestore tìm các vườn chung và đăng ký
+        db.collection("gardens")
+            .whereArrayContains("members", uid) // Khớp với cấu trúc mảng members của bạn
+            .get()
+            .addOnSuccessListener { documents ->
+                for (doc in documents) {
+                    val gardenId = doc.id
+                    FirebaseMessaging.getInstance().subscribeToTopic("garden_$gardenId")
+                        .addOnCompleteListener { Log.d("FCM_LEAFY", "Subscribed to garden: garden_$gardenId") }
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("FCM_LEAFY", "Error fetching gardens for subscription: ${e.message}")
+            }
+    }
+
+    private fun setupNavigation() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
         val navController = navHostFragment.navController
@@ -64,67 +138,19 @@ class MainActivity : AppCompatActivity() {
         binding.navView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_camera -> {
-                    navController.navigate(
-                        R.id.navigation_camera,
-                        null,
-                        navOptions { launchSingleTop = true }
-                    )
+                    navController.navigate(R.id.navigation_camera, null, navOptions { launchSingleTop = true })
                     true
                 }
                 else -> NavigationUI.onNavDestinationSelected(item, navController)
-            }
-        }
-
-        handleIntent(intent)
-        askNotificationPermission()
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleIntent(intent)
-    }
-
-    private fun handleIntent(intent: Intent?) {
-        intent?.let {
-            val screen = it.getStringExtra("screen")
-            val openGarden = it.getBooleanExtra("OPEN_GARDEN", false) ||
-                    it.getBooleanExtra("OPEN_MY_GARDEN", false) ||
-                    it.getBooleanExtra("NAVIGATE_TO_GARDEN", false) ||
-                    screen == "TasksFragment"
-
-            if (openGarden) {
-                // 1. Chuyển sang Tab Garden
-                binding.navView.selectedItemId = R.id.navigation_garden
-
-                // 2. Xử lý logic Garden Mode (nếu có)
-                if (it.hasExtra("IS_FAMILY_MODE")) {
-                    val isFamily = it.getBooleanExtra("IS_FAMILY_MODE", false)
-                    val gardenId = it.getStringExtra("TARGET_GARDEN_ID")
-
-                    if (isFamily && gardenId != null) {
-                        val targetGarden = Garden(id = gardenId)
-                        gardenViewModel.setGardenMode(targetGarden)
-                    } else {
-                        gardenViewModel.setGardenMode(null)
-                    }
-                }
-
-                // Xóa các extra sau khi đã xử lý để tránh nhảy tab khi xoay màn hình
-                it.removeExtra("OPEN_GARDEN")
-                it.removeExtra("OPEN_MY_GARDEN")
-                it.removeExtra("NAVIGATE_TO_GARDEN")
             }
         }
     }
 
     private fun askNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
             ) {
-                // Đã có quyền
-            } else {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
@@ -132,18 +158,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Garden Notifications"
-            val descriptionText = "Thông báo nhắc nhở chăm sóc cây"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channelId = "leafy_garden_channel"
-
-            val channel = NotificationChannel(channelId, name, importance).apply {
-                description = descriptionText
+            val channel = NotificationChannel(
+                "leafy_garden_channel", // Khớp với NotificationHelper và Cloud Functions
+                "Garden Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Thông báo nhắc nhở chăm sóc cây"
             }
-
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
         }
     }
 }
