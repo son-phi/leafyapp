@@ -223,9 +223,17 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     // =========================================================================
     // PLANT OPERATIONS & UTILS (Giữ nguyên)
     // =========================================================================
+    // Trong GardenViewModel.kt
     fun insert(plant: UserPlant) = viewModelScope.launch {
+        val currentUid = auth.currentUser?.uid ?: ""
         val currentGid = _currentGarden.value?.id
-        val plantToSave = plant.copy(gardenId = currentGid)
+
+        // BỔ SUNG ownerId vào đây
+        val plantToSave = plant.copy(
+            gardenId = currentGid,
+            ownerId = currentUid
+        )
+
         repository.insertUserPlant(plantToSave)
         saveCreationDate(plantToSave.id, System.currentTimeMillis())
         loadCombinedPlants()
