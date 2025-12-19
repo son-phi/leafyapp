@@ -25,16 +25,13 @@ import com.example.leafyapp.data.model.Garden
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-
-
     private val gardenViewModel: GardenViewModel by viewModels()
 
-    // [CÁCH MỚI] Khai báo biến xử lý kết quả xin quyền
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // Người dùng đồng ý -> Tốt!
+            // Quyền thông báo đã được cấp
         } else {
             Toast.makeText(this, "Bạn cần cấp quyền để nhận thông báo chăm sóc cây!", Toast.LENGTH_LONG).show()
         }
@@ -50,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
         supportActionBar?.hide()
 
-        // [QUAN TRỌNG] Tạo kênh thông báo ngay khi mở App
+        // Tạo kênh thông báo
         createNotificationChannel()
 
         // Setup Navigation
@@ -78,10 +75,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Xử lý khi bấm vào thông báo để mở App
         handleIntent(intent)
-
-        // [CÁCH MỚI] Xin quyền Notification (Android 13+)
         askNotificationPermission()
     }
 
@@ -93,29 +87,33 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent?.let {
-            // Kiểm tra xem có yêu cầu mở tab Garden không
-            val shouldNavigateToGarden = it.getBooleanExtra("NAVIGATE_TO_GARDEN", false)
-                    || it.getBooleanExtra("OPEN_MY_GARDEN", false)
-                    || it.getStringExtra("screen") == "TasksFragment"
+            val screen = it.getStringExtra("screen")
+            val openGarden = it.getBooleanExtra("OPEN_GARDEN", false) ||
+                    it.getBooleanExtra("OPEN_MY_GARDEN", false) ||
+                    it.getBooleanExtra("NAVIGATE_TO_GARDEN", false) ||
+                    screen == "TasksFragment"
 
-            if (shouldNavigateToGarden) {
-                // A. Chuyển Tab
+            if (openGarden) {
+                // 1. Chuyển sang Tab Garden
                 binding.navView.selectedItemId = R.id.navigation_garden
 
-                // B. Cấu hình Mode cho ViewModel (nếu có dữ liệu trong Intent)
+                // 2. Xử lý logic Garden Mode (nếu có)
                 if (it.hasExtra("IS_FAMILY_MODE")) {
                     val isFamily = it.getBooleanExtra("IS_FAMILY_MODE", false)
                     val gardenId = it.getStringExtra("TARGET_GARDEN_ID")
 
                     if (isFamily && gardenId != null) {
-                        // Tạo object Garden tạm thời với ID đúng để ViewModel load data
                         val targetGarden = Garden(id = gardenId)
                         gardenViewModel.setGardenMode(targetGarden)
                     } else {
-                        // Về chế độ Personal
                         gardenViewModel.setGardenMode(null)
                     }
                 }
+
+                // Xóa các extra sau khi đã xử lý để tránh nhảy tab khi xoay màn hình
+                it.removeExtra("OPEN_GARDEN")
+                it.removeExtra("OPEN_MY_GARDEN")
+                it.removeExtra("NAVIGATE_TO_GARDEN")
             }
         }
     }
@@ -127,19 +125,17 @@ class MainActivity : AppCompatActivity() {
             ) {
                 // Đã có quyền
             } else {
-                // Chưa có quyền -> Hiện bảng xin phép
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
 
     private fun createNotificationChannel() {
-        // Chỉ cần cho Android 8.0 (Oreo) trở lên
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Garden Notifications"
             val descriptionText = "Thông báo nhắc nhở chăm sóc cây"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channelId = "leafy_garden_channel" // ID này phải trùng với trong MyFirebaseMessagingService
+            val channelId = "leafy_garden_channel"
 
             val channel = NotificationChannel(channelId, name, importance).apply {
                 description = descriptionText

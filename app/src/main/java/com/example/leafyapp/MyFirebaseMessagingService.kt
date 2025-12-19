@@ -1,4 +1,4 @@
-package com.example.leafyapp // Đổi package cho đúng
+package com.example.leafyapp
 
 import android.util.Log
 import com.example.leafyapp.ui.notifications.NotificationHelper
@@ -11,45 +11,59 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // Chỉ xử lý nếu có Data
+        // Firebase có 2 loại tin nhắn: Notification và Data.
+        // Để App tự xử lý logic hiển thị (lọc người nhận), ta nên xử lý phần Data.
         if (remoteMessage.data.isNotEmpty()) {
-            handleDataMessage(remoteMessage.data)
+            handleDataMessage(remoteMessage.data, remoteMessage.notification)
         }
-
-        // (Nếu có notification payload thì Android tự hiện, nhưng ở đây mình dùng data-only)
     }
 
-    private fun handleDataMessage(data: Map<String, String>) {
-        val type = data["type"] ?: return
-        val ownerId = data["ownerId"] ?: ""
-        val taskId = data["taskId"] ?: ""
-        val title = data["taskTitle"] ?: "Nhắc nhở"
-        val body = data["taskBody"] ?: ""
-
+    private fun handleDataMessage(data: Map<String, String>, notification: RemoteMessage.Notification?) {
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        // --- LOGIC PHÂN QUYỀN (CHÌA KHÓA CỦA BẠN) ---
+        // 1. Lấy loại thông báo
+        val type = data["type"] ?: "GENERAL"
 
+        // 2. ĐỒNG BỘ KEY: Ưu tiên lấy taskTitle/taskBody từ Server JS gửi về
+        // Server JS của bạn gửi: taskTitle, taskBody cho hẹn giờ
+        // Server JS của bạn gửi: notification payload cho New Task/New Plant
+        val title = data["taskTitle"] ?: data["title"] ?: notification?.title ?: "Thông báo Leafy"
+        val body = data["taskBody"] ?: data["body"] ?: notification?.body ?: "Bạn có cập nhật mới."
+
+        // 3. Lấy ID liên quan (Người tạo hoặc Người được giao)
+        val relatedUserId = data["ownerId"] ?: ""
+
+        // 4. BỘ LỌC THÔNG MINH
         var shouldShow = false
-
-        if (type == "due_now") {
-            // Case 1: Đúng giờ -> Chỉ hiện nếu MÌNH LÀ CHỦ TASK
-            if (currentUid == ownerId) {
-                shouldShow = true
+        when (type) {
+            "due_now" -> {
+                // Robot báo đúng giờ: Chỉ hiện cho người được giao (ownerId)
+                if (currentUid == relatedUserId) shouldShow = true
             }
-        } else if (type == "escalate") {
-            // Case 2: Trễ 30p -> Chỉ hiện nếu MÌNH KHÔNG PHẢI CHỦ (Vợ/Thành viên khác)
-            if (currentUid != ownerId) {
-                shouldShow = true
+            "escalate" -> {
+                // Robot báo trễ: Chỉ hiện cho những người KHÁC trong vườn để nhắc giùm
+                if (currentUid != relatedUserId) shouldShow = true
             }
+            "NEW_TASK", "NEW_PLANT", "TASK_COMPLETED" -> {
+                // Sự kiện từ thành viên khác: Chỉ hiện cho người KHÔNG gây ra sự kiện
+                if (currentUid != relatedUserId) shouldShow = true
+            }
+            else -> shouldShow = true
         }
 
-        // --- HIỆN THÔNG BÁO ---
+        // 5. HIỆN THÔNG BÁO
         if (shouldShow) {
             val helper = NotificationHelper(this)
             helper.createNotificationChannel()
-            // Dùng hashCode của taskId làm ID để update lại thông báo cũ nếu cần
-            helper.showNotification(taskId.hashCode(), title, body)
+
+            // Dùng taskId hoặc timestamp để các thông báo không đè lên nhau
+            val taskId = data["taskId"] ?: ""
+            val notificationId = if (taskId.isNotEmpty()) taskId.hashCode() else System.currentTimeMillis().toInt()
+
+            helper.showNotification(notificationId, title, body)
+            Log.d("FCM_LEAFY", "SUCCESS: Hiển thị $type - $title")
+        } else {
+            Log.d("FCM_LEAFY", "FILTERED: Chặn thông báo $type do quy tắc trùng UID")
         }
     }
 }

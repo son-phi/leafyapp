@@ -1,11 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- App Theme (NO ACTION BAR + FULLSCREEN) -->
     <style name="Theme.LeafyApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Ẩn Title Bar / App Bar -->
         <item name="android:windowNoTitle">true</item>
         <item name="windowNoTitle">true</item>
+
+        <!-- Fullscreen không status bar -->
         <item name="android:windowFullscreen">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
 
+        <!-- Màu brand (tùy chọn) -->
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="colorSecondary">@color/teal_200</item>
@@ -91,6 +96,12 @@
         <item name="android:colorControlActivated">#4CAF50</item>
 
         <item name="android:textColorPrimary">#1A1C1E</item>
+    </style>
+
+    <style name="CustomMaterialDialog" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="backgroundTint">@color/white</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.MaterialComponents.LargeComponent</item>
     </style>
 
 </resources>
