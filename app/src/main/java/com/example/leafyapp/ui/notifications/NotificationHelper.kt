@@ -14,10 +14,11 @@ import com.example.leafyapp.R
 class NotificationHelper(private val context: Context) {
 
     companion object {
-        const val CHANNEL_ID = "leafy_garden_channel"
+        const val CHANNEL_ID = "leafy_garden_channel" //
         const val CHANNEL_NAME = "Garden Care Reminders"
     }
 
+    // Tạo kênh thông báo (Bắt buộc cho Android 8.0+)
     fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -35,27 +36,40 @@ class NotificationHelper(private val context: Context) {
         }
     }
 
-    fun showNotification(notificationId: Int, title: String, message: String) {
+    // [CẬP NHẬT] Nhận thêm screen và gardenId để điều hướng
+    fun showNotification(
+        notificationId: Int,
+        title: String,
+        message: String,
+        screen: String? = null,
+        gardenId: String? = null
+    ) {
+        // Cấu hình Intent để mở MainActivity kèm dữ liệu điều hướng
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            // Truyền tín hiệu để MainActivity biết cần mở tab Garden
-            putExtra("OPEN_GARDEN", true)
+
+            // Đưa thông tin từ Server vào Intent để MainActivity xử lý
+            putExtra("screen", screen)
+            putExtra("TARGET_GARDEN_ID", gardenId)
+            putExtra("OPEN_GARDEN", true) //
+
+            if (!gardenId.isNullOrEmpty()) {
+                putExtra("IS_FAMILY_MODE", true)
+            }
         }
 
+        // Sử dụng notificationId làm requestCode để các thông báo không ghi đè Intent của nhau
         val pendingIntent = PendingIntent.getActivity(
             context, notificationId, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            // 1. ĐỔI Ở ĐÂY: Dùng ic_launcher (hình App)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            // 2. THÊM MÀU: Để icon nổi bật hơn với màu xanh lá
-            .setColor(ContextCompat.getColor(context, R.color.green))
+            .setSmallIcon(R.mipmap.ic_launcher) // Hình App
+            .setColor(ContextCompat.getColor(context, R.color.green)) // Màu xanh lá
             .setContentTitle(title)
             .setContentText(message)
-            // 3. THÊM STYLE: Để hiển thị được hết nội dung nếu tin nhắn dài
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message)) // Hiển thị tin nhắn dài
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
