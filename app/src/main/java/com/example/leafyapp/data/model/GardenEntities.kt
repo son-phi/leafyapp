@@ -7,23 +7,22 @@ import com.example.leafyapp.R
 
 data class UserPlant(
     var id: String = "",
-    var userId: String = "",
+    var userId: String = "", // Giữ lại nếu bạn đang dùng để query
+    var ownerId: String = "", // [BỔ SUNG] Để Server lấy tên hiển thị Quý Phạm
 
     val plantId: Int = 0,
-    var nickname: String = "", // var để sửa tên (Family)
+    var nickname: String = "",
     val imagePath: String? = null,
     val dateAdded: Long = System.currentTimeMillis(),
     var gardenId: String? = null
 ) : Serializable {
-    constructor() : this("", "", 0, "", null)
+    constructor() : this("", "", "", 0, "", null)
 }
 
 data class CareTask(
     var id: String = "",
     var userPlantId: String = "",
-
-    // [QUAN TRỌNG 1] Thêm tên cây để hiển thị trên thông báo cho đẹp
-    val plantName: String? = null,
+    val plantName: String? = null, // Giúp thông báo hiện tên cây cụ thể
 
     val type: TaskType = TaskType.WATER,
     val frequencyDays: Int = 1,
@@ -34,16 +33,12 @@ data class CareTask(
     val nextDueDate: Long = System.currentTimeMillis(),
 
     val isAutoReminder: Boolean = true,
-    val lastCompletedDate: Long? = null,
+    var lastCompletedDate: Long? = null,
 
-    // [QUAN TRỌNG 2] ID Vườn (null = Cá nhân, có giá trị = Family)
-    val gardenId: String? = null,
-
-    // [QUAN TRỌNG 3] ID Người tạo (Để xử lý logic báo thức so le 30p)
-    val ownerId: String = ""
+    val gardenId: String? = null, // null = Cá nhân, ID = Family
+    val ownerId: String = ""      // Dùng để lọc thông báo và báo trễ
 
 ) : Serializable {
-    // Constructor rỗng cho Firebase (cập nhật đủ trường)
     constructor() : this(
         "", "", null, TaskType.WATER, 1, 8, 0,
         System.currentTimeMillis(), System.currentTimeMillis(),

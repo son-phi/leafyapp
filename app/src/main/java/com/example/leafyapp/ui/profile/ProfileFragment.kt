@@ -30,7 +30,9 @@ import com.bumptech.glide.request.target.Target
 import android.graphics.drawable.Drawable
 import android.widget.EditText
 import android.widget.TextView
-
+import android.util.Log
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ProfileFragment : Fragment() {
 
@@ -154,6 +156,46 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    // Hàm phụ để tách riêng logic logout auth
+    private fun cleanupFcmTopicsAndProceed(onComplete: () -> Unit) {
+        val user = authRepository.getCurrentUser()
+        val uid = user?.uid
+
+        if (uid == null || user.isAnonymous) {
+            onComplete()
+            return
+        }
+
+        // 1. Hủy đăng ký kênh cá nhân
+        FirebaseMessaging.getInstance().unsubscribeFromTopic("user_$uid")
+            .addOnCompleteListener { Log.d("FCM", "Unsubscribed from personal topic") }
+
+        // 2. Quét và hủy đăng ký các kênh vườn gia đình
+        val db = FirebaseFirestore.getInstance()
+        db.collection("gardens")
+            .whereArrayContains("members", uid)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (doc in documents) {
+                    FirebaseMessaging.getInstance().unsubscribeFromTopic("garden_${doc.id}")
+                        .addOnCompleteListener { Log.d("FCM", "Unsubscribed from garden_${doc.id}") }
+                }
+                // Sau khi quét xong hết (hoặc không có vườn nào), tiến hành bước tiếp theo
+                onComplete()
+            }
+            .addOnFailureListener {
+                Log.e("FCM", "Failed to cleanup garden topics: ${it.message}")
+                onComplete() // Vẫn tiếp tục thực hiện logout để tránh kẹt user
+            }
+    }
+
+    private fun performFinalLogout() {
+        authRepository.logout()
+        googleSignInClient.signOut().addOnCompleteListener {
+            navigateToSplash()
+        }
+    }
+
     private fun setupClicks() {
         binding.rowLocation.setOnClickListener { openAppSettings() }
 
@@ -176,36 +218,38 @@ class ProfileFragment : Fragment() {
         }
 
         binding.btnLogout.setOnClickListener {
-            // isDestructive = false (Mặc định, nút màu Xanh)
             showConfirmationDialog(
                 title = "Log Out",
                 message = "Are you sure you want to log out?",
                 positiveButtonTitle = "Log Out"
             ) {
-                authRepository.logout()
-                googleSignInClient.signOut().addOnCompleteListener {
-                    navigateToSplash()
+                // Thứ tự: Unsubscribe -> Logout -> Navigate
+                cleanupFcmTopicsAndProceed {
+                    performFinalLogout()
                 }
             }
         }
 
+
+
+        // --- 2. XỬ LÝ DELETE ACCOUNT (DỌN DẸP TRƯỚC KHI XÓA) ---
         binding.btnDeleteAccount.setOnClickListener {
-            // isDestructive = true -> Nút sẽ hiện màu ĐỎ để cảnh báo
             showConfirmationDialog(
                 title = "Delete Account",
                 message = "This action is permanent and cannot be undone. All your data will be lost.",
                 positiveButtonTitle = "Delete Forever",
                 isDestructive = true
             ) {
-                authRepository.deleteAccount(
-                    onSuccess = {
-                        Toast.makeText(context, "Account deleted.", Toast.LENGTH_SHORT).show()
-                        navigateToSplash()
-                    },
-                    onError = { msg ->
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                // Thứ tự: Unsubscribe -> Delete Account -> Navigate
+                cleanupFcmTopicsAndProceed {
+                    authRepository.deleteAccount(
+                        onSuccess = {
+                            Toast.makeText(context, "Account deleted.", Toast.LENGTH_SHORT).show()
+                            navigateToSplash()
+                        },
+                        onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                    )
+                }
             }
         }
 
