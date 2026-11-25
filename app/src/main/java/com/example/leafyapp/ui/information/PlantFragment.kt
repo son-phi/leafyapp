@@ -332,16 +332,22 @@ class PlantFragment : Fragment() {
         val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
         val baseName = plantToSave.name
 
-        for (i in 1..quantity) {
-            val newIndex = currentCount + i
-            val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
+        try {
+            for (i in 1..quantity) {
+                val newIndex = currentCount + i
+                val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
 
-            val newUserPlant = UserPlant(
-                plantId = plantToSave.id,
-                nickname = finalName,
-                imagePath = plantToSave.image
-            )
-            gardenViewModel.insert(newUserPlant)
+                val newUserPlant = UserPlant(
+                    plantId = plantToSave.id,
+                    nickname = finalName,
+                    imagePath = plantToSave.image
+                )
+                gardenViewModel.insertAndAwait(newUserPlant)
+            }
+        } catch (e: Exception) {
+            Log.e("PlantFragment", "Lỗi lưu cây vào Firestore", e)
+            Toast.makeText(context, "Không thể thêm cây: ${e.message}", Toast.LENGTH_LONG).show()
+            return
         }
 
         val dest = if (isFamilyMode) "Family Garden" else "My Garden"

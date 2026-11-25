@@ -147,6 +147,13 @@ class GardenRepository {
         plant.userId = currentUserId ?: ""
         ref.set(plant)
     }
+    // Ghi lên Firestore và CHỜ kết quả (ném lỗi nếu bị từ chối, vd: Security Rules)
+    suspend fun insertUserPlantAwait(plant: UserPlant) {
+        val ref = getPlantsRef().document()
+        plant.id = ref.id
+        plant.userId = currentUserId ?: ""
+        ref.set(plant).await()
+    }
     fun updateUserPlant(plant: UserPlant) { getPlantsRef().document(plant.id).set(plant) }
     fun deleteUserPlant(plant: UserPlant) { getPlantsRef().document(plant.id).delete() }
 

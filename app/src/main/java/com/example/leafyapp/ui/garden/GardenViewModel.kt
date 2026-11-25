@@ -239,6 +239,16 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         loadCombinedPlants()
     }
 
+    // Bản suspend: chờ Firestore xác nhận đã lưu, ném lỗi nếu thất bại
+    suspend fun insertAndAwait(plant: UserPlant) {
+        val plantToSave = plant.copy(
+            gardenId = _currentGarden.value?.id,
+            ownerId = auth.currentUser?.uid ?: ""
+        )
+        repository.insertUserPlantAwait(plantToSave)
+        saveCreationDate(plantToSave.id, System.currentTimeMillis())
+    }
+
     fun delete(plant: UserPlant) = viewModelScope.launch {
         repository.deleteUserPlant(plant)
         loadCombinedPlants()
