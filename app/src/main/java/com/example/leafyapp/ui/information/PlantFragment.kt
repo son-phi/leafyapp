@@ -88,32 +88,74 @@ class PlantFragment : Fragment() {
     }
 
     private fun fetchPlantFromFirebase() {
-        if (plantId == -1) {
-            showError("ID cây không hợp lệ.")
-            return
-        }
-
         binding.tvPlantName.text = plantLabel ?: "Loading..."
 
         val db = FirebaseFirestore.getInstance()
-        db.collection("plants").document(plantId.toString())
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val plant = document.toObject(Plant::class.java)
-                    if (plant != null) {
-                        currentDisplayPlant = plant
-                        displayPlantInfo(plant)
-                        setupAddButton(plant)
-                    } else {
-                        showError("Lỗi dữ liệu cây.")
+
+        if (plantId != -1) {
+            db.collection("plants").document(plantId.toString())
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val plant = document.toObject(Plant::class.java)
+                        if (plant != null) {
+                            currentDisplayPlant = plant
+                            displayPlantInfo(plant)
+                            setupAddButton(plant)
+                            return@addOnSuccessListener
+                        }
                     }
+                    searchPlantByName(db)
+                }
+                .addOnFailureListener {
+                    searchPlantByName(db)
+                }
+        } else {
+            searchPlantByName(db)
+        }
+    }
+
+    private fun searchPlantByName(db: FirebaseFirestore) {
+        val label = plantLabel
+        if (label.isNullOrBlank() || label == "Unknown") {
+            showError("Không tìm thấy cây này.")
+            return
+        }
+
+        db.collection("plants")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                var matchedPlant: Plant? = null
+
+                for (doc in snapshot.documents) {
+                    val p = doc.toObject(Plant::class.java) ?: continue
+                    if (p.name.equals(label, ignoreCase = true) ||
+                        p.scientificName.equals(label, ignoreCase = true) ||
+                        p.name.contains(label, ignoreCase = true) ||
+                        label.contains(p.name, ignoreCase = true)) {
+                        val docIdInt = doc.id.toIntOrNull() ?: p.id
+                        matchedPlant = p.copy(id = docIdInt)
+                        break
+                    }
+                }
+
+                if (matchedPlant != null) {
+                    currentDisplayPlant = matchedPlant
+                    displayPlantInfo(matchedPlant)
+                    setupAddButton(matchedPlant)
                 } else {
-                    showError("Không tìm thấy cây này.")
+                    val fallbackPlant = Plant(
+                        id = 0,
+                        name = label,
+                        scientificName = label,
+                        description = "Thông tin cây được nhận diện bởi AI Model."
+                    )
+                    currentDisplayPlant = fallbackPlant
+                    displayPlantInfo(fallbackPlant)
+                    setupAddButton(fallbackPlant)
                 }
             }
             .addOnFailureListener { e ->
-                Log.e("PlantFragment", "Lỗi tải Firebase", e)
                 showError("Lỗi kết nối: ${e.message}")
             }
     }

@@ -201,12 +201,15 @@ class LoadingActivity : AppCompatActivity() {
 
         val intent = Intent(this, ResultActivity::class.java)
 
-        // Truyền ID gốc từ Model (0, 1, 2...)
-        // ResultActivity sẽ lo việc cộng thêm 1 nếu là Plant
-        intent.putExtra("RESULT_ID", result.id)
+        val top = result.topPrediction
+        val label = result.displayLabel
+        val conf = result.displayConfidence
+        // CHÚ Ý: result.id nếu -1 thì giữ nguyên -1 (không dùng rank 1 làm DB ID)
+        val id = if (result.id != -1) result.id else -1
 
-        intent.putExtra("RESULT_LABEL", result.label)
-        intent.putExtra("RESULT_CONF", result.confidence)
+        intent.putExtra("RESULT_ID", id)
+        intent.putExtra("RESULT_LABEL", label)
+        intent.putExtra("RESULT_CONF", conf)
 
         // Truyền lại MODE để ResultActivity biết đường xử lý ID
         intent.putExtra("RESULT_MODE", mode)
