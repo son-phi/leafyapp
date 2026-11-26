@@ -189,13 +189,13 @@ class AuthRepository {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val userMap = hashMapOf(
-            "firstName" to first,
-            "lastName" to last,
-            "displayName" to full,
+        // Đúng các trường của bảng Users (thiết kế/web admin). role/status do admin quản lý, rules chặn client đổi;
+        // tài liệu mới không có role/status thì app coi là user/active.
+        val userMap = hashMapOf<String, Any>(
             "email" to email,
-            "photoUrl" to (photoUrl ?: ""), // Lưu URL ảnh
-            "lastUpdated" to System.currentTimeMillis()
+            "fullName" to full.ifBlank { "$first $last".trim() },
+            "avatarUrl" to (photoUrl ?: ""),
+            "lastLoginAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
         )
 
         db.collection("users").document(uid)

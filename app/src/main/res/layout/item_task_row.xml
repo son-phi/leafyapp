@@ -1,120 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:paddingVertical="12dp"
-    android:paddingStart="16dp">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:minHeight="56dp"
+        android:orientation="horizontal"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
 
-        <!-- Icon Task -->
         <ImageView
             android:id="@+id/img_task_icon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_rounded_light_blue"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_leafy_icon_tile"
+            android:contentDescription="@null"
             android:padding="8dp"
-            android:src="@drawable/ic_water_drop"
-            app:tint="#2196F3" />
+            app:tint="@color/leafy_primary_dark"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- Tên Task -->
             <TextView
                 android:id="@+id/tv_task_name"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Watering"
-                android:textColor="#000000"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/leafy_text"
+                android:textSize="15sp" />
 
-            <!-- Thông tin hoàn thành -->
+            <TextView
+                android:id="@+id/tvTaskSub"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/leafy_text_secondary"
+                android:textSize="12sp" />
+
             <LinearLayout
                 android:id="@+id/layout_completed_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:visibility="gone">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="4dp">
-
-                    <ImageView
-                        android:id="@+id/img_completed_icon"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:src="@drawable/ic_completed_small"
-                        app:tint="#4CAF50"/>
-
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:text="Today Completed"
-                        android:textColor="#4CAF50"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                <ImageView
+                    android:id="@+id/img_completed_icon"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:contentDescription="@null"
+                    android:src="@android:drawable/checkbox_on_background"
+                    android:visibility="gone" />
 
                 <TextView
                     android:id="@+id/tv_next_due_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Next task: 2 Dec"
-                    android:textColor="#2196F3"
-                    android:textStyle="bold"
+                    android:textColor="@color/leafy_primary"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Checkbox (Sẽ ẩn đi khi hoàn thành) -->
         <CheckBox
             android:id="@+id/cb_task_done"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:button="@drawable/selector_task_check"
-            android:background="@null"
-            android:buttonTint="@null"
-            app:buttonTint="@null"/>
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/selector_leafy_task_check"
+            android:button="@null"
+            android:gravity="center" />
 
-
-        <!-- Icon Tick tròn xám (Hiện khi hoàn thành - ĐÂY LÀ ID BẠN BỊ THIẾU) -->
         <ImageView
             android:id="@+id/img_done_check"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_check_circle_gray"
-            app:tint="#BDBDBD"
-            android:visibility="gone"
-            android:layout_marginEnd="8dp"/>
-
-
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@null"
+            android:visibility="gone" />
     </LinearLayout>
 
     <View
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginStart="64dp"
-        android:background="#F0F0F0"/>
-
+        android:layout_marginStart="48dp"
+        android:background="@color/leafy_outline" />
 </LinearLayout>

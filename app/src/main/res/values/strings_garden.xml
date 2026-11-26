@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="garden_title">Vườn của tôi</string>
+    <string name="garden_manage">Quản lý</string>
+    <string name="garden_mode_personal">Cá nhân</string>
+    <string name="garden_mode_family">Gia đình</string>
+    <string name="garden_family_empty_title">Tạo vườn gia đình</string>
+    <string name="garden_family_empty_body">Cùng người thân chăm sóc chung một khu vườn.</string>
+    <string name="garden_family_create">Tạo vườn mới</string>
+    <string name="garden_family_join">Tôi có mã mời</string>
+    <string name="garden_tab_plants">Cây trồng</string>
+    <string name="garden_tab_tasks">Công việc</string>
+
+    <string name="garden_summary_plants">%1$d cây</string>
+    <string name="garden_summary_today">%1$d việc hôm nay</string>
+    <string name="garden_summary_attention">%1$d cây cần chú ý</string>
+    <string name="garden_add_plant">Thêm cây</string>
+    <string name="garden_empty_title">Vườn còn trống</string>
+    <string name="garden_empty_body">Chụp ảnh để nhận diện loài và thêm cây đầu tiên của bạn.</string>
+    <string name="garden_plant_tasks_today">%1$d việc hôm nay</string>
+    <string name="garden_plant_no_tasks">Không có việc hôm nay</string>
+
+    <string name="tasks_today">Hôm nay</string>
+    <string name="tasks_add">Thêm việc</string>
+    <string name="tasks_empty_title">Không có việc nào</string>
+    <string name="tasks_empty_body">Ngày này cây của bạn không cần chăm sóc gì thêm.</string>
+    <string name="tasks_next">Lần tới: %1$s</string>
+    <string name="tasks_done_at">Đã xong</string>
+    <string name="tasks_completed_toast">Đã ghi nhận hoàn thành</string>
+    <string name="tasks_progress">%1$d/%2$d việc đã xong</string>
+</resources>

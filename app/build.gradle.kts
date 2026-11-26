@@ -68,6 +68,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation(libs.firebase.storage.ktx)
 
     // --- 3. CAMERA X (QUAN TRỌNG: Nâng cấp lên 1.4.0 để sửa lỗi surfaceProvider) ---
     val cameraVersion = "1.4.0"
@@ -115,6 +116,8 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
 

@@ -81,18 +81,8 @@ class TrendingAdapter(private val onClick: (Plant) -> Unit) :
         }
 
         // Hàm chuyển đổi link Google Drive (nếu cần)
-        private fun convertGoogleDriveLink(originalUrl: String): String {
-            return if (originalUrl.contains("drive.google.com")) {
-                try {
-                    val id = originalUrl.substringAfter("/d/").substringBefore("/")
-                    "https://drive.google.com/uc?export=view&id=$id"
-                } catch (e: Exception) {
-                    originalUrl
-                }
-            } else {
-                originalUrl
-            }
-        }
+        private fun convertGoogleDriveLink(originalUrl: String): String =
+        com.example.leafyapp.util.ImageUtils.directImageUrl(originalUrl) ?: originalUrl
     }
 
     class DiffCallback : DiffUtil.ItemCallback<Plant>() {

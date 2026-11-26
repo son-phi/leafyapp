@@ -210,6 +210,12 @@ class CameraFragment : Fragment() {
     }
 
     private fun takePhoto() {
+        if (!allPermissionsGranted()) {
+            // Từ chối quyền camera: thông báo và gợi ý chọn ảnh từ thư viện
+            android.widget.Toast.makeText(requireContext(), R.string.camera_permission_denied, android.widget.Toast.LENGTH_LONG).show()
+            openGallery()
+            return
+        }
         val capture = imageCapture ?: return
 
         val fileName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".jpg"
@@ -239,6 +245,16 @@ class CameraFragment : Fragment() {
     }
 
     private fun openLoadingActivity(path: String) {
+        // Chế độ Nhận diện loài cây → luồng mới 8.1 (xem trước ảnh, kết quả, Thêm cây trồng)
+        if (currentMode == "Plant") {
+            com.example.leafyapp.ui.identify.IdentifyActivity.start(requireContext(), path)
+            return
+        }
+        // Chế độ Chẩn đoán bệnh → luồng mới 8.2 (/analyze: loài + bệnh + hướng xử lý)
+        if (currentMode == "Disease") {
+            com.example.leafyapp.ui.diagnose.QuickDiagnoseActivity.start(requireContext(), path)
+            return
+        }
         val intent = Intent(requireContext(), LoadingActivity::class.java)
         intent.putExtra("PHOTO_PATH", path)
         intent.putExtra("SCAN_MODE", currentMode) // Truyền mode (Disease/Plant) sang màn hình sau

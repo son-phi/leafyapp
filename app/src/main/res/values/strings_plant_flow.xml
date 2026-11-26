@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chuỗi giao diện cho luồng Nhận diện loài cây (8.1) và Thêm cây trồng (8.3) -->
+<resources>
+    <!-- Nhận diện loài cây -->
+    <string name="identify_title">Nhận diện loài cây</string>
+    <string name="identify_preview_hint">Ảnh rõ nét, đủ sáng, thấy rõ lá hoặc toàn bộ cây sẽ cho kết quả chính xác hơn.</string>
+    <string name="identify_retake">Chụp lại</string>
+    <string name="identify_action">Nhận diện</string>
+    <string name="identify_loading">Đang nhận diện loài cây…</string>
+    <string name="identify_loading_sub">Phân tích hình dạng lá và đối chiếu danh mục loài</string>
+    <string name="identify_retry">Thử lại</string>
+    <string name="identify_error_title">Không nhận diện được</string>
+    <string name="identify_confidence">Độ tin cậy %1$d%%</string>
+    <string name="identify_uncertain_title">Kết quả chưa chắc chắn</string>
+    <string name="identify_uncertain_body">Độ tin cậy dưới 60%%. Hãy chọn loài đúng trong các loài có khả năng cao nhất bên dưới, hoặc chụp lại ảnh rõ hơn.</string>
+    <string name="identify_candidates_title">Các loài có khả năng cao nhất</string>
+    <string name="identify_not_in_catalog_title">Loài này chưa có thông tin chăm sóc trong hệ thống</string>
+    <string name="identify_not_in_catalog_body">AI nhận diện là \"%1$s\" nhưng danh mục chưa có loài này. Bạn có thể tìm và chọn loài trong danh mục.</string>
+    <string name="identify_pick_from_catalog">Tìm loài trong danh mục</string>
+    <string name="identify_choose_species_first">Chọn một loài để xem thông tin và thêm cây trồng</string>
+    <string name="identify_selected">Đang chọn</string>
+    <string name="identify_not_in_catalog_short">Chưa có trong danh mục</string>
+
+    <string name="species_section_about">Giới thiệu</string>
+    <string name="species_section_care">Thông tin chăm sóc</string>
+    <string name="species_section_threshold">Ngưỡng môi trường phù hợp</string>
+    <string name="species_section_schedule">Lịch chăm sóc gợi ý</string>
+    <string name="species_section_notes">Lưu ý chăm sóc</string>
+    <string name="species_section_problems">Vấn đề thường gặp</string>
+    <string name="species_section_toxicity">Độc tính</string>
+    <string name="species_section_extra">Thông tin thêm</string>
+    <string name="species_light">Ánh sáng</string>
+    <string name="species_water">Tưới nước</string>
+    <string name="species_fertilizer">Bón phân</string>
+    <string name="species_soil">Đất, giá thể</string>
+    <string name="species_temperature">Nhiệt độ</string>
+    <string name="species_humidity">Độ ẩm không khí</string>
+    <string name="species_seasonal">Theo mùa</string>
+    <string name="species_origin">Nguồn gốc</string>
+    <string name="species_family">Họ thực vật</string>
+    <string name="species_size">Kích thước trưởng thành</string>
+    <string name="species_growth">Tốc độ sinh trưởng</string>
+    <string name="species_propagation">Nhân giống</string>
+    <string name="species_synonyms">Tên đồng nghĩa</string>
+    <string name="species_other_names">Tên gọi khác</string>
+    <string name="species_soil_moisture">Độ ẩm đất</string>
+    <string name="species_light_lux">Cường độ ánh sáng</string>
+    <string name="species_every_days">Mỗi %1$d ngày</string>
+    <string name="species_no_fertilizer">Không bón phân</string>
+    <string name="species_toxic_pets">Độc với thú cưng</string>
+    <string name="species_toxic_humans">Độc với người</string>
+    <string name="species_non_toxic">Không độc</string>
+    <string name="care_level_easy">Dễ chăm</string>
+    <string name="care_level_medium">Chăm sóc vừa phải</string>
+    <string name="care_level_hard">Khó chăm</string>
+
+    <string name="add_plant_action">Thêm cây trồng</string>
+
+    <!-- Chọn loài -->
+    <string name="species_picker_title">Chọn loài cây</string>
+    <string name="species_picker_search_hint">Tìm theo tên tiếng Việt, tên khoa học…</string>
+    <string name="species_picker_empty">Không tìm thấy loài phù hợp</string>
+    <string name="species_picker_load_error">Không tải được danh mục loài</string>
+
+    <!-- Thêm cây trồng -->
+    <string name="add_plant_title">Thêm cây trồng</string>
+    <string name="add_plant_photo">Ảnh cây</string>
+    <string name="add_plant_photo_add">Chọn ảnh</string>
+    <string name="add_plant_photo_change">Đổi ảnh</string>
+    <string name="add_plant_photo_remove">Bỏ ảnh</string>
+    <string name="add_plant_species">Loài cây</string>
+    <string name="add_plant_species_required">Chọn loài cây</string>
+    <string name="add_plant_species_change">Đổi loài</string>
+    <string name="add_plant_name">Tên gọi</string>
+    <string name="add_plant_name_hint">Ví dụ: Lưỡi hổ phòng khách</string>
+    <string name="add_plant_name_required">Vui lòng nhập tên gọi</string>
+    <string name="add_plant_planted_date">Ngày trồng</string>
+    <string name="add_plant_date_future">Ngày trồng không được sau hôm nay</string>
+    <string name="add_plant_threshold_title">Ngưỡng môi trường</string>
+    <string name="add_plant_threshold_note">Mặc định dùng ngưỡng chuẩn của loài. Bạn có thể tinh chỉnh riêng cho cây trong hồ sơ cây sau khi thêm.</string>
+    <string name="add_plant_schedule_title">Lịch chăm sóc đề xuất</string>
+    <string name="add_plant_schedule_note">Đề xuất theo đặc tính của loài. Chọn lịch muốn tạo, có thể sửa chu kỳ, ngày bắt đầu và giờ nhắc. Chỉ những lịch được chọn mới được lưu.</string>
+    <string name="add_plant_schedule_interval">Chu kỳ (ngày)</string>
+    <string name="add_plant_schedule_start">Bắt đầu</string>
+    <string name="add_plant_schedule_time">Giờ nhắc</string>
+    <string name="add_plant_save">Lưu cây trồng</string>
+    <string name="add_plant_saving">Đang lưu…</string>
+    <string name="add_plant_success">Đã thêm cây vào vườn</string>
+    <string name="add_plant_error_title">Chưa lưu được cây trồng</string>
+    <string name="add_plant_upload_error_title">Chưa tải được ảnh cây</string>
+    <string name="add_plant_upload_error_body">%1$s\n\nHồ sơ cây chưa được lưu. Bạn có thể thử lại, hoặc lưu cây không kèm ảnh (thêm ảnh sau).</string>
+    <string name="add_plant_save_without_photo">Lưu không kèm ảnh</string>
+    <string name="add_plant_interval_invalid">Chu kỳ phải từ 1 đến 365 ngày</string>
+    <string name="add_plant_loading_species">Đang tải thông tin loài…</string>
+    <string name="common_cancel">Hủy</string>
+    <string name="common_retry">Thử lại</string>
+    <string name="common_close">Đóng</string>
+    <string name="camera_permission_denied">Ứng dụng chưa được cấp quyền camera. Bạn có thể chọn ảnh từ thư viện.</string>
+</resources>

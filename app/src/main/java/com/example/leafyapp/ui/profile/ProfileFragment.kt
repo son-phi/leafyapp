@@ -138,13 +138,13 @@ class ProfileFragment : Fragment() {
             // --- GIAI ĐOẠN 2: Lấy dữ liệu chuẩn từ Firestore (Chậm hơn chút nhưng chính xác) ---
             authRepository.getUserDetailsFromFirestore { userData ->
                 // 1. Cập nhật Tên (Lấy từ Firestore: displayName hoặc nối First+Last)
-                val firestoreName = userData["displayName"] as? String
+                val firestoreName = userData["fullName"] as? String
                 if (!firestoreName.isNullOrEmpty()) {
                     binding.tvUsername.text = firestoreName
                 }
 
                 // 2. Cập nhật Avatar (Nếu Firestore có ảnh xịn hơn thì load đè lên)
-                val firestorePhoto = userData["photoUrl"] as? String
+                val firestorePhoto = userData["avatarUrl"] as? String
                 if (!firestorePhoto.isNullOrEmpty()) {
                     Glide.with(this)
                         .load(firestorePhoto)

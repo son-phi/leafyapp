@@ -22,7 +22,9 @@ import java.util.Locale
 class TaskGroupAdapter(
     private var selectedDateMillis: Long,
     private val onTaskChecked: (CareTask) -> Unit,
-    private val onTaskClick: (CareTask) -> Unit
+    private val onTaskClick: (CareTask) -> Unit,
+    /** Ảnh cây giống thẻ ở tab Cây trồng (cây mới không lưu imagePath, dùng ảnh trên máy/ảnh loài). */
+    private val imageFor: (String) -> String? = { null }
 ) : ListAdapter<PlantTasksGroup, TaskGroupAdapter.GroupViewHolder>(GroupDiffCallback()) {
 
     fun updateSelectedDate(newDate: Long) {
@@ -45,15 +47,19 @@ class TaskGroupAdapter(
         fun bind(group: PlantTasksGroup) {
             // 1. Set tên cây
             binding.tvPlantNameHeader.text = group.plant.nickname
+            val doneToday = group.tasks.count { isSameDay(it.lastCompletedDate ?: 0, selectedDateMillis) }
+            binding.tvGroupProgress.text = "$doneToday/${group.tasks.size}"
+            val isV2 = group.plant.speciesId != null
 
             // 2. Load ảnh cây
             val context = itemView.context
-            if (!group.plant.imagePath.isNullOrEmpty()) {
-                val resId = context.resources.getIdentifier(group.plant.imagePath, "drawable", context.packageName)
+            val avatar = group.plant.imagePath?.takeIf { it.isNotBlank() } ?: imageFor(group.plant.id)
+            if (!avatar.isNullOrEmpty()) {
+                val resId = context.resources.getIdentifier(avatar, "drawable", context.packageName)
                 if (resId != 0) {
                     Glide.with(context).load(resId).centerCrop().into(binding.imgPlantAvatar)
                 } else {
-                    val finalUrl = convertDrive(group.plant.imagePath!!)
+                    val finalUrl = com.example.leafyapp.util.ImageUtils.directImageUrl(avatar) ?: avatar
                     Glide.with(context)
                         .load(finalUrl)
                         .centerCrop()
@@ -73,7 +79,7 @@ class TaskGroupAdapter(
                 val taskView = inflater.inflate(R.layout.item_task_row, binding.layoutTasksContainer, false)
 
                 // Bind dữ liệu cho dòng task
-                bindTaskRow(taskView, task, context)
+                bindTaskRow(taskView, task, context, isV2)
 
                 // Ẩn đường kẻ của dòng cuối cùng
                 if (index == group.tasks.size - 1) {
@@ -85,7 +91,7 @@ class TaskGroupAdapter(
             }
         }
 
-        private fun bindTaskRow(view: View, task: CareTask, context: Context) {
+        private fun bindTaskRow(view: View, task: CareTask, context: Context, isV2: Boolean) {
             val tvName = view.findViewById<TextView>(R.id.tv_task_name)
             val imgIcon = view.findViewById<ImageView>(R.id.img_task_icon)
             val cbDone = view.findViewById<CheckBox>(R.id.cb_task_done)
@@ -93,7 +99,18 @@ class TaskGroupAdapter(
             val layoutCompleted = view.findViewById<View>(R.id.layout_completed_info)
             val tvNextDue = view.findViewById<TextView>(R.id.tv_next_due_date)
 
-            tvName.text = task.type.displayName
+            // Lịch mới: CareTask.plantName mang tên công việc (vd. "Lau lá"); lịch cũ: dịch tên loại việc
+            tvName.text = if (isV2 && !task.plantName.isNullOrBlank()) task.plantName else vietnameseName(task.type)
+            val tvSub = view.findViewById<TextView>(R.id.tvTaskSub)
+            val timeText = String.format(Locale.US, "%02d:%02d", task.timeHour, task.timeMinute)
+            val overdueDays = ((startOfDay(selectedDateMillis) - startOfDay(task.nextDueDate)) / 86_400_000L).toInt()
+            tvSub.text = when {
+                isSameDay(task.lastCompletedDate ?: 0, selectedDateMillis) -> context.getString(R.string.tasks_done_at)
+                overdueDays > 0 && isSameDay(selectedDateMillis, System.currentTimeMillis()) -> "⏰ $timeText · quá hạn $overdueDays ngày"
+                else -> "⏰ $timeText · mỗi ${task.frequencyDays} ngày"
+            }
+            tvSub.setTextColor(androidx.core.content.ContextCompat.getColor(context,
+                if (overdueDays > 0 && isSameDay(selectedDateMillis, System.currentTimeMillis())) R.color.leafy_danger else R.color.leafy_text_secondary))
 
             // [SỬA LỖI Ở ĐÂY] Thêm nhánh OTHER và else
             val iconRes = when (task.type) {
@@ -127,8 +144,7 @@ class TaskGroupAdapter(
                 val oneDayMillis = 24L * 60 * 60 * 1000
                 val nextDueTime = selectedDateMillis + (task.frequencyDays * oneDayMillis)
                 val nextDate = Calendar.getInstance().apply { timeInMillis = nextDueTime }
-                val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
-                tvNextDue.text = "Next task: ${dateFormat.format(nextDate.time)}"
+                tvNextDue.text = context.getString(R.string.tasks_next, SimpleDateFormat("dd/MM", Locale("vi")).format(nextDate.time))
             }
             else {
                 // CHƯA HOÀN THÀNH
@@ -160,8 +176,7 @@ class TaskGroupAdapter(
                     val baseTime = selectedDateMillis
                     val nextDueTime = baseTime + (task.frequencyDays * oneDayMillis)
                     val nextDate = Calendar.getInstance().apply { timeInMillis = nextDueTime }
-                    val dateFormat = SimpleDateFormat("d MMM", Locale.getDefault())
-                    tvNextDue.text = "Next task: ${dateFormat.format(nextDate.time)}"
+                    tvNextDue.text = context.getString(R.string.tasks_next, SimpleDateFormat("dd/MM", Locale("vi")).format(nextDate.time))
                 }
             }
 
@@ -169,14 +184,21 @@ class TaskGroupAdapter(
         }
     }
 
-    private fun convertDrive(url: String): String {
-        return if (url.contains("drive.google.com")) {
-            try {
-                val id = url.substringAfter("d/").substringBefore("/")
-                "https://drive.google.com/uc?export=view&id=$id"
-            } catch (e: Exception) { url }
-        } else url
+    private fun vietnameseName(t: TaskType) = when (t) {
+        TaskType.WATER -> "Tưới nước"
+        TaskType.FERTILIZER -> "Bón phân"
+        TaskType.ROTATE -> "Xoay chậu"
+        TaskType.MIST -> "Phun sương"
+        TaskType.CUT -> "Cắt tỉa"
+        else -> "Công việc khác"
     }
+
+    private fun startOfDay(ms: Long) = Calendar.getInstance().apply {
+        timeInMillis = ms; set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    private fun convertDrive(url: String): String =
+        com.example.leafyapp.util.ImageUtils.directImageUrl(url) ?: url
 
     private fun isSameDay(date1: Long, date2: Long): Boolean {
         val cal1 = Calendar.getInstance().apply { timeInMillis = date1 }

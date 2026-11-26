@@ -57,19 +57,20 @@ class TasksFragment : Fragment() {
 
             // --- ĐOẠN CODE MỚI ---
             // Tách format riêng cho Tháng (MMM - Viết tắt 3 chữ) và Năm (yyyy)
-            val monthFormat = SimpleDateFormat("MMM", Locale.getDefault()) // Ví dụ: Nov, Dec
-            val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault()) // Ví dụ: 2025
-
-            // Cập nhật lên 2 TextView mới
-            binding.tvMonth.text = monthFormat.format(selectedDate)
-            binding.tvYear.text = yearFormat.format(selectedDate)
+            showMonth(selectedDate)
             // ---------------------
 
             isViewingToday = isSameDay(selectedDate, Date())
             taskAdapter.updateSelectedDate(selectedDate.time)
+            viewModel.groupedTasksForSelectedDate.value?.let { updateProgress(it) }
         }
 
         binding.rvCalendar.adapter = calendarAdapter
+        showMonth(Date())
+        binding.btnToday.setOnClickListener {
+            val pos = calendarAdapter.selectToday()
+            if (pos >= 0) (binding.rvCalendar.layoutManager as LinearLayoutManager).scrollToPositionWithOffset((pos - 2).coerceAtLeast(0), 0)
+        }
 
         // Scroll đến ngày hôm nay
         val todayPos = calendarAdapter.getSelectedPositionInt()
@@ -85,11 +86,12 @@ class TasksFragment : Fragment() {
                 // Lấy thời gian thực tế lúc bấm hoàn thành
                 val completedAt = System.currentTimeMillis()
                 viewModel.markTaskAsCompleted(task, completedAt)
-                Toast.makeText(context, "Completed!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, com.example.leafyapp.R.string.tasks_completed_toast, Toast.LENGTH_SHORT).show()
             },
             onTaskClick = { task ->
                 showEditDeleteDialog(task)
-            }
+            },
+            imageFor = { id -> viewModel.allUserPlants.value?.firstOrNull { it.id == id }?.imagePath }
         )
 
         binding.rvTasks.adapter = taskAdapter
@@ -99,6 +101,7 @@ class TasksFragment : Fragment() {
         // Khi switch gạt -> groupedTasksForSelectedDate tự thay đổi -> List tự cập nhật
         viewModel.groupedTasksForSelectedDate.observe(viewLifecycleOwner) { groupedList ->
             taskAdapter.submitList(groupedList)
+            updateProgress(groupedList)
 
             if (groupedList.isEmpty()) {
                 binding.layoutNoTask.visibility = View.VISIBLE
@@ -146,6 +149,24 @@ class TasksFragment : Fragment() {
         }
 
         dialog.show()
+    }
+
+    private fun showMonth(d: Date) {
+        val c = Calendar.getInstance().apply { time = d }
+        binding.tvMonth.text = "Tháng ${c.get(Calendar.MONTH) + 1}"
+        binding.tvYear.text = c.get(Calendar.YEAR).toString()
+    }
+
+    /** Thanh tiến độ: số việc đã xong trong ngày đang xem. */
+    private fun updateProgress(groups: List<PlantTasksGroup>) {
+        val day = viewModel.selectedDateMillis()
+        val tasks = groups.flatMap { it.tasks }
+        val done = tasks.count { isSameDay(Date(it.lastCompletedDate ?: 0L), Date(day)) }
+        binding.tvProgress.visibility = if (tasks.isEmpty()) View.GONE else View.VISIBLE
+        binding.progressTasks.visibility = binding.tvProgress.visibility
+        binding.tvProgress.text = getString(com.example.leafyapp.R.string.tasks_progress, done, tasks.size)
+        binding.progressTasks.max = tasks.size.coerceAtLeast(1)
+        binding.progressTasks.setProgressCompat(done, true)
     }
 
     private fun isSameDay(date1: Date, date2: Date): Boolean {

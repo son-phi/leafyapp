@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pd_more">Tùy chọn</string>
+    <string name="pd_stat_today">Việc hôm nay</string>
+    <string name="pd_stat_care">Lần chăm sóc</string>
+    <string name="pd_stat_diag">Lần chẩn đoán</string>
+    <string name="pd_last_check">Kiểm tra lần cuối: %1$s</string>
+    <string name="pd_never_checked">Chưa kiểm tra sức khỏe lần nào</string>
+    <string name="pd_health_check">Kiểm tra sức khỏe cây</string>
+    <string name="pd_mark_done">✓ Đánh dấu xong</string>
+
+    <string name="pd_tab_overview">Tổng quan</string>
+    <string name="pd_tab_schedule">Lịch chăm sóc</string>
+    <string name="pd_tab_history">Lịch sử</string>
+
+    <string name="health_unknown">Chưa kiểm tra</string>
+    <string name="health_healthy">Khỏe mạnh</string>
+    <string name="health_mild">Bệnh nhẹ</string>
+    <string name="health_moderate">Bệnh trung bình</string>
+    <string name="health_severe">Bệnh nặng</string>
+
+    <string name="pd_treatment_title">Đang điều trị: %1$s</string>
+    <string name="pd_treatment_progress">Đã xong %1$d/%2$d việc · mức %3$s</string>
+    <string name="pd_upcoming">Việc sắp tới</string>
+    <string name="pd_no_upcoming">Chưa có lịch chăm sóc nào. Thêm lịch ở tab Lịch chăm sóc.</string>
+    <string name="pd_see_all">Xem tất cả lịch</string>
+    <string name="pd_env_title">Môi trường</string>
+    <string name="pd_env_not_connected">Chưa kết nối cảm biến IoT. Khi kết nối, số đo thực tế sẽ hiện tại đây và được so với ngưỡng phù hợp của cây.</string>
+    <string name="pd_env_threshold_species">Ngưỡng phù hợp (theo loài)</string>
+    <string name="pd_env_threshold_custom">Ngưỡng phù hợp (tùy chỉnh)</string>
+    <string name="pd_care_info">Thông tin chăm sóc</string>
+
+    <string name="pd_add_schedule">+ Thêm lịch chăm sóc</string>
+    <string name="pd_section_treatment">Kế hoạch điều trị</string>
+    <string name="pd_section_care">Chăm sóc định kỳ</string>
+    <string name="pd_section_paused">Đang tạm dừng</string>
+    <string name="pd_due_overdue">Quá hạn %1$d ngày · %2$s</string>
+    <string name="pd_due_today">Hôm nay · %1$s</string>
+    <string name="pd_due_tomorrow">Ngày mai · %1$s</string>
+    <string name="pd_due_on">Đến hạn %1$s</string>
+    <string name="pd_repeat_every">🔁 Mỗi %1$d ngày</string>
+    <string name="pd_repeat_treatment">🩺 Điều trị: lần %1$d/%2$d · mỗi %3$d ngày</string>
+    <string name="pd_repeat_once">🩺 Điều trị: làm một lần</string>
+    <string name="pd_paused">⏸ Đang tạm dừng</string>
+    <string name="pd_menu_edit">Sửa lịch</string>
+    <string name="pd_menu_pause">Tạm dừng</string>
+    <string name="pd_menu_resume">Tiếp tục</string>
+    <string name="pd_menu_delete">Xóa lịch</string>
+    <string name="pd_delete_schedule_confirm">Xóa lịch “%1$s”? Nhật ký các lần đã làm vẫn được giữ.</string>
+
+    <string name="pd_field_type">Loại công việc</string>
+    <string name="pd_field_title">Tên công việc</string>
+    <string name="pd_field_interval">Lặp lại mỗi (ngày)</string>
+    <string name="pd_field_note">Ghi chú</string>
+    <string name="pd_field_time">Giờ nhắc %1$s</string>
+    <string name="pd_field_date">Lần đầu: %1$s</string>
+    <string name="pd_field_done_at">Thời điểm làm: %1$s</string>
+    <string name="pd_dialog_add">Thêm lịch chăm sóc</string>
+    <string name="pd_dialog_edit">Sửa lịch chăm sóc</string>
+    <string name="pd_invalid_interval">Chu kỳ phải từ 1 đến 365 ngày</string>
+
+    <string name="pd_history_diagnoses">Chẩn đoán</string>
+    <string name="pd_history_care">Chăm sóc</string>
+    <string name="pd_no_diagnoses">Chưa có lần chẩn đoán nào. Bấm “Kiểm tra sức khỏe cây” để bắt đầu.</string>
+    <string name="pd_no_logs">Chưa có nhật ký chăm sóc trong khoảng thời gian này.</string>
+    <string name="pd_filter_7">7 ngày</string>
+    <string name="pd_filter_30">30 ngày</string>
+    <string name="pd_filter_all">Tất cả</string>
+    <string name="pd_add_log">+ Ghi lại việc đã làm</string>
+    <string name="pd_log_title">Ghi lại việc đã làm</string>
+    <string name="pd_unreliable">Chưa chắc chắn</string>
+    <string name="pd_diag_detail_conf">Độ tin cậy %1$d%% · vết bệnh %2$s%%</string>
+
+    <string name="pd_rename">Đổi tên cây</string>
+    <string name="pd_delete_plant">Xóa cây</string>
+    <string name="pd_delete_plant_confirm">Xóa “%1$s” cùng toàn bộ lịch chăm sóc, nhật ký và lịch sử chẩn đoán? Không thể hoàn tác.</string>
+    <string name="common_save">Lưu</string>
+    <string name="common_delete">Xóa</string>
+</resources>
