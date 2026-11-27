@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="8dp">
+    android:paddingStart="6dp" android:paddingEnd="6dp" android:paddingTop="4dp" android:paddingBottom="4dp">
 
     <!-- Thứ (MON, TUE...) -->
     <TextView
@@ -14,13 +14,13 @@
         android:text="MON"
         android:textSize="12sp"
         android:textColor="#808080"
-        android:layout_marginBottom="8dp"/>
+        android:layout_marginBottom="4dp"/>
 
     <!-- Ngày (24, 25...) - Có background tròn khi chọn -->
     <TextView
         android:id="@+id/tv_day_of_month"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
         android:text="24"
         android:textSize="16sp"
         android:textStyle="bold"

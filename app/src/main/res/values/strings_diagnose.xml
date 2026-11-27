@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="diagnose_title">Kiểm tra sức khỏe cây</string>
+    <string name="diagnose_entry">Kiểm tra sức khỏe cây</string>
+    <string name="diagnose_pick_hint">Chụp cận cảnh lá có dấu hiệu bất thường, đủ sáng, lá chiếm phần lớn khung hình.</string>
+    <string name="diagnose_take_photo">Chụp ảnh</string>
+    <string name="diagnose_from_gallery">Chọn từ thư viện</string>
+    <string name="diagnose_analyze">Chẩn đoán bệnh trên lá</string>
+    <string name="diagnose_loading">Đang phân tích lá…</string>
+    <string name="diagnose_retake">Chụp lại</string>
+    <string name="diagnose_save">Lưu và áp dụng kế hoạch</string>
+    <string name="diagnose_save_healthy">Lưu kết quả</string>
+    <string name="diagnose_saving">Đang lưu…</string>
+    <string name="diagnose_saved">Đã lưu chẩn đoán và %1$d việc điều trị vào lịch chăm sóc</string>
+    <string name="diagnose_saved_no_tasks">Đã lưu kết quả chẩn đoán</string>
+    <string name="diagnose_camera_denied">Chưa có quyền camera, hãy chọn ảnh từ thư viện.</string>
+
+    <string name="diagnose_healthy">Không phát hiện bệnh</string>
+    <string name="diagnose_unknown">Không xác định được bệnh</string>
+    <string name="diagnose_metrics">Độ tin cậy %1$d%% · Diện tích vết bệnh %2$s%%</string>
+    <string name="diagnose_metrics_healthy">Độ tin cậy %1$d%%</string>
+    <string name="diagnose_uncertain_title">Kết quả chưa chắc chắn</string>
+    <string name="diagnose_uncertain_body">Độ tin cậy dưới 60%. Kết quả vẫn được lưu để tham khảo nhưng không cập nhật tình trạng sức khỏe và xu hướng của cây.</string>
+
+    <string name="severity_none">Không bệnh</string>
+    <string name="severity_mild">Nhẹ</string>
+    <string name="severity_moderate">Trung bình</string>
+    <string name="severity_severe">Nặng</string>
+
+    <string name="trend_improved">↓ Tốt lên so với lần chẩn đoán trước (%1$s%% → %2$s%%)</string>
+    <string name="trend_stable">→ Ổn định so với lần chẩn đoán trước (%1$s%% → %2$s%%)</string>
+    <string name="trend_worse">↑ Xấu đi so với lần chẩn đoán trước (%1$s%% → %2$s%%)</string>
+
+    <string name="diagnose_section_normal">Có thể là hiện tượng bình thường</string>
+    <string name="diagnose_section_causes">Nguyên nhân thường gặp</string>
+    <string name="diagnose_section_care">Hướng xử lý</string>
+    <string name="diagnose_section_tasks">Kế hoạch điều trị</string>
+    <string name="diagnose_section_tasks_hint">Chọn việc muốn thêm vào lịch chăm sóc. Kế hoạch điều trị cũ còn dở của cây sẽ được thay bằng kế hoạch này.</string>
+    <string name="diagnose_section_changes">Đề xuất điều chỉnh lịch chăm sóc</string>
+    <string name="diagnose_section_avoid">Không nên làm với loài này</string>
+    <string name="diagnose_section_prevention">Phòng bệnh</string>
+    <string name="diagnose_section_safety">Lưu ý an toàn khi dùng thuốc</string>
+    <string name="diagnose_section_healthy">Cây đang khỏe</string>
+    <string name="diagnose_healthy_body">Tiếp tục chăm sóc theo lịch hiện tại. Nếu có kế hoạch điều trị cũ còn dở, kế hoạch đó sẽ được đóng lại.</string>
+    <string name="diagnose_unknown_body">Model chưa xác định được bệnh. Hãy chụp lại cận cảnh lá có dấu hiệu bất thường, đủ sáng.</string>
+
+    <string name="task_due_today">Hôm nay</string>
+    <string name="task_due_in_days">Sau %1$d ngày</string>
+    <string name="task_repeat">mỗi %1$d ngày × %2$d lần</string>
+    <string name="task_once">một lần</string>
+    <string name="priority_urgent">CẤP BÁCH</string>
+    <string name="priority_high">CAO</string>
+
+    <string name="change_scale">%1$s: mỗi %2$d ngày → mỗi %3$d ngày</string>
+    <string name="change_pause">%1$s: tạm dừng %2$d ngày</string>
+    <string name="quick_title">Chẩn đoán bệnh trên lá</string>
+    <string name="quick_loading">Đang nhận diện loài và chẩn đoán bệnh…</string>
+    <string name="quick_species_title">Loài cây</string>
+    <string name="quick_species_reliable">Loài cây được nhận diện. Chọn lại nếu chưa đúng.</string>
+    <string name="quick_species_uncertain">Chưa chắc chắn về loài (dưới 60%). Hãy chọn đúng loài để nhận hướng chăm sóc phù hợp.</string>
+    <string name="quick_plan_generic">Chọn loài để có hướng xử lý riêng cho loài đó. Dưới đây là hướng xử lý chung.</string>
+    <string name="quick_is_my_plant">Ảnh này là cây trong vườn của tôi</string>
+    <string name="quick_add_plant">Thêm cây trồng</string>
+    <string name="quick_pick_plant_title">Chọn cây trong vườn</string>
+    <string name="quick_same_species">cùng loài</string>
+    <string name="quick_no_plants">Vườn chưa có cây nào. Hãy Thêm cây trồng.</string>
+    <string name="quick_need_species">Hãy chọn loài trước khi Thêm cây trồng.</string>
+    <string name="quick_species_info">Thông tin loài</string>
+</resources>

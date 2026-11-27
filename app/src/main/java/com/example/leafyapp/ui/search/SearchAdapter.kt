@@ -57,19 +57,6 @@ class SearchAdapter(private val onClick: (Plant) -> Unit) :
     }
 
     // --- Thêm hàm hỗ trợ này xuống dưới cùng class Adapter ---
-    private fun convertGoogleDriveLink(originalUrl: String): String {
-        // Link gốc trong DB: https://drive.google.com/file/d/FILE_ID/view?usp=drive_link
-        // Link cần chuyển:   https://drive.google.com/uc?export=view&id=FILE_ID
-
-        return if (originalUrl.contains("drive.google.com")) {
-            try {
-                val id = originalUrl.substringAfter("/d/").substringBefore("/")
-                "https://drive.google.com/uc?export=view&id=$id"
-            } catch (e: Exception) {
-                originalUrl // Nếu lỗi thì trả về link gốc
-            }
-        } else {
-            originalUrl // Nếu không phải link Drive thì giữ nguyên
-        }
-    }
+    private fun convertGoogleDriveLink(originalUrl: String): String =
+        com.example.leafyapp.util.ImageUtils.directImageUrl(originalUrl) ?: originalUrl
 }

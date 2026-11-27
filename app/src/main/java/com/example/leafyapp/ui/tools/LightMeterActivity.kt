@@ -8,6 +8,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -157,74 +159,23 @@ class LightMeterActivity : AppCompatActivity(), SensorEventListener {
     }
 
     // --- LOGIC TÌM CÂY TRÊN FIRESTORE ---
+    /** Gợi ý cây hợp với mức sáng đo được: lux nằm trong ngưỡng ánh sáng của loài (`species.threshold`). */
     private fun fetchPlantsByLight(lux: Float) {
-        val db = FirebaseFirestore.getInstance()
-
-        // Map giá trị Lux sang các từ khóa trong Database
-        val targetLightCategories = when {
-            // Nhóm Yếu
-            lux < 500 -> listOf(
-                "Ánh sáng mạnh hoặc yếu đều được."
-            )
-
-            // Nhóm Gián tiếp (500 - 1500)
-            lux in 500.0..1500.0 -> listOf(
-                "Ánh sáng gián tiếp.",
-                "Ánh sáng gián tiếp, tránh nắng gắt.",
-                "Ánh sáng mạnh hoặc yếu đều được."
-            )
-
-            // Nhóm Tán xạ (1500 - 4000)
-            lux in 1500.0..4000.0 -> listOf(
-                "Ánh sáng tán xạ.",
-                "Ánh sáng tán xạ, tránh nắng gắt.",
-                "Ánh sáng gián tiếp.",
-                "Ánh sáng nhẹ, gần cửa sổ."
-            )
-
-            // Nhóm Mạnh & Trực tiếp (> 4000)
-            else -> listOf(
-                "Ánh sáng mạnh.",
-                "Ánh sáng đầy đủ.",
-                "Ánh sáng mạnh, gần cửa sổ.",
-                "Ánh sáng mạnh hoặc yếu đều được.",
-                "Ánh sáng mạnh, có thể trồng ngoài trời.",
-                "Ánh sáng mạnh, 4h nắng/ngày."
-            )
+        lifecycleScope.launch {
+            val list = try {
+                val repo = com.example.leafyapp.data.repository.SpeciesRepository
+                repo.getAll().filter { lux >= it.threshold.lightMin && lux <= it.threshold.lightMax }
+                    .take(10).map { repo.asPlant(it) }
+            } catch (e: Exception) { emptyList() }
+            binding.progressLoading.visibility = View.GONE
+            if (list.isEmpty()) {
+                binding.tvNoResult.visibility = View.VISIBLE
+                binding.rvSuggestedPlants.visibility = View.GONE
+            } else {
+                binding.tvNoResult.visibility = View.GONE
+                binding.rvSuggestedPlants.visibility = View.VISIBLE
+                plantsAdapter.submitList(list)
+            }
         }
-
-        // Truy vấn Firestore
-        db.collection("plants")
-            .whereIn("light", targetLightCategories)
-            .limit(10) // Lấy tối đa 10 cây
-            .get()
-            .addOnSuccessListener { documents ->
-                val list = ArrayList<Plant>()
-                for (doc in documents) {
-                    try {
-                        // Tự động map dữ liệu vào object Plant
-                        // Lưu ý: Class Plant phải có trường `val id: Int`
-                        // Firestore sẽ tự điền giá trị từ field "id" (số) vào đây
-                        val plant = doc.toObject(Plant::class.java)
-
-                        list.add(plant)
-                    } catch (e: Exception) { e.printStackTrace() }
-                }
-
-                // Cập nhật UI sau khi tải xong
-                binding.progressLoading.visibility = View.GONE
-                if (list.isEmpty()) {
-                    binding.tvNoResult.visibility = View.VISIBLE
-                    binding.rvSuggestedPlants.visibility = View.GONE
-                } else {
-                    binding.tvNoResult.visibility = View.GONE
-                    binding.rvSuggestedPlants.visibility = View.VISIBLE
-                    plantsAdapter.submitList(list)
-                }
-            }
-            .addOnFailureListener {
-                binding.progressLoading.visibility = View.GONE
-                Toast.makeText(this, "Lỗi kết nối: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
     }
 }

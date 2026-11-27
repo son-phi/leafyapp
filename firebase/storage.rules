@@ -1,0 +1,24 @@
+rules_version = '2';
+// Firebase Storage Security Rules – LeafyApp
+// Lưu ý: project phải nâng lên gói Blaze mới bật được Cloud Storage.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Ảnh của người dùng: users/{uid}/plants/{plantId}/cover.jpg,
+    // users/{uid}/diagnoses/{id}.jpg, users/{uid}/identifications/{id}.jpg
+    match /users/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    // Ảnh minh họa danh mục loài, bệnh: ai đăng nhập cũng đọc, chỉ admin ghi
+    match /catalog/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

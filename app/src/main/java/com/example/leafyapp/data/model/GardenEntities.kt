@@ -1,6 +1,7 @@
 package com.example.leafyapp.data.model
 
 import java.io.Serializable
+import com.google.firebase.firestore.Exclude
 import androidx.annotation.DrawableRes
 import com.example.leafyapp.R
 
@@ -17,6 +18,16 @@ data class UserPlant(
     var gardenId: String? = null
 ) : Serializable {
     constructor() : this("", "", "", 0, "", null)
+
+    // --- Chỉ dùng trên app (không lưu Firestore): cây theo cấu trúc mới users/{uid}/plants ---
+    @get:Exclude @set:Exclude var speciesId: String? = null
+    @get:Exclude @set:Exclude var speciesName: String? = null
+    @get:Exclude @set:Exclude var scientificName: String? = null
+    /** Tình trạng sức khỏe (cây cấu trúc mới): UNKNOWN | HEALTHY | MILD | MODERATE | SEVERE */
+    @get:Exclude @set:Exclude var healthStatus: String? = null
+
+    /** Khóa nhóm cây cùng loài trong danh sách vườn. */
+    @get:Exclude val groupKey: String get() = speciesId ?: "legacy-$plantId"
 }
 
 data class CareTask(

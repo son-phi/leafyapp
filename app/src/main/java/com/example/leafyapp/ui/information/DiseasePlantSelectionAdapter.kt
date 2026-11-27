@@ -96,12 +96,7 @@ class DiseasePlantSelectionAdapter(
         if (resId != 0) {
             Glide.with(context).load(resId).centerCrop().into(imageView)
         } else {
-            val finalUrl = if (path.contains("drive.google.com")) {
-                try {
-                    val id = path.substringAfter("d/").substringBefore("/")
-                    "https://drive.google.com/uc?export=view&id=$id"
-                } catch (e: Exception) { path }
-            } else path
+            val finalUrl = com.example.leafyapp.util.ImageUtils.directImageUrl(path) ?: path
 
             Glide.with(context)
                 .load(finalUrl)

@@ -1,0 +1,3 @@
+# Không commit khóa service account
+*.json
+!**/package.json

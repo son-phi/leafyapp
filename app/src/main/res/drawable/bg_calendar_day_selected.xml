@@ -3,7 +3,7 @@
     <!-- Trạng thái được chọn: Màu xanh tròn -->
     <item android:state_selected="true">
         <shape android:shape="oval">
-            <solid android:color="#007BFF"/>
+            <solid android:color="@color/leafy_primary"/>
         </shape>
     </item>
     <!-- Trạng thái thường: Trong suốt -->

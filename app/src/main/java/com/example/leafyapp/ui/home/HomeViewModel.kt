@@ -43,47 +43,26 @@ class HomeViewModel : ViewModel() {
         fetchPlantsFromFirebase()
     }
 
+    /** Trending: 5 loài trong danh mục `species` (loài có ảnh lên trước). */
     fun fetchTrendingPlants() {
-        FirebaseFirestore.getInstance().collection("plants")
-            .orderBy("popularity", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(5)
-            .get()
-            .addOnSuccessListener { documents ->
-                val list = documents.toObjects(Plant::class.java)
-                _trendingPlants.value = list
-            }
+        viewModelScope.launch {
+            runCatching { com.example.leafyapp.data.repository.SpeciesRepository.allAsPlants() }
+                .onSuccess { _trendingPlants.value = it.take(5) }
+                .onFailure { Log.e("HomeViewModel", "Tải trending", it) }
+        }
     }
 
     private fun fetchPlantsFromFirebase() {
         _isLoading.value = true
-        val db = FirebaseFirestore.getInstance()
-
-        db.collection("plants")
-            .get()
-            .addOnSuccessListener { result ->
-                val list = ArrayList<Plant>()
-                for (document in result) {
-                    // Chuyển đổi Document thành Plant Object
-                    try {
-                        val plant = document.toObject(Plant::class.java)
-                        list.add(plant)
-                    } catch (e: Exception) {
-                        Log.e("Firebase", "Lỗi convert data: ${e.message}")
-                    }
+        viewModelScope.launch {
+            runCatching { com.example.leafyapp.data.repository.SpeciesRepository.allAsPlants() }
+                .onSuccess { list ->
+                    _allPlants.clear(); _allPlants.addAll(list)
+                    _plants.value = list
                 }
-
-                // Lưu vào danh sách gốc
-                _allPlants.clear()
-                _allPlants.addAll(list)
-
-                // Cập nhật lên UI
-                _plants.value = list
-                _isLoading.value = false
-            }
-            .addOnFailureListener { exception ->
-                Log.e("Firebase", "Lỗi lấy dữ liệu: ", exception)
-                _isLoading.value = false
-            }
+                .onFailure { Log.e("Firebase", "Lỗi lấy dữ liệu: ", it) }
+            _isLoading.value = false
+        }
     }
 
     // Hàm lấy 5 cây phổ biến nhất

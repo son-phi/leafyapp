@@ -94,8 +94,8 @@ class GardenFragment : Fragment() {
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -> "Your Plants"  // <-- Đã đổi lại tiếng Anh
-                1 -> "Tasks"        // <-- Đã đổi lại tiếng Anh
+                0 -> getString(com.example.leafyapp.R.string.garden_tab_plants)
+                1 -> getString(com.example.leafyapp.R.string.garden_tab_tasks)
                 else -> ""
             }
         }.attach()
@@ -268,7 +268,7 @@ class GardenFragment : Fragment() {
 
                         // SỬA LOGIC Ở ĐÂY:
                         // 1. Reset tên nút Family về mặc định
-                        binding.btnModeFamily.text = "Family"
+                        binding.btnModeFamily.text = getString(com.example.leafyapp.R.string.garden_mode_family)
 
                         // 2. Vẫn giữ chế độ Family nhưng ở trạng thái "Chưa có vườn"
                         updateUI(isFamilyMode = true, hasGarden = false)

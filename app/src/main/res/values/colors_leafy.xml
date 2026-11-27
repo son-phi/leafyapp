@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="leafy_primary">#1B7F4B</color>
+    <color name="leafy_primary_dark">#0F5C35</color>
+    <color name="leafy_primary_container">#DDF3E5</color>
+    <color name="leafy_background">#FBFAF4</color>
+    <color name="leafy_surface">#FFFFFF</color>
+    <color name="leafy_surface_variant">#F1EFE6</color>
+    <color name="leafy_outline">#E3E0D4</color>
+    <color name="leafy_text">#1E2B22</color>
+    <color name="leafy_text_secondary">#5F6B63</color>
+    <color name="leafy_warning">#B45309</color>
+    <color name="leafy_warning_container">#FFF1DF</color>
+    <color name="leafy_danger">#B3261E</color>
+    <color name="leafy_danger_container">#FCE8E6</color>
+    <color name="leafy_outline_strong">#B9C2BB</color>
+</resources>

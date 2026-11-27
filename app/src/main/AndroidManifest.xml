@@ -53,6 +53,20 @@
             android:label="" />
 
         <activity android:name=".ui.search.SearchActivity" android:exported="false" />
+        <activity android:name=".ui.identify.IdentifyActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.addplant.AddPlantActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.diagnose.DiagnoseActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.plantdetail.PlantDetailActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".ui.diagnose.QuickDiagnoseActivity" android:exported="false" android:screenOrientation="portrait" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.leafy.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/leafy_file_paths" />
+        </provider>
         <activity android:name=".ui.camera.LoadingActivity" android:label="" android:exported="false"/>
         <activity android:name=".ui.information.ResultActivity" android:label="" android:exported="false"/>
         <activity android:name=".ui.profile.FaqActivity" android:exported="false" />
