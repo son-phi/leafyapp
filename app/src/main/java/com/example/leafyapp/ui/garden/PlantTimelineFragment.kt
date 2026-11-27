@@ -42,6 +42,16 @@ class PlantTimelineFragment : Fragment() {
         }
 
         // --- SỬA 2: Kiểm tra null thay vì -1 ---
+        // 8.4: kiểm tra sức khỏe chỉ cho cây theo cấu trúc mới (users/{uid}/plants)
+        if (plantId != null) {
+            binding.btnHealthCheck.setOnClickListener {
+                com.example.leafyapp.ui.diagnose.DiagnoseActivity.start(requireContext(), plantId)
+            }
+            viewModel.v2Plants.observe(viewLifecycleOwner) { list ->
+                binding.btnHealthCheck.visibility = if (list.any { it.id == plantId }) View.VISIBLE else View.GONE
+            }
+        }
+
         if (plantId != null) {
             // viewModel.getPlantTimeline(String) -> Khớp với ViewModel mới
             viewModel.getPlantTimeline(plantId).observe(viewLifecycleOwner) { items ->

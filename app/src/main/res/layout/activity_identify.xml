@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/leafy_background"
+    android:orientation="vertical">
+
+    <!-- Thanh tiêu đề -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="16dp">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/common_close"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/leafy_text" />
+
+        <TextView
+            android:id="@+id/tvToolbarTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:text="@string/identify_title"
+            android:textColor="@color/leafy_text"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- 1. XEM TRƯỚC ẢNH -->
+        <LinearLayout
+            android:id="@+id/layoutPreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgPreview"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/Leafy.Shape.Large" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/identify_preview_hint"
+                android:textColor="@color/leafy_text_secondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRetake"
+                    style="@style/Leafy.Button.Outlined"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/identify_retake" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnIdentify"
+                    style="@style/Leafy.Button.Filled"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/identify_action" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 2. ĐANG NHẬN DIỆN -->
+        <LinearLayout
+            android:id="@+id/layoutLoading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/imgLoading"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/Leafy.Shape.Large" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:indeterminate="true"
+                app:indicatorColor="@color/leafy_primary"
+                app:trackColor="@color/leafy_primary_container"
+                app:trackCornerRadius="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/identify_loading"
+                android:textColor="@color/leafy_text"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="@string/identify_loading_sub"
+                android:textColor="@color/leafy_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- 3. LỖI -->
+        <LinearLayout
+            android:id="@+id/layoutError"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/identify_error_title"
+                android:textColor="@color/leafy_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvErrorMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:textColor="@color/leafy_text_secondary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnErrorRetry"
+                style="@style/Leafy.Button.Filled"
+                android:layout_width="220dp"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
+                android:text="@string/identify_retry" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnErrorRetake"
+                style="@style/Leafy.Button.Text"
+                android:layout_width="220dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/identify_retake" />
+        </LinearLayout>
+
+        <!-- 4. KẾT QUẢ -->
+        <LinearLayout
+            android:id="@+id/layoutResult"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="16dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/imgResultPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp"
+                        android:scaleType="centerCrop"
+                        app:shapeAppearanceOverlay="@style/Leafy.Shape.Large" />
+
+                    <!-- Cảnh báo độ tin cậy thấp -->
+                    <LinearLayout
+                        android:id="@+id/cardUncertain"
+                        style="@style/Leafy.Banner.Warning"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            style="@style/Leafy.Banner.Title"
+                            android:text="@string/identify_uncertain_title"
+                            android:textColor="@color/leafy_warning" />
+
+                        <TextView
+                            style="@style/Leafy.Banner.Body"
+                            android:text="@string/identify_uncertain_body" />
+                    </LinearLayout>
+
+                    <!-- Thẻ loài đang chọn -->
+                    <LinearLayout
+                        android:id="@+id/cardSpecies"
+                        style="@style/Leafy.Card"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/imgSpecies"
+                            android:layout_width="72dp"
+                            android:layout_height="72dp"
+                            android:background="@color/leafy_primary_container"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/Leafy.Shape.Medium" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvSpeciesName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/leafy_primary_dark"
+                                android:textSize="20sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvScientificName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:textColor="@color/leafy_text_secondary"
+                                android:textSize="14sp"
+                                android:textStyle="italic" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tvConfidence"
+                                    style="@style/Leafy.Pill" />
+
+                                <TextView
+                                    android:id="@+id/tvCareLevel"
+                                    style="@style/Leafy.Pill.Neutral"
+                                    android:layout_marginStart="6dp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Loài chưa có trong danh mục -->
+                    <LinearLayout
+                        android:id="@+id/cardNotInCatalog"
+                        style="@style/Leafy.Banner.Warning"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            style="@style/Leafy.Banner.Title"
+                            android:text="@string/identify_not_in_catalog_title"
+                            android:textColor="@color/leafy_warning" />
+
+                        <TextView
+                            android:id="@+id/tvNotInCatalogBody"
+                            style="@style/Leafy.Banner.Body" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnPickFromCatalog"
+                            style="@style/Leafy.Button.Outlined"
+                            android:layout_width="wrap_content"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/identify_pick_from_catalog"
+                            app:icon="@drawable/ic_search"
+                            app:iconTint="@color/leafy_primary" />
+                    </LinearLayout>
+
+                    <!-- Top 3 loài -->
+                    <TextView
+                        android:id="@+id/tvCandidatesTitle"
+                        style="@style/Leafy.SectionTitle"
+                        android:text="@string/identify_candidates_title" />
+
+                    <LinearLayout
+                        android:id="@+id/containerCandidates"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <!-- Thông tin loài + chăm sóc (dựng động) -->
+                    <LinearLayout
+                        android:id="@+id/containerSpeciesInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/leafy_surface"
+                android:elevation="8dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnResultRetake"
+                    style="@style/Leafy.Button.Outlined"
+                    android:layout_width="wrap_content"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/identify_retake" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddPlant"
+                    style="@style/Leafy.Button.Filled"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_weight="1"
+                    android:text="@string/add_plant_action"
+                    app:icon="@drawable/ic_add_black_24dp"
+                    app:iconTint="@android:color/white" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>

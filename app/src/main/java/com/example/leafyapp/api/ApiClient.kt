@@ -10,7 +10,7 @@ object ApiClient {
 
     // IP Wi-Fi của máy chạy server (xem dòng "App mobile ... [Wi-Fi]" khi chạy `python main.py`).
     // Emulator Android: "http://10.0.2.2:8000/"
-    private const val BASE_URL = "http://192.168.2.7:8000/"
+    private const val BASE_URL = "https://blurb-cattle-henna.ngrok-free.dev/"
 
     // Tạo logging cho debug API
     private val logging = HttpLoggingInterceptor().apply {

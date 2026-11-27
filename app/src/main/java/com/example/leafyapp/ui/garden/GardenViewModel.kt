@@ -34,6 +34,10 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     val allUserPlants = MediatorLiveData<List<UserPlant>>()
 
     private val _allTasksSource = repository.allTasksWithPlant
+    /** Mọi việc (cũ + mới) kèm cây – để đếm việc hôm nay trên thẻ cây. */
+    val allTasksWithPlant: LiveData<List<com.example.leafyapp.data.model.TaskWithPlant>> = repository.allTasksWithPlant
+    /** Cây theo cấu trúc mới (users/{uid}/plants) – dùng để bật Kiểm tra sức khỏe cây (8.4). */
+    val v2Plants: LiveData<List<com.example.leafyapp.data.model.PlantProfile>> = repository.v2Plants
     private val _selectedDate = MutableLiveData<Long>(System.currentTimeMillis())
     val allDiseaseLogs: LiveData<List<DiseaseLog>> = repository.diseaseLogs
 
@@ -44,8 +48,16 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         loadCombinedPlants()
     }
 
+    private val v2PlantsObserver = Observer<List<com.example.leafyapp.data.model.PlantProfile>> {
+        loadCombinedPlants()
+    }
+
     init {
         repository.userPlants.observeForever(repoPlantsObserver)
+        repository.v2Plants.observeForever(v2PlantsObserver)
+        repository.onV2SchedulesChanged = { schedules, names ->
+            com.example.leafyapp.ui.notifications.CareReminderScheduler.sync(getApplication(), schedules, names)
+        }
 
         // Đăng ký kênh thông báo cá nhân ngay khi khởi tạo ViewModel
         subscribeToPersonalTopic()
@@ -71,6 +83,7 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     override fun onCleared() {
         super.onCleared()
         repository.userPlants.removeObserver(repoPlantsObserver)
+        repository.v2Plants.removeObserver(v2PlantsObserver)
     }
 
     // =========================================================================
@@ -80,14 +93,29 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         val uid = auth.currentUser?.uid ?: return@launch
         val combinedList = ArrayList<UserPlant>()
         try {
-            // Lấy cây cá nhân
-            val pQuery = db.collection("users").document(uid).collection("user_plants").get().await()
-            val pList = pQuery.toObjects(UserPlant::class.java)
-            pList.forEachIndexed { i, p ->
-                p.id = pQuery.documents[i].id
-                p.gardenId = null
+            // Cây theo cấu trúc mới users/{uid}/plants (luồng Thêm cây trồng 8.3)
+            try {
+                val v2Query = db.collection("users").document(uid).collection("plants").get().await()
+                val profiles = v2Query.toObjects(com.example.leafyapp.data.model.PlantProfile::class.java)
+                val catalog = try {
+                    com.example.leafyapp.data.repository.SpeciesRepository.getAll()
+                } catch (e: Exception) { emptyList() }
+                profiles.forEach { p ->
+                    val sp = catalog.find { it.id == p.speciesId }
+                    combinedList.add(
+                        GardenRepository.toUserPlant(
+                            p,
+                            legacyCatalogId = 0,
+                            speciesName = sp?.commonName,
+                            scientificName = sp?.scientificName,
+                            fallbackImage = com.example.leafyapp.util.LocalPlantImages.pathIfExists(getApplication(), p.id)
+                                ?: com.example.leafyapp.util.ImageUtils.directImageUrl(sp?.imageUrl)
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("GardenViewModel", "Error loading plants (v2): ${e.message}")
             }
-            combinedList.addAll(pList)
 
             // Lấy cây gia đình
             val gQuery = db.collection("gardens").whereArrayContains("members", uid).get().await()
@@ -114,6 +142,10 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     // TASK OPERATIONS (Đã Server-hóa hoàn toàn)
     // =========================================================================
     fun insertTask(task: CareTask) = viewModelScope.launch {
+        if (repository.isV2Plant(task.userPlantId)) {
+            runCatching { repository.insertV2Task(task) }.onFailure { Log.e("GardenViewModel", "insertV2Task", it) }
+            return@launch
+        }
         val currentUid = auth.currentUser?.uid ?: ""
         val currentGardenId = _currentGarden.value?.id
 
@@ -129,15 +161,28 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun updateTask(task: CareTask) = viewModelScope.launch {
+        if (repository.isV2Task(task.id)) {
+            runCatching { repository.updateV2Task(task) }.onFailure { Log.e("GardenViewModel", "updateV2Task", it) }
+            return@launch
+        }
         repository.updateTask(task)
         // Không còn cancel/scheduleLocalAlarm
     }
 
     fun deleteTask(task: CareTask) = viewModelScope.launch {
+        if (repository.isV2Task(task.id)) {
+            runCatching { repository.deleteV2Task(task.id) }.onFailure { Log.e("GardenViewModel", "deleteV2Task", it) }
+            return@launch
+        }
         repository.deleteTask(task)
     }
 
     fun markTaskAsCompleted(task: CareTask, completedDate: Long) = viewModelScope.launch {
+        if (repository.isV2Task(task.id)) {
+            runCatching { repository.completeV2Task(task.id, completedDate) }
+                .onFailure { Log.e("GardenViewModel", "completeV2Task", it) }
+            return@launch
+        }
         repository.insertHistory(TaskHistory(taskId = task.id, completedDate = completedDate))
         val oneDayMillis = 24L * 60 * 60 * 1000
         val newNextDue = completedDate + (task.frequencyDays * oneDayMillis)
@@ -239,12 +284,34 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
         loadCombinedPlants()
     }
 
+    // Bản suspend: chờ Firestore xác nhận đã lưu, ném lỗi nếu thất bại
+    suspend fun insertAndAwait(plant: UserPlant) {
+        val plantToSave = plant.copy(
+            gardenId = _currentGarden.value?.id,
+            ownerId = auth.currentUser?.uid ?: ""
+        )
+        repository.insertUserPlantAwait(plantToSave)
+        saveCreationDate(plantToSave.id, System.currentTimeMillis())
+    }
+
     fun delete(plant: UserPlant) = viewModelScope.launch {
+        if (plant.speciesId != null || repository.isV2Plant(plant.id)) {
+            runCatching { repository.deleteV2Plant(plant.id) }
+                .onSuccess { com.example.leafyapp.util.LocalPlantImages.delete(getApplication(), plant.id) }
+                .onFailure { Log.e("GardenViewModel", "deleteV2Plant", it) }
+            loadCombinedPlants()
+            return@launch
+        }
         repository.deleteUserPlant(plant)
         loadCombinedPlants()
     }
 
     fun updatePlantName(plant: UserPlant, newName: String) = viewModelScope.launch {
+        if (plant.speciesId != null || repository.isV2Plant(plant.id)) {
+            runCatching { repository.renameV2Plant(plant.id, newName) }.onFailure { Log.e("GardenViewModel", "renameV2Plant", it) }
+            loadCombinedPlants()
+            return@launch
+        }
         repository.updateUserPlant(plant.copy(nickname = newName))
         loadCombinedPlants()
     }
@@ -338,6 +405,7 @@ class GardenViewModel(application: Application) : AndroidViewModel(application) 
     }
     fun getSelectedDayStart() = getStartOfDay(_selectedDate.value ?: System.currentTimeMillis())
     fun setSelectedDate(date: Date) { _selectedDate.value = date.time }
+    fun selectedDateMillis(): Long = _selectedDate.value ?: System.currentTimeMillis()
     private fun saveCreationDate(id: String, date: Long) = getApplication<Application>().getSharedPreferences("plant_birthdays", 0).edit().putLong("dob_$id", date).apply()
     private fun getOrInitCreationDate(id: String, fb: Long) = getApplication<Application>().getSharedPreferences("plant_birthdays", 0).getLong("dob_$id", 0L).let { if (it != 0L) it else fb }
     suspend fun getPlantCount(sid: Int) = (allUserPlants.value ?: emptyList()).count { it.plantId == sid }

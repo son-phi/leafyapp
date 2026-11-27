@@ -61,6 +61,11 @@ class MyPlantsFragment : Fragment() {
             // Callback 2: Khi bấm vào item cây -> Mở Timeline
             // Callback 2: Khi bấm vào item cây -> Mở Timeline
             onItemClick = { plant ->
+                // Cây theo cấu trúc mới → màn Hồ sơ cây trồng (8.6); cây cũ vẫn mở lịch sử chăm sóc
+                if (viewModel.v2Plants.value.orEmpty().any { it.id == plant.id }) {
+                    com.example.leafyapp.ui.plantdetail.PlantDetailActivity.start(requireContext(), plant.id)
+                    return@UserPlantAdapter
+                }
                 // 1. Tạo gói dữ liệu (Bundle) chứa ID cây
                 val bundle = android.os.Bundle().apply {
                     putString("PLANT_ID", plant.id)
@@ -80,7 +85,23 @@ class MyPlantsFragment : Fragment() {
         )
 
         binding.rvMyPlants.adapter = adapter
-        binding.rvMyPlants.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvMyPlants.layoutManager = androidx.recyclerview.widget.GridLayoutManager(requireContext(), 2).apply {
+            spanSizeLookup = adapter.spanLookup()
+        }
+
+        // Số việc đến hạn hôm nay (kể cả quá hạn, chưa làm hôm nay) theo từng cây
+        viewModel.allTasksWithPlant.observe(viewLifecycleOwner) { list ->
+            val endOfToday = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, 23); set(java.util.Calendar.MINUTE, 59); set(java.util.Calendar.SECOND, 59)
+            }.timeInMillis
+            val startOfToday = endOfToday - 86_399_000L
+            adapter.submitTodayCounts(list.filter {
+                it.task.nextDueDate <= endOfToday && (it.task.lastCompletedDate ?: 0L) < startOfToday
+            }.groupingBy { it.plant.id }.eachCount())
+        }
+
+        // Thêm cây trồng: chọn loài (hoặc chụp ảnh nhận diện ở màn hình chính)
+        binding.fabAddPlant.setOnClickListener { addPlant() }
 
         // Lắng nghe dữ liệu từ ViewModel CHUNG
         viewModel.allUserPlants.observe(viewLifecycleOwner) { plants ->
@@ -89,16 +110,22 @@ class MyPlantsFragment : Fragment() {
             // Hiển thị giao diện trống nếu không có cây
             if (plants.isEmpty()) {
                 binding.layoutEmptyState.visibility = View.VISIBLE
+                binding.fabAddPlant.visibility = View.GONE
                 binding.rvMyPlants.visibility = View.GONE
             } else {
                 binding.layoutEmptyState.visibility = View.GONE
+                binding.fabAddPlant.visibility = View.VISIBLE
                 binding.rvMyPlants.visibility = View.VISIBLE
             }
         }
 
-        binding.btnAddFirstPlant.setOnClickListener {
-            showAddPlantBottomSheet()
-        }
+        binding.btnAddFirstPlant.setOnClickListener { addPlant() }
+    }
+
+    /** Vườn cá nhân: luồng Thêm cây trồng mới (8.3). Vườn gia đình: giữ cách thêm cũ. */
+    private fun addPlant() {
+        if (viewModel.currentGarden.value == null) com.example.leafyapp.ui.addplant.AddPlantActivity.start(requireContext())
+        else showAddPlantBottomSheet()
     }
 
     // --- CÁC HÀM UI LOGIC (GIỮ NGUYÊN CỦA BẠN) ---
@@ -125,10 +152,8 @@ class MyPlantsFragment : Fragment() {
     }
 
     private fun openLoadingActivity(path: String) {
-        val intent = Intent(requireContext(), LoadingActivity::class.java)
-        intent.putExtra("PHOTO_PATH", path)
-        intent.putExtra("SCAN_MODE", "Plant")
-        startActivity(intent)
+        // Ảnh chọn từ thư viện trong vườn → luồng Nhận diện loài cây (8.1)
+        com.example.leafyapp.ui.identify.IdentifyActivity.start(requireContext(), path)
     }
 
     private fun showPlantOptionsBottomSheet(plant: UserPlant) {

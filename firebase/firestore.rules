@@ -1,0 +1,80 @@
+rules_version = '2';
+// Firestore Security Rules – LeafyApp
+// Triển khai: Firebase Console → Firestore → Rules (dán toàn bộ file) → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+    // Quản trị viên: custom claim `admin = true` (gán qua Firebase Admin SDK)
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    // ---------------------------------------------------------
+    // 1. USERS – mỗi người chỉ đọc/ghi dữ liệu của mình
+    //    users/{uid}/plants/{plantId}/(careSchedules|careLogs|diagnoses)
+    //    users/{uid}/identifications/{id}
+    //    và các collection cũ (user_plants, care_tasks, task_history, disease_logs)
+    // ---------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      // role/status/lockedAt chỉ admin đổi (khóa tài khoản, phân quyền) – người dùng không tự nâng quyền
+      allow create: if isOwner(userId)
+        && request.resource.data.get('role', 'user') == 'user'
+        && request.resource.data.get('status', 'active') == 'active';
+      allow update: if (isOwner(userId)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status']))
+        || isAdmin();
+      allow delete: if isOwner(userId);
+
+      // Dữ liệu riêng của người dùng (plants/..., identifications, ...). lockHistory do admin ghi qua Cloud Functions.
+      match /{coll}/{rest=**} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) && coll != 'lockHistory';
+      }
+    }
+
+    // Web admin: chỉ đọc để thống kê (collection group) – quyền người dùng do khối users ở trên quyết định
+    match /{path=**}/plants/{id} { allow read: if isAdmin(); }
+    match /{path=**}/diagnoses/{id} { allow read: if isAdmin(); }
+    match /{path=**}/wateringLogs/{id} { allow read: if isAdmin(); }
+    match /{path=**}/chatSessions/{id} { allow read: if isAdmin(); }
+    match /{path=**}/nodes/{id} { allow read: if isAdmin(); }
+    match /devices/{id} { allow read: if isAdmin(); }
+
+    // ---------------------------------------------------------
+    // 2. GARDENS (vườn gia đình – giữ nguyên, chưa mở rộng)
+    // ---------------------------------------------------------
+    match /gardens/{gardenId} {
+      allow read, write: if isAuthenticated();
+      match /{subcollection=**} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    // ---------------------------------------------------------
+    // 3. DANH MỤC DÙNG CHUNG: ai đăng nhập cũng đọc, chỉ admin ghi
+    // ---------------------------------------------------------
+    // Danh mục do web admin ghi qua Cloud Functions (Admin SDK); app chỉ đọc
+    match /species/{speciesId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    match /diseases/{diseaseId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ---------------------------------------------------------
+    // 4. MẶC ĐỊNH: chặn mọi truy cập khác
+    // ---------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

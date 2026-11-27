@@ -3,205 +3,153 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/leafy_background"
+    android:orientation="vertical">
 
+    <!-- Tiêu đề + chọn vườn -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#FFFFFF"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="6dp"
-        android:elevation="4dp">
+        android:paddingStart="20dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#FFFFFF"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="12dp"
-            android:elevation="2dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                app:cardCornerRadius="25dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#4CAF50"
-                app:strokeWidth="1dp"
-                app:cardBackgroundColor="#FFFFFF">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/garden_title"
+                android:textColor="@color/leafy_text"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/toggleGardenMode"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    app:singleSelection="true"
-                    app:selectionRequired="true"
-                    app:checkedButton="@id/btnModePersonal"
-                    app:strokeWidth="0dp"> <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnModePersonal"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:text="Personal"
-                    android:textAllCaps="false"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-
-                    app:icon="@drawable/ic_user_solid_full"
-                    app:iconTint="@color/selector_toggle_text"
-                    android:textColor="@color/selector_toggle_text"
-
-                    app:backgroundTint="@color/selector_toggle_bg"
-                    app:cornerRadius="0dp"
-                    app:strokeWidth="0dp"
-                    />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnModeFamily"
-                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:text="Family"
-                        android:textAllCaps="false"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-
-                        app:icon="@drawable/house_chimney_window_solid_full"
-                        app:iconTint="@color/selector_toggle_text"
-                        android:textColor="@color/selector_toggle_text"
-
-                        app:backgroundTint="@color/selector_toggle_bg"
-                        app:cornerRadius="0dp"
-                        app:strokeWidth="0dp"
-                        />
-
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            </com.google.android.material.card.MaterialCardView>
-
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGardenSettings"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:text="@string/garden_manage"
+                android:textColor="@color/leafy_text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:icon="@android:drawable/ic_menu_preferences"
+                app:iconSize="16dp"
+                app:iconTint="@color/leafy_text_secondary" />
         </LinearLayout>
 
+        <!-- Cá nhân / Gia đình -->
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleGardenMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:checkedButton="@id/btnModePersonal"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnModePersonal"
+                style="@style/Leafy.Segment"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:text="@string/garden_mode_personal" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnModeFamily"
+                style="@style/Leafy.Segment"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/garden_mode_family" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <!-- Chưa có vườn gia đình -->
         <LinearLayout
             android:id="@+id/layoutNoGarden"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone"
+            android:layout_marginTop="32dp"
             android:gravity="center"
-            android:padding="32dp"
-            android:layout_marginTop="16dp">
-
-            <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:src="@drawable/leaf_solid_full"
-                app:tint="#C8E6C9"
-                android:layout_marginBottom="24dp"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Start Your Family Garden"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:textColor="#2E7D32"
-                android:textAlignment="center"
-                android:layout_marginBottom="8dp"/>
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Create a shared space to care for plants together with your loved ones."
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_leafy_icon_tile"
                 android:gravity="center"
-                android:textSize="15sp"
-                android:textColor="#757575"
-                android:lineSpacingExtra="4dp"
-                android:layout_marginBottom="32dp"/>
+                android:text="🏡"
+                android:textSize="32sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/garden_family_empty_title"
+                android:textColor="@color/leafy_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/garden_family_empty_body"
+                android:textColor="@color/leafy_text_secondary"
+                android:textSize="14sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCreateGarden"
+                style="@style/Leafy.Button.Filled"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Create New Garden"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:cornerRadius="16dp"
-
-                android:backgroundTint="#4CAF50"
-                android:textColor="#FFFFFF"
-                app:iconTint="#FFFFFF"
-
-                app:icon="@android:drawable/ic_input_add"
-                app:iconGravity="textStart"
-                android:layout_marginBottom="12dp"/>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/garden_family_create" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnJoinGarden"
+                style="@style/Leafy.Button.Outlined"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="I have an Invite Code"
-                android:textAllCaps="false"
-                android:textSize="16sp"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:textColor="#4CAF50"
-                app:strokeColor="#4CAF50"
-                app:strokeWidth="1dp"
-                app:cornerRadius="16dp"/>
-
+                android:layout_height="wrap_content"
+                android:text="@string/garden_family_join" />
         </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGardenSettings"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_gravity="end"
-            android:layout_marginTop="6dp"
-            android:text="Manage Garden"
-            android:textColor="#757575"
-            android:textSize="12sp"
-            app:rippleColor="#334CAF50"
-            app:icon="@android:drawable/ic_menu_preferences"
-            app:iconTint="#757575"
-            app:iconSize="16dp"
-            android:visibility="gone" />
-
     </LinearLayout>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
-        android:paddingBottom="8dp"
-
-        app:tabIndicatorFullWidth="false"
-        app:tabIndicatorHeight="4dp"
-        app:tabIndicatorColor="#4CAF50"
-
-        app:tabSelectedTextColor="#4CAF50"
-        app:tabTextColor="#9E9E9E"
-        app:tabTextAppearance="@style/TextAppearance.AppCompat.Medium"
-        app:tabMode="fixed"
+        android:layout_marginTop="4dp"
+        android:background="@color/leafy_background"
         app:tabGravity="fill"
+        app:tabMaxWidth="0dp"
+        app:tabIndicatorColor="@color/leafy_primary"
+        app:tabIndicatorFullWidth="false"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabRippleColor="@color/leafy_primary_container"
+        app:tabSelectedTextColor="@color/leafy_primary"
+        app:tabTextAppearance="@style/Leafy.TabText"
+        app:tabTextColor="@color/leafy_text_secondary" />
 
-        app:tabRippleColor="#204CAF50" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/leafy_outline" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingBottom="100dp"/>
-
+        android:layout_height="match_parent" />
 </LinearLayout>

@@ -87,77 +87,31 @@ class PlantFragment : Fragment() {
         binding.btnClose.setOnClickListener { requireActivity().finish() }
     }
 
+    /** Thông tin loài lấy từ danh mục `species` (thay danh mục cũ `plants`): theo id số, rồi theo tên. */
+    private var currentSpeciesId: String? = null
+
     private fun fetchPlantFromFirebase() {
-        binding.tvPlantName.text = plantLabel ?: "Loading..."
-
-        val db = FirebaseFirestore.getInstance()
-
-        if (plantId != -1) {
-            db.collection("plants").document(plantId.toString())
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null && document.exists()) {
-                        val plant = document.toObject(Plant::class.java)
-                        if (plant != null) {
-                            currentDisplayPlant = plant
-                            displayPlantInfo(plant)
-                            setupAddButton(plant)
-                            return@addOnSuccessListener
-                        }
-                    }
-                    searchPlantByName(db)
+        binding.tvPlantName.text = plantLabel ?: "Đang tải..."
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val repo = com.example.leafyapp.data.repository.SpeciesRepository
+                val label = plantLabel.orEmpty()
+                val species = (if (plantId != -1) repo.findByPlantId(plantId) else null)
+                    ?: repo.findByAiLabel(label)
+                    ?: label.takeIf { it.isNotBlank() && it != "Unknown" }?.let { repo.search(it).firstOrNull() }
+                if (species == null) {
+                    showError("Không tìm thấy cây này trong danh mục.")
+                    return@launch
                 }
-                .addOnFailureListener {
-                    searchPlantByName(db)
-                }
-        } else {
-            searchPlantByName(db)
-        }
-    }
-
-    private fun searchPlantByName(db: FirebaseFirestore) {
-        val label = plantLabel
-        if (label.isNullOrBlank() || label == "Unknown") {
-            showError("Không tìm thấy cây này.")
-            return
-        }
-
-        db.collection("plants")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                var matchedPlant: Plant? = null
-
-                for (doc in snapshot.documents) {
-                    val p = doc.toObject(Plant::class.java) ?: continue
-                    if (p.name.equals(label, ignoreCase = true) ||
-                        p.scientificName.equals(label, ignoreCase = true) ||
-                        p.name.contains(label, ignoreCase = true) ||
-                        label.contains(p.name, ignoreCase = true)) {
-                        val docIdInt = doc.id.toIntOrNull() ?: p.id
-                        matchedPlant = p.copy(id = docIdInt)
-                        break
-                    }
-                }
-
-                if (matchedPlant != null) {
-                    currentDisplayPlant = matchedPlant
-                    displayPlantInfo(matchedPlant)
-                    setupAddButton(matchedPlant)
-                } else {
-                    val fallbackPlant = Plant(
-                        id = 0,
-                        name = label,
-                        scientificName = label,
-                        description = "Thông tin cây được nhận diện bởi AI Model."
-                    )
-                    currentDisplayPlant = fallbackPlant
-                    displayPlantInfo(fallbackPlant)
-                    setupAddButton(fallbackPlant)
-                }
-            }
-            .addOnFailureListener { e ->
+                currentSpeciesId = species.id
+                val plant = repo.asPlant(species)
+                currentDisplayPlant = plant
+                displayPlantInfo(plant)
+                setupAddButton(plant)
+            } catch (e: Exception) {
                 showError("Lỗi kết nối: ${e.message}")
             }
+        }
     }
 
     private fun displayPlantInfo(plant: Plant) {
@@ -183,18 +137,8 @@ class PlantFragment : Fragment() {
         binding.tvHumidity.text = "💦 Humidity: ${plant.humidity ?: "N/A"}"
     }
 
-    private fun convertGoogleDriveLink(originalUrl: String): String {
-        return if (originalUrl.contains("drive.google.com")) {
-            try {
-                val id = originalUrl.substringAfter("/d/").substringBefore("/")
-                "https://drive.google.com/uc?export=view&id=$id"
-            } catch (e: Exception) {
-                originalUrl
-            }
-        } else {
-            originalUrl
-        }
-    }
+    private fun convertGoogleDriveLink(originalUrl: String): String =
+        com.example.leafyapp.util.ImageUtils.directImageUrl(originalUrl) ?: originalUrl
 
     private fun showError(msg: String) {
         binding.tvPlantName.text = "Error"
@@ -208,8 +152,12 @@ class PlantFragment : Fragment() {
         binding.btnAddPlant.isEnabled = true
         binding.btnAddPlant.alpha = 1.0f
 
+        binding.btnAddPlant.text = "Thêm cây trồng"
         binding.btnAddPlant.setOnClickListener {
-            showQuantityDialog(plant)
+            // Vườn cá nhân dùng luồng Thêm cây trồng mới (users/{uid}/plants)
+            val sid = currentSpeciesId
+            if (sid != null) com.example.leafyapp.ui.addplant.AddPlantActivity.start(requireContext(), speciesId = sid)
+            else showQuantityDialog(plant)
         }
     }
 
@@ -332,16 +280,22 @@ class PlantFragment : Fragment() {
         val currentCount = gardenViewModel.getPlantCount(plantToSave.id)
         val baseName = plantToSave.name
 
-        for (i in 1..quantity) {
-            val newIndex = currentCount + i
-            val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
+        try {
+            for (i in 1..quantity) {
+                val newIndex = currentCount + i
+                val finalName = if (currentCount == 0 && quantity == 1) baseName else "$baseName $newIndex"
 
-            val newUserPlant = UserPlant(
-                plantId = plantToSave.id,
-                nickname = finalName,
-                imagePath = plantToSave.image
-            )
-            gardenViewModel.insert(newUserPlant)
+                val newUserPlant = UserPlant(
+                    plantId = plantToSave.id,
+                    nickname = finalName,
+                    imagePath = plantToSave.image
+                )
+                gardenViewModel.insertAndAwait(newUserPlant)
+            }
+        } catch (e: Exception) {
+            Log.e("PlantFragment", "Lỗi lưu cây vào Firestore", e)
+            Toast.makeText(context, "Không thể thêm cây: ${e.message}", Toast.LENGTH_LONG).show()
+            return
         }
 
         val dest = if (isFamilyMode) "Family Garden" else "My Garden"

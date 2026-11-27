@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
@@ -108,30 +110,16 @@ class SearchActivity : AppCompatActivity() {
         showKeyboard()
     }
 
+    /** Danh mục `species` (thay danh mục cũ `plants`); loài có ảnh lên trước, 5 loài đầu làm gợi ý. */
     private fun fetchPlantsFromFirebase() {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("plants")
-            .get()
-            .addOnSuccessListener { result ->
-                val list = ArrayList<Plant>()
-                for (document in result) {
-                    try {
-                        val plant = document.toObject(Plant::class.java)
-                        list.add(plant)
-                    } catch (e: Exception) {
-                        Log.e("SearchActivity", "Error parsing plant", e)
-                    }
-                }
-
-                // Sắp xếp danh sách gốc giảm dần theo độ phổ biến
-                allPlants = list.sortedByDescending { it.popularity }
-
-                // Hiển thị 5 cây đầu tiên (Trending)
+        lifecycleScope.launch {
+            try {
+                allPlants = com.example.leafyapp.data.repository.SpeciesRepository.allAsPlants()
                 adapter.submitList(allPlants.take(5))
+            } catch (e: Exception) {
+                Toast.makeText(this@SearchActivity, "Lỗi tải dữ liệu: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Lỗi tải dữ liệu: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        }
     }
 
     private fun performSearch(query: String) {

@@ -59,23 +59,22 @@ class CalendarAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(date: Date, position: Int) {
-            val dayFormat = SimpleDateFormat("d", Locale.getDefault())
-            val dayOfWeekFormat = SimpleDateFormat("EEE", Locale.getDefault())
-
-            binding.tvDayOfMonth.text = dayFormat.format(date)
-            binding.tvDayOfWeek.text = dayOfWeekFormat.format(date).uppercase()
-
-            // Xử lý trạng thái chọn
-            val isSelected = position == selectedPosition
-            binding.tvDayOfMonth.isSelected = isSelected
-
-            if (isSelected) {
-                binding.tvDayOfMonth.setTextColor(Color.WHITE)
-                binding.tvDayOfWeek.setTextColor(Color.parseColor("#007BFF"))
-            } else {
-                binding.tvDayOfMonth.setTextColor(Color.BLACK)
-                binding.tvDayOfWeek.setTextColor(Color.parseColor("#808080"))
+            val cal = Calendar.getInstance().apply { time = date }
+            binding.tvDayOfMonth.text = cal.get(Calendar.DAY_OF_MONTH).toString()
+            binding.tvDayOfWeek.text = when (cal.get(Calendar.DAY_OF_WEEK)) {
+                Calendar.MONDAY -> "T2"; Calendar.TUESDAY -> "T3"; Calendar.WEDNESDAY -> "T4"
+                Calendar.THURSDAY -> "T5"; Calendar.FRIDAY -> "T6"; Calendar.SATURDAY -> "T7"; else -> "CN"
             }
+
+            val ctx = binding.root.context
+            val isSelected = position == selectedPosition
+            val isToday = isSameDay(cal, Calendar.getInstance())
+            binding.tvDayOfMonth.isSelected = isSelected
+            val primary = androidx.core.content.ContextCompat.getColor(ctx, com.example.leafyapp.R.color.leafy_primary)
+            val text = androidx.core.content.ContextCompat.getColor(ctx, com.example.leafyapp.R.color.leafy_text)
+            val secondary = androidx.core.content.ContextCompat.getColor(ctx, com.example.leafyapp.R.color.leafy_text_secondary)
+            binding.tvDayOfMonth.setTextColor(when { isSelected -> Color.WHITE; isToday -> primary; else -> text })
+            binding.tvDayOfWeek.setTextColor(if (isSelected || isToday) primary else secondary)
 
             binding.root.setOnClickListener {
                 val previousSelected = selectedPosition
@@ -97,6 +96,19 @@ class CalendarAdapter(
     }
 
     override fun getItemCount(): Int = days.size
+
+    /** Chọn lại hôm nay; trả về vị trí để cuộn tới. */
+    fun selectToday(): Int {
+        val today = Calendar.getInstance()
+        val pos = days.indexOfFirst { isSameDay(Calendar.getInstance().apply { time = it }, today) }
+        if (pos >= 0) {
+            val prev = selectedPosition
+            selectedPosition = pos
+            notifyItemChanged(prev); notifyItemChanged(pos)
+            onDateClick(days[pos])
+        }
+        return pos
+    }
 
     fun getSelectedDate(): Date = if (selectedPosition != -1) days[selectedPosition] else Date()
 }
